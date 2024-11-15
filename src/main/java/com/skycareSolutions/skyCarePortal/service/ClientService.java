@@ -1,0 +1,259 @@
+package com.skycareSolutions.skyCarePortal.service;
+
+import com.skycareSolutions.skyCarePortal.dto.ClientDTO;
+import com.skycareSolutions.skyCarePortal.dto.ClientPhysicalAddressDTO;
+import com.skycareSolutions.skyCarePortal.dto.ClientPostalAddressDTO;
+import com.skycareSolutions.skyCarePortal.model.*;
+import com.skycareSolutions.skyCarePortal.repository.ClientRepository;
+import com.skycareSolutions.skyCarePortal.repository.ClientStatusRepository;
+import com.skycareSolutions.skyCarePortal.repository.ClientTypeRepository;
+import com.skycareSolutions.skyCarePortal.repository.LanguageRepository;
+import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
+public class ClientService {
+
+    private static final String DIRECTORY = Paths.get(System.getProperty("user.home"), "skyCareUploads", "Client_profile_Photos").toString();
+
+
+    @Autowired
+    private ClientRepository clientRepository;
+
+    @Autowired
+    private LanguageRepository languageRepository;
+
+    @Autowired
+    private ClientTypeRepository clientTypeRepository;
+
+    @Autowired
+    private ClientStatusRepository clientStatusRepository;
+
+    // Convert Client entity to ClientDTO
+    private ClientDTO fromEntity(Client clientEntity) {
+        ClientDTO clientDTO = new ClientDTO();
+        clientDTO.setClientID(clientEntity.getClientID());
+        clientDTO.setFirstName(clientEntity.getFirstName());
+        clientDTO.setLastName(clientEntity.getLastName());
+        clientDTO.setPreferredName(clientEntity.getPreferredName());
+        clientDTO.setEmail(clientEntity.getEmail());
+        clientDTO.setGender(clientEntity.getGender());
+        clientDTO.setBirthday(clientEntity.getBirthday());
+        clientDTO.setJoinDate(clientEntity.getJoinDate());
+        clientDTO.setAboutMe(clientEntity.getAboutMe());
+        clientDTO.setInterests(clientEntity.getInterests());
+        clientDTO.setDislikes(clientEntity.getDislikes());
+        clientDTO.setProfilePhoto(clientEntity.getProfilePhoto());
+
+        // Map physicalAddress and postalAddress
+        if (clientEntity.getPhysicalAddress() != null) {
+            ClientPhysicalAddressDTO physicalAddressDTO = new ClientPhysicalAddressDTO();
+            physicalAddressDTO.setId(clientEntity.getPhysicalAddress().getId());
+            physicalAddressDTO.setAddress(clientEntity.getPhysicalAddress().getAddress());
+            physicalAddressDTO.setCity(clientEntity.getPhysicalAddress().getCity());
+            physicalAddressDTO.setState(clientEntity.getPhysicalAddress().getState());
+            physicalAddressDTO.setCountry(clientEntity.getPhysicalAddress().getCountry());
+            physicalAddressDTO.setPostalCode(clientEntity.getPhysicalAddress().getPostalCode());
+            physicalAddressDTO.setLongitude(clientEntity.getPhysicalAddress().getLongitude());
+            physicalAddressDTO.setLatitude(clientEntity.getPhysicalAddress().getLatitude());
+            clientDTO.setPhysicalAddress(physicalAddressDTO);
+        }
+
+        if (clientEntity.getPostalAddress() != null) {
+            ClientPostalAddressDTO postalAddressDTO = new ClientPostalAddressDTO();
+            postalAddressDTO.setId(clientEntity.getPostalAddress().getId());
+            postalAddressDTO.setAddress(clientEntity.getPostalAddress().getAddress());
+            postalAddressDTO.setCity(clientEntity.getPostalAddress().getCity());
+            postalAddressDTO.setState(clientEntity.getPostalAddress().getState());
+            postalAddressDTO.setCountry(clientEntity.getPostalAddress().getCountry());
+            postalAddressDTO.setPostalCode(clientEntity.getPostalAddress().getPostalCode());
+            postalAddressDTO.setLongitude(clientEntity.getPostalAddress().getLongitude());
+            postalAddressDTO.setLatitude(clientEntity.getPostalAddress().getLatitude());
+            clientDTO.setPostalAddress(postalAddressDTO);
+        }
+
+        // Map other lists and references
+        clientDTO.setClientLanguages(clientEntity.getClientLanguages().stream().map(ClientLanguage ->ClientLanguage.getLanguage().getLanguageID()).toList());
+        clientDTO.setPhoneNumbers(clientEntity.getPhoneNumbers().stream().map(ClientPhoneNo->ClientPhoneNo.getId().getPhoneNo()).toList());
+        clientDTO.setClientClassifications(clientEntity.getClientClassifications().stream().map(ClientClassification->ClientClassification.getClassification().getClassificationID()).toList());
+        clientDTO.setClientType(clientEntity.getClientType().getClientTypeID());
+        clientDTO.setClientStatus(clientEntity.getClientStatus().getClientStatusID());
+
+        return clientDTO;
+    }
+
+    // Convert ClientDTO to Client entity
+    private Client toEntity(ClientDTO clientDTO) {
+
+        Client clientEntity = new Client();
+        clientEntity.setClientID(clientDTO.getClientID());
+        clientEntity.setFirstName(clientDTO.getFirstName());
+        clientEntity.setLastName(clientDTO.getLastName());
+        clientEntity.setPreferredName(clientDTO.getPreferredName());
+        clientEntity.setEmail(clientDTO.getEmail());
+        clientEntity.setGender(clientDTO.getGender());
+        clientEntity.setBirthday(clientDTO.getBirthday());
+        clientEntity.setJoinDate(clientDTO.getJoinDate());
+        clientEntity.setAboutMe(clientDTO.getAboutMe());
+        clientEntity.setInterests(clientDTO.getInterests());
+        clientEntity.setDislikes(clientDTO.getDislikes());
+        clientEntity.setProfilePhoto(clientDTO.getProfilePhoto());
+
+        // Map physicalAddress and postalAddress
+        if (clientDTO.getPhysicalAddress() != null) {
+            ClientPhysicalAddress physicalAddress = new ClientPhysicalAddress();
+            physicalAddress.setId(clientDTO.getPhysicalAddress().getId());
+            physicalAddress.setAddress(clientDTO.getPhysicalAddress().getAddress());
+            physicalAddress.setCity(clientDTO.getPhysicalAddress().getCity());
+            physicalAddress.setState(clientDTO.getPhysicalAddress().getState());
+            physicalAddress.setCountry(clientDTO.getPhysicalAddress().getCountry());
+            physicalAddress.setPostalCode(clientDTO.getPhysicalAddress().getPostalCode());
+            physicalAddress.setLongitude(clientDTO.getPhysicalAddress().getLongitude());
+            physicalAddress.setLatitude(clientDTO.getPhysicalAddress().getLatitude());
+            clientEntity.setPhysicalAddress(physicalAddress);
+        }
+
+        if (clientDTO.getPostalAddress() != null) {
+            ClientPostalAddress postalAddress = new ClientPostalAddress();
+            postalAddress.setId(clientDTO.getPostalAddress().getId());
+            postalAddress.setAddress(clientDTO.getPostalAddress().getAddress());
+            postalAddress.setCity(clientDTO.getPostalAddress().getCity());
+            postalAddress.setState(clientDTO.getPostalAddress().getState());
+            postalAddress.setCountry(clientDTO.getPostalAddress().getCountry());
+            postalAddress.setPostalCode(clientDTO.getPostalAddress().getPostalCode());
+            postalAddress.setLongitude(clientDTO.getPostalAddress().getLongitude());
+            postalAddress.setLatitude(clientDTO.getPostalAddress().getLatitude());
+            clientEntity.setPostalAddress(postalAddress);
+        }
+
+        // Map other lists and references
+        System.out.println("languages "+clientDTO.getClientLanguages().toString());
+        clientEntity.setClientLanguages(
+                clientDTO.getClientLanguages().stream()
+                        .map(languageId -> {
+                            Language language = languageRepository.findById(languageId).orElseThrow(() ->
+                                    new RuntimeException("Language not found: " + languageId)
+                            );
+                            return new ClientLanguage(new ClientLanguageId(clientEntity.getClientID(),languageId),clientEntity, language); // Pass Client and Language entities
+                        })
+                        .toList()
+        );
+        System.out.println("phone no "+clientDTO.getPhoneNumbers().toString());
+
+        clientEntity.setPhoneNumbers(clientDTO.getPhoneNumbers().stream().map(phoneNumber -> new ClientPhoneNo(new ClientPhoneNoId(clientEntity.getClientID(),phoneNumber), clientEntity)).toList());
+
+        System.out.println("phone no "+clientDTO.getClientType().toString());
+        Optional<ClientType> clientType = clientTypeRepository.findById(clientDTO.getClientType());
+        if (clientType.isPresent()){
+            clientEntity.setClientType(clientType.get());
+        }
+
+        System.out.println("phone no "+clientDTO.getClientStatus().toString());
+        Optional<ClientStatus> clientStatusValue = clientStatusRepository.findById(clientDTO.getClientStatus());
+        if (clientStatusValue.isPresent()) {
+            clientEntity.setClientStatus(clientStatusValue.get());
+        }
+
+        clientEntity.setClientClassifications(
+                clientDTO.getClientClassifications().stream()
+                        .map(classificationID -> {
+                            // Create the ClientClassificationID
+                            ClientClassificationID classificationId = new ClientClassificationID(clientEntity.getClientID(), classificationID);
+
+                            // Print the ClientClassificationID to verify it's being created
+                            System.out.println("Creating ClientClassificationID: " + classificationId.getClientID());
+
+                            // Create and return ClientClassification
+                            return new ClientClassification(
+                                    classificationId,
+                                    clientEntity,
+                                    new Classification(classificationID) // Assuming Classification has a constructor taking classificationID
+                            );
+                        })
+                        .toList()
+        );
+
+        System.out.println(clientEntity.getClientID());
+        System.out.println(clientEntity.getClientType());
+        System.out.println(clientEntity.getClientClassifications());
+        return clientEntity;
+    }
+
+    // Get all clients
+    public List<ClientDTO> getAllClients() {
+        return clientRepository.getAllClients().stream()
+                .map(client->fromEntity(client))
+                .collect(Collectors.toList());
+    }
+
+    // Create a new client
+    public ClientDTO createClient(ClientDTO clientDTO, MultipartFile profilePhoto) {
+        // Check if email already exists
+        if (clientRepository.findByEmail(clientDTO.getEmail()) != null) {
+            throw new DataIntegrityViolationException("Email already exists.");
+        }
+        String lastClientID = clientRepository.getLastIdOfClient();
+        String newClientID = Micro_utils.idGenerator("client",lastClientID);
+        clientDTO.setClientID(newClientID);
+
+        try {
+            String originalFileName = profilePhoto.getOriginalFilename();
+            String fileExtension = originalFileName;
+            if (originalFileName != null && originalFileName.contains(".")) {
+                fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
+            }
+            System.out.println("original file name "+originalFileName);
+            File directory = new File(DIRECTORY);
+            if(!directory.exists()){
+                directory.mkdirs();
+            }
+            File destinationFile = new File(DIRECTORY, newClientID + fileExtension);
+            profilePhoto.transferTo(destinationFile);
+            clientDTO.setProfilePhoto(destinationFile.getAbsolutePath());
+            Client clientEntity = toEntity(clientDTO);
+            clientRepository.save(clientEntity);
+            return fromEntity(clientEntity);
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // Get client by ID
+    public ClientDTO getClientById(String clientID) {
+        Optional<Client> clientEntity = clientRepository.findById(clientID);
+        return clientEntity.map(client->fromEntity(client)).orElseThrow(() -> new RuntimeException("Client not found"));
+    }
+
+    // Update an existing client
+    public ClientDTO updateClient(String clientID, ClientDTO clientDTO) {
+        Optional<Client> existingClient = clientRepository.findById(clientID);
+        if (existingClient.isPresent()) {
+            Client updatedClient = toEntity(clientDTO);
+            updatedClient.setClientID(clientID);
+            clientRepository.save(updatedClient);
+            return fromEntity(updatedClient);
+        } else {
+            throw new RuntimeException("Client not found");
+        }
+    }
+
+    // Delete a client by ID
+    public void deleteClient(String clientID) {
+        Optional<Client> client = clientRepository.findById(clientID);
+        if (client.isPresent()) {
+            clientRepository.delete(client.get());
+        } else {
+            throw new RuntimeException("Client not found");
+        }
+    }
+}
