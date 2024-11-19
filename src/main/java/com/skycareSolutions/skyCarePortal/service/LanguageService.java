@@ -45,7 +45,7 @@ public class LanguageService {
             ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse("Language already created", false));
         }
         languageRepository.save(DTOtoEntity(language));
-        return ResponseEntity.ok(new ApiResponse("Language Created Successfully ",true));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse("Language Created Successfully ",true));
     }
 
     // Read or Get all Languages

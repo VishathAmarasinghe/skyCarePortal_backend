@@ -39,7 +39,7 @@ public class ClientService {
     private ClientStatusRepository clientStatusRepository;
 
     // Convert Client entity to ClientDTO
-    private ClientDTO fromEntity(Client clientEntity) {
+    private ClientDTO fromEntity(Client clientEntity,String type) {
         ClientDTO clientDTO = new ClientDTO();
         clientDTO.setClientID(clientEntity.getClientID());
         clientDTO.setFirstName(clientEntity.getFirstName());
@@ -81,12 +81,21 @@ public class ClientService {
             clientDTO.setPostalAddress(postalAddressDTO);
         }
 
+        if (type.equalsIgnoreCase("values")){
+            clientDTO.setClientLanguages(clientEntity.getClientLanguages().stream().map(ClientLanguage ->ClientLanguage.getLanguage().getLanguage()).toList());
+            clientDTO.setClientClassifications(clientEntity.getClientClassifications().stream().map(ClientClassification->ClientClassification.getClassification().getClassificationName()).toList());
+            clientDTO.setClientType(clientEntity.getClientType().getName());
+            clientDTO.setClientStatus(clientEntity.getClientStatus().getStatus());
+
+        }else{
+            clientDTO.setClientClassifications(clientEntity.getClientClassifications().stream().map(ClientClassification->ClientClassification.getClassification().getClassificationID()).toList());
+            clientDTO.setClientLanguages(clientEntity.getClientLanguages().stream().map(ClientLanguage ->ClientLanguage.getLanguage().getLanguageID()).toList());
+            clientDTO.setClientType(clientEntity.getClientType().getClientTypeID());
+            clientDTO.setClientStatus(clientEntity.getClientStatus().getClientStatusID());
+        }
         // Map other lists and references
-        clientDTO.setClientLanguages(clientEntity.getClientLanguages().stream().map(ClientLanguage ->ClientLanguage.getLanguage().getLanguageID()).toList());
         clientDTO.setPhoneNumbers(clientEntity.getPhoneNumbers().stream().map(ClientPhoneNo->ClientPhoneNo.getId().getPhoneNo()).toList());
-        clientDTO.setClientClassifications(clientEntity.getClientClassifications().stream().map(ClientClassification->ClientClassification.getClassification().getClassificationID()).toList());
-        clientDTO.setClientType(clientEntity.getClientType().getClientTypeID());
-        clientDTO.setClientStatus(clientEntity.getClientStatus().getClientStatusID());
+
 
         return clientDTO;
     }
@@ -191,7 +200,7 @@ public class ClientService {
     // Get all clients
     public List<ClientDTO> getAllClients() {
         return clientRepository.getAllClients().stream()
-                .map(client->fromEntity(client))
+                .map(client->fromEntity(client,"values"))
                 .collect(Collectors.toList());
     }
 
@@ -206,22 +215,25 @@ public class ClientService {
         clientDTO.setClientID(newClientID);
 
         try {
-            String originalFileName = profilePhoto.getOriginalFilename();
-            String fileExtension = originalFileName;
-            if (originalFileName != null && originalFileName.contains(".")) {
-                fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
+            if (profilePhoto!=null){
+                String originalFileName = profilePhoto.getOriginalFilename();
+                String fileExtension = originalFileName;
+                if (originalFileName != null && originalFileName.contains(".")) {
+                    fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
+                }
+                System.out.println("original file name "+originalFileName);
+                File directory = new File(DIRECTORY);
+                if(!directory.exists()){
+                    directory.mkdirs();
+                }
+                File destinationFile = new File(DIRECTORY, newClientID + fileExtension);
+                profilePhoto.transferTo(destinationFile);
+                clientDTO.setProfilePhoto(destinationFile.getAbsolutePath());
+
             }
-            System.out.println("original file name "+originalFileName);
-            File directory = new File(DIRECTORY);
-            if(!directory.exists()){
-                directory.mkdirs();
-            }
-            File destinationFile = new File(DIRECTORY, newClientID + fileExtension);
-            profilePhoto.transferTo(destinationFile);
-            clientDTO.setProfilePhoto(destinationFile.getAbsolutePath());
             Client clientEntity = toEntity(clientDTO);
             clientRepository.save(clientEntity);
-            return fromEntity(clientEntity);
+            return fromEntity(clientEntity,"ids");
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -231,7 +243,7 @@ public class ClientService {
     // Get client by ID
     public ClientDTO getClientById(String clientID) {
         Optional<Client> clientEntity = clientRepository.findById(clientID);
-        return clientEntity.map(client->fromEntity(client)).orElseThrow(() -> new RuntimeException("Client not found"));
+        return clientEntity.map(client->fromEntity(client,"values")).orElseThrow(() -> new RuntimeException("Client not found"));
     }
 
     // Update an existing client
@@ -241,7 +253,7 @@ public class ClientService {
             Client updatedClient = toEntity(clientDTO);
             updatedClient.setClientID(clientID);
             clientRepository.save(updatedClient);
-            return fromEntity(updatedClient);
+            return fromEntity(updatedClient,"values");
         } else {
             throw new RuntimeException("Client not found");
         }

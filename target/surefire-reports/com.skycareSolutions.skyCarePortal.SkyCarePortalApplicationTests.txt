@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.skycareSolutions.skyCarePortal.SkyCarePortalApplicationTests
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 35.52 s -- in com.skycareSolutions.skyCarePortal.SkyCarePortalApplicationTests

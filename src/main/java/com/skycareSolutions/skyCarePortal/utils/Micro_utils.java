@@ -22,6 +22,8 @@ public class Micro_utils {
             formatTablePrefix="CS";
         }else if (tableName.equalsIgnoreCase("client")){
             formatTablePrefix="CU";
+        }else if(tableName.equalsIgnoreCase("notes")){
+            formatTablePrefix="NT";
         }
         return String.format(formatTablePrefix+"%05d", newID);
     }
