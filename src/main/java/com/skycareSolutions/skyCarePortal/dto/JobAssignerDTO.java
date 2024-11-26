@@ -6,5 +6,6 @@ public class JobAssignerDTO {
     private String taskID;
     private String appointmentID;
     private String assignType;
+    private String assigner;
     private String acceptanceType;
 }

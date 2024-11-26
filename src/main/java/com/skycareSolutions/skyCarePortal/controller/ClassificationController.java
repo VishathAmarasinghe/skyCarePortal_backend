@@ -19,8 +19,12 @@ public class ClassificationController {
 
     private static final Logger logger = LoggerFactory.getLogger(ClassificationController.class);
 
-    @Autowired
-    private ClassificationService classificationService;
+
+    final private ClassificationService classificationService;
+
+    public ClassificationController(ClassificationService classificationService) {
+        this.classificationService = classificationService;
+    }
 
     // Create a new classification
     @PostMapping

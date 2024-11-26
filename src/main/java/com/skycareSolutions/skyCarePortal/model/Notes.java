@@ -5,7 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.mapping.TableOwner;
 
+import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -25,13 +27,13 @@ public class Notes {
     private String title;
 
     @Column(name = "create_date", nullable = false)
-    private LocalDate createDate;
+    private String createDate;
 
-    @Column(name = "shift_start_time")
-    private LocalDateTime shiftStartTime;
+    @Column(name = "shift_start_time",nullable = true)
+    private String shiftStartTime;
 
-    @Column(name = "shift_end_time")
-    private LocalDateTime shiftEndTime;
+    @Column(name = "shift_end_time", nullable = true)
+    private String shiftEndTime;
 
     @ManyToOne
     @JoinColumn(name = "careplanID")
@@ -52,8 +54,8 @@ public class Notes {
     @JoinColumn(name = "appointmentID")
     private Appointment appointmentID;
 
-    @Column(name = "effective_date")
-    private LocalDate effectiveDate;
+    @Column(name = "effective_date",nullable = true)
+    private String effectiveDate;
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;

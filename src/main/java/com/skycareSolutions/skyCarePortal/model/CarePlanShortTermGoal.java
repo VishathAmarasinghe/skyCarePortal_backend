@@ -18,8 +18,9 @@ public class CarePlanShortTermGoal {
     @Column(name = "shortTermGoalID", nullable = false, unique = true)
     private String shortTermGoalID;
 
-    @Column(name = "longTermGoalID", nullable = false)
-    private String longTermGoalID;
+    @ManyToOne
+    @JoinColumn(name = "longTermGoalID", nullable = false)
+    private CarePlanLongTermGoal longTermGoalID;
 
     @Column(name = "goalTitle", nullable = false)
     private String goalTitle;
@@ -39,5 +40,5 @@ public class CarePlanShortTermGoal {
 
     @ManyToOne
     @JoinColumn(name = "careplanID", nullable = false)
-    private CarePlan carePlan;
+    private CarePlan carePlanID;
 }

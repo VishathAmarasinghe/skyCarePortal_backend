@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.sql.Timestamp;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -30,8 +32,15 @@ public class JobAssigner {
     @JoinColumn(name = "appointmentID", nullable = true)
     private Appointment appointment; // Foreign key to Appointment (nullable if not associated with an appointment)
 
+    @ManyToOne
+    @JoinColumn(name = "assignerID",nullable = false)
+    private Employee employee;
+
     @Column(name = "assignType", nullable = false)
     private String assignType; // Type of assignment (e.g., Task, Appointment)
+
+    @Column(name = "assignTime")
+    private Timestamp assignTime;
 
     @Column(name = "acceptanceType", nullable = false)
     private String acceptanceType; // Acceptance status (e.g., Pending, Accepted, Rejected)

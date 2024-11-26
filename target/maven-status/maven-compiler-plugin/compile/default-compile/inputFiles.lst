@@ -1,3 +1,4 @@
+C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\config\FileUploadConfig.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\config\ModelMapperConfig.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\controller\ClassificationController.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\controller\ClientController.java
@@ -6,6 +7,7 @@ C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\ja
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\controller\EmployeeController.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\controller\LanguageController.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\controller\NotesController.java
+C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\controller\NotesDocumentController.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\dto\ApiResponse.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\dto\AppointmentAddressDTO.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\dto\AppointmentAttachmentsDTO.java
@@ -94,6 +96,7 @@ C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\ja
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\repository\EmployeePhoneNoRepository.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\repository\EmployeeRepository.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\repository\LanguageRepository.java
+C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\repository\NotesDocumentRepository.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\repository\NotesRepository.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\service\ClassificationService.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\service\ClientService.java
@@ -101,6 +104,7 @@ C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\ja
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\service\ClientTypeService.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\service\EmployeeService.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\service\LanguageService.java
+C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\service\NotesDocumentService.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\service\NotesService.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\SkyCarePortalApplication.java
 C:\Codings\individual projects\sky_care_portal_backend\skyCarePortal\src\main\java\com\skycareSolutions\skyCarePortal\utils\Micro_utils.java

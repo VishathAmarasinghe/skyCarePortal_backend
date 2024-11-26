@@ -1,5 +1,8 @@
 package com.skycareSolutions.skyCarePortal.dto;
 
+import lombok.Data;
+
+@Data
 public class CarePlanShortTermGoalDTO {
     private String shortTermGoalID;
     private String longTermGoalID;

@@ -32,5 +32,5 @@ public class CarePlanLongTermGoal {
 
     @ManyToOne
     @JoinColumn(name = "careplanID", nullable = false)
-    private CarePlan carePlan;
+    private CarePlan carePlanID;
 }

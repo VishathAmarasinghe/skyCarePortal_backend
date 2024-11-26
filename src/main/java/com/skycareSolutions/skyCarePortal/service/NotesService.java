@@ -26,6 +26,9 @@ public class NotesService {
     @Autowired
     private NotesRepository notesRepository;
 
+    @Autowired
+    private NotesDocumentService notesDocumentService;
+
     public NotesDTO createNote(NotesDTO notesDTO, List<MultipartFile> files) {
         String lastNoteID = notesRepository.getLastIdOfNotes();
         String newNoteID = Micro_utils.idGenerator("notes",lastNoteID);
@@ -53,6 +56,9 @@ public class NotesService {
                         docs.setNoteID(newNoteID);
                         docs.setDocID(originalFileName+new Date().toString());
                         docs.setDocument(destinationFile.getAbsolutePath());
+
+                        notesDocumentService.saveNoteDocument(docs);
+
                     }
                 }
             }

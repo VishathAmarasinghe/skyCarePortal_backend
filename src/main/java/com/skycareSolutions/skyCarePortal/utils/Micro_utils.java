@@ -24,6 +24,22 @@ public class Micro_utils {
             formatTablePrefix="CU";
         }else if(tableName.equalsIgnoreCase("notes")){
             formatTablePrefix="NT";
+        }else if (tableName.equalsIgnoreCase("careplan")){
+            formatTablePrefix="CP";
+        }else if (tableName.equalsIgnoreCase("longTermCarePlan")){
+            formatTablePrefix="LP";
+        }else if (tableName.equalsIgnoreCase("shortTermCarePlan")){
+            formatTablePrefix="SP";
+        }else if (tableName.equalsIgnoreCase("goalOutcome")){
+            formatTablePrefix="GO";
+        }else if (tableName.equalsIgnoreCase("carePlanStatus")){
+            formatTablePrefix="PS";
+        } else if (tableName.equalsIgnoreCase("carePlanBillables")){
+            formatTablePrefix="BL";
+        }else if (tableName.equalsIgnoreCase("appointment")){
+            formatTablePrefix="AP";
+        }else if (tableName.equalsIgnoreCase("appointment-type")){
+            formatTablePrefix="AT";
         }
         return String.format(formatTablePrefix+"%05d", newID);
     }

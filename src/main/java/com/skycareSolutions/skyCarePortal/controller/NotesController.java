@@ -1,11 +1,13 @@
 package com.skycareSolutions.skyCarePortal.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skycareSolutions.skyCarePortal.dto.ApiResponse;
 import com.skycareSolutions.skyCarePortal.dto.NotesDTO;
 import com.skycareSolutions.skyCarePortal.service.NotesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,12 +22,20 @@ public class NotesController {
     @Autowired
     private NotesService notesService;
 
-    @PostMapping(consumes = "multipart/form-data")
+    @PostMapping()
     public ResponseEntity<ApiResponse> createNote(
-            @RequestPart("note") NotesDTO notesDTO,
-            @RequestPart("files") List<MultipartFile> files) {
-        notesService.createNote(notesDTO,files);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse("Notes Added successfully",true));
+            @RequestPart("note") String notesDTO,
+            @RequestPart(value = "files") List<MultipartFile> files) {
+        System.out.println("functionality came here ");
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            NotesDTO notes = mapper.readValue(notesDTO,NotesDTO.class);
+            notesService.createNote(notes,files);
+            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse("Notes Added successfully",true));
+        }catch (Exception e){
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(e.getMessage(),false));
+        }
     }
 
     @PutMapping("/{noteID}")

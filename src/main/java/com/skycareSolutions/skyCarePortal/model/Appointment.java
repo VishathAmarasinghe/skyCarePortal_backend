@@ -21,27 +21,31 @@ public class Appointment {
     @Column(name = "appointmentID", nullable = false, unique = true)
     private String appointmentID;
 
+    @Column(name = "title",nullable = false)
+    private String title;
+
     @ManyToOne
     @JoinColumn(name = "appointmentTypeID", nullable = false)
     private AppointmentType appointmentType;
 
-    @Column(name = "clientID", nullable = false)
-    private String clientID;
+    @ManyToOne
+    @JoinColumn(name = "clientID", nullable = false)
+    private Client clientID;
 
     @Column(name = "caregiverCount", nullable = false)
     private int caregiverCount;
 
     @Column(name = "startDate", nullable = false)
-    private LocalDate startDate;
+    private String startDate;
 
     @Column(name = "startTime")
-    private LocalDateTime startTime;
+    private String startTime;
 
     @Column(name = "endDate", nullable = false)
-    private LocalDate endDate;
+    private String endDate;
 
     @Column(name = "endTime")
-    private LocalDateTime endTime;
+    private String endTime;
 
     @Column(name = "duration")
     private int duration; // Assuming duration is in minutes
@@ -50,11 +54,11 @@ public class Appointment {
     private String comment;
 
     @ManyToOne
-    @JoinColumn(name = "carePlanID")
+    @JoinColumn(name = "carePlanID",nullable = true)
     private CarePlan carePlan;
 
     @ManyToOne
-    @JoinColumn(name = "taskID")
+    @JoinColumn(name = "taskID",nullable = true)
     private Task task;
 
     @Column(name = "broadcastType", nullable = false)

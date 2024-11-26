@@ -24,11 +24,14 @@ public class CarePlan {
     @JoinColumn(name = "careplanStatusID", nullable = false)
     private CarePlanStatus carePlanStatus;
 
+    @Column(name = "title",nullable = false)
+    private String title;
+
     @Column(name = "startDate", nullable = false)
-    private LocalDate startDate;
+    private String startDate;
 
     @Column(name = "endDate", nullable = true)
-    private LocalDate endDate;
+    private String endDate;
 
     @ManyToOne
     @JoinColumn(name = "clientID", nullable = false )
