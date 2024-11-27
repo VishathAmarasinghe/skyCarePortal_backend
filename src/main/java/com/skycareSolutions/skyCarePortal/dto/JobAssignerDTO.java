@@ -1,5 +1,9 @@
 package com.skycareSolutions.skyCarePortal.dto;
 
+
+import lombok.Data;
+
+@Data
 public class JobAssignerDTO {
     private String assignID;
     private String careGiverID;

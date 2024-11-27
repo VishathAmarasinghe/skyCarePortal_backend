@@ -40,6 +40,12 @@ public class Micro_utils {
             formatTablePrefix="AP";
         }else if (tableName.equalsIgnoreCase("appointment-type")){
             formatTablePrefix="AT";
+        }else if (tableName.equalsIgnoreCase("appointmentAddress")){
+            formatTablePrefix="AD";
+        }else if(tableName.equalsIgnoreCase("recurrentWork")){
+            formatTablePrefix="RW";
+        }else if (tableName.equalsIgnoreCase("jobAssigner")){
+            formatTablePrefix="JA";
         }
         return String.format(formatTablePrefix+"%05d", newID);
     }

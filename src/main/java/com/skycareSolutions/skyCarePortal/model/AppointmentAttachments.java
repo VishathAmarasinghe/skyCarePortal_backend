@@ -21,8 +21,6 @@ public class AppointmentAttachments {
     @JoinColumn(name = "appointmentID", insertable = false, updatable = false)
     private Appointment appointment;
 
-    @Column(name = "docuementID")
-    private String documentID;
 
     @Column(name = "document")
     private String document;

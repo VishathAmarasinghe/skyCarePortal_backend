@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -18,30 +19,37 @@ public class JobAssigner {
 
     @Id
     @Column(name = "assignID", nullable = false, unique = true)
-    private String assignID; // Primary Key (not auto-generated)
+    private String assignID;
 
     @ManyToOne
-    @JoinColumn(name = "careGiverID", nullable = false)
-    private CareGiver careGiver; // Foreign key to CareGiver
+    @JoinColumn(name = "careGiverID", nullable = true)
+    private CareGiver careGiver;
 
     @ManyToOne
     @JoinColumn(name = "taskID", nullable = true)
-    private Task task; // Foreign key to Task (nullable if not associated with a task)
+    private Task task;
 
     @ManyToOne
     @JoinColumn(name = "appointmentID", nullable = true)
-    private Appointment appointment; // Foreign key to Appointment (nullable if not associated with an appointment)
+    private Appointment appointment;
 
     @ManyToOne
     @JoinColumn(name = "assignerID",nullable = false)
     private Employee employee;
 
     @Column(name = "assignType", nullable = false)
-    private String assignType; // Type of assignment (e.g., Task, Appointment)
+    private String assignType;
 
     @Column(name = "assignTime")
     private Timestamp assignTime;
 
     @Column(name = "acceptanceType", nullable = false)
-    private String acceptanceType; // Acceptance status (e.g., Pending, Accepted, Rejected)
+    private String acceptanceType;
+
+    @PrePersist
+    protected void onCreate() {
+        if (assignTime == null) {
+            assignTime = Timestamp.from(Instant.now());
+        }
+    }
 }

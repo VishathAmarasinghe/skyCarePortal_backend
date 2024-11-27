@@ -65,6 +65,6 @@ public class Appointment {
     private String broadcastType;
 
     @ManyToOne
-    @JoinColumn(name = "appointmentAddressID")
+    @JoinColumn(name = "appointmentAddressID",nullable = true)
     private AppointmentAddress appointmentAddress;
 }

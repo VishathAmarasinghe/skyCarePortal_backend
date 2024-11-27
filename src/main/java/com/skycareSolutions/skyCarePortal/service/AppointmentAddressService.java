@@ -1,7 +1,9 @@
 package com.skycareSolutions.skyCarePortal.service;
 
+import com.skycareSolutions.skyCarePortal.dto.AppointmentAddressDTO;
 import com.skycareSolutions.skyCarePortal.model.AppointmentAddress;
 import com.skycareSolutions.skyCarePortal.repository.AppointmentAddressRepository;
+import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,14 +15,29 @@ public class AppointmentAddressService {
     @Autowired
     private AppointmentAddressRepository repository;
 
+    private AppointmentAddress mapToEntitiy(AppointmentAddressDTO address){
+        AppointmentAddress addressEntity = new AppointmentAddress();
+        addressEntity.setAddress(address.getAddress());
+        addressEntity.setCity(address.getCity());
+        addressEntity.setState(address.getState());
+        addressEntity.setPostalCode(address.getPostalCode());
+        addressEntity.setAppointmentAddressID(address.getAppointmentAddressID());
+
+        return addressEntity;
+    }
+
     /**
      * Save or update an AppointmentAddress.
      *
      * @param address the AppointmentAddress object to save.
      * @return the saved AppointmentAddress.
      */
-    public AppointmentAddress save(AppointmentAddress address) {
-        return repository.save(address);
+    public AppointmentAddress save(AppointmentAddressDTO address) {
+        String lastAppointmentAddressID = repository.getLastIdOfAppointmentAddress();
+        String newAppointmentAddressID = Micro_utils.idGenerator("appointmentAddress",lastAppointmentAddressID);
+        address.setAppointmentAddressID(newAppointmentAddressID);
+        AppointmentAddress appointmentAddress = mapToEntitiy(address);
+        return repository.save(appointmentAddress);
     }
 
     /**

@@ -12,7 +12,7 @@ public interface AppointmentTypesRepository extends CrudRepository<AppointmentTy
     @Query(value = "SELECT ap.appointmentid FROM appointment ap ORDER BY CAST(SUBSTRING(ap.appointmentid, 3) AS UNSIGNED) DESC LIMIT 1", nativeQuery = true)
     String getLastIdOfAppointmentType();
 
-    @Query(value = "SELECT AP FROM AppointmentType")
+    @Query(value = "SELECT AP FROM AppointmentType AP")
     List<AppointmentType> findAllAppointmentTypes();
 
 

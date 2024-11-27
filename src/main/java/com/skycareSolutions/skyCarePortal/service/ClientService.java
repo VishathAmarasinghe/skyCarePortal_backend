@@ -246,6 +246,11 @@ public class ClientService {
         return clientEntity.map(client->fromEntity(client,"values")).orElseThrow(() -> new RuntimeException("Client not found"));
     }
 
+    public Client getClientByIdWithEntitiy(String clientID) {
+        Optional<Client> clientEntity = clientRepository.findById(clientID);
+        return clientEntity.orElseThrow(() -> new RuntimeException("Client not found"));
+    }
+
     // Update an existing client
     public ClientDTO updateClient(String clientID, ClientDTO clientDTO) {
         Optional<Client> existingClient = clientRepository.findById(clientID);

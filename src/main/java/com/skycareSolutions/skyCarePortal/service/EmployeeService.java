@@ -283,6 +283,15 @@ public class EmployeeService {
         return employeeDetails;
     }
 
+    public Employee findOneEmployeeWithEntity(String employeeID){
+        Optional<Employee> existingEmployeeOpt = employeeRepository.findById(employeeID);
+        if (existingEmployeeOpt.isPresent()) {
+            return existingEmployeeOpt.get();
+        }else{
+            throw new RuntimeException();
+        }
+    }
+
     public ApiResponse updateEmployeeState(String employeeID,String state){
         Optional<Employee> existingEmployeeOpt = employeeRepository.findById(employeeID);
         if (existingEmployeeOpt.isEmpty()) {

@@ -1,6 +1,9 @@
 package com.skycareSolutions.skyCarePortal.dto;
+import lombok.Data;
+
 import java.time.LocalDate;
 
+@Data
 public class RecurrentWorkDTO {
     private String recurrentWorkID;
     private String appointmentID;

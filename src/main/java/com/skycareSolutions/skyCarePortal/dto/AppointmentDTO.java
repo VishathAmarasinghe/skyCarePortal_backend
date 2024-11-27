@@ -26,5 +26,5 @@ public class AppointmentDTO {
     private List<AppointmentAttachmentsDTO> attachments;
     private Boolean recurrenceState;
     private RecurrentWorkDTO recurrentWork;
-    private JobAssignerDTO jobAssigns;
+    private JobAssignCreationDTO jobAssigns;
 }
