@@ -25,7 +25,7 @@ public class NotesController {
     @PostMapping()
     public ResponseEntity<ApiResponse> createNote(
             @RequestPart("note") String notesDTO,
-            @RequestPart(value = "files") List<MultipartFile> files) {
+            @RequestPart(value = "files",required = false) List<MultipartFile> files) {
         System.out.println("functionality came here ");
         try {
             ObjectMapper mapper = new ObjectMapper();
@@ -39,8 +39,22 @@ public class NotesController {
     }
 
     @PutMapping("/{noteID}")
-    public ResponseEntity<NotesDTO> updateNote(@PathVariable String noteID, @RequestBody NotesDTO notesDTO) {
-        return ResponseEntity.ok(notesService.updateNote(noteID, notesDTO));
+    public ResponseEntity<ApiResponse> updateNote(
+            @PathVariable String noteID,
+            @RequestPart("note") String notesDTO,
+            @RequestPart(value = "files",required = false) List<MultipartFile> files) {
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            NotesDTO notes = mapper.readValue(notesDTO,NotesDTO.class);
+            notesService.updateNote(noteID, notes,files);
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse("Successfully updated",true));
+        }catch (Exception e){
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(e.getMessage(),false));
+        }
+
+
     }
 
     @GetMapping

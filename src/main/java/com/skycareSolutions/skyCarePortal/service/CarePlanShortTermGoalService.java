@@ -39,7 +39,7 @@ public class CarePlanShortTermGoalService {
         dto.setLongTermGoalID(entity.getLongTermGoalID().getLongGoalID());
         dto.setGoalTitle(entity.getGoalTitle());
         dto.setGoalDescription(entity.getGoalDescription());
-//        dto.setGoalOutcomeTypeID(entity.getGoalOutcome().getOutcomeTypeID());
+        dto.setGoalOutcomeTypeID(entity.getGoalOutcome().getGoalOutcomeID());
         dto.setOutcomeDetails(entity.getOutcomeDetails());
         dto.setGoalStrategy(entity.getGoalStrategy());
         dto.setCareplanID(entity.getCarePlanID().getCareplanID());

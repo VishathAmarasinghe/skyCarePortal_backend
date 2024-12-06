@@ -37,7 +37,7 @@ public class NotesService {
         Notes savedNote = notesRepository.save(note);
 
         try {
-            if (!files.isEmpty()){
+            if (files!=null && !files.isEmpty()){
                 for (MultipartFile file:files){
                     if (file!=null){
                         String originalFileName = file.getOriginalFilename();
@@ -51,6 +51,14 @@ public class NotesService {
                             directory.mkdirs();
                         }
                         File destinationFile = new File(DIRECTORY, newNoteID + fileExtension);
+                        if (destinationFile.exists()) {
+                            // Delete the existing file
+                            boolean deleted = destinationFile.delete();
+                            if (!deleted) {
+                                throw new RuntimeException("Failed to delete the existing file: " + destinationFile.getName());
+                            }
+                        }
+
                         file.transferTo(destinationFile);
                         NoteDocumentsDTO docs  = new NoteDocumentsDTO();
                         docs.setNoteID(newNoteID);
@@ -69,14 +77,64 @@ public class NotesService {
         return convertToDTO(savedNote);
     }
 
-    public NotesDTO updateNote(String noteID, NotesDTO notesDTO) {
+    public NotesDTO updateNote(String noteID, NotesDTO notesDTO,List<MultipartFile> files) {
         Notes existingNote = notesRepository.findById(noteID)
                 .orElseThrow(() -> new RuntimeException("Note not found"));
 
-        // Manually update the existing entity using the DTO
         updateEntityFromDTO(notesDTO, existingNote);
 
         Notes updatedNote = notesRepository.save(existingNote);
+
+        try {
+            List<NoteDocumentsDTO> documents = notesDTO.getDocuments();
+            for (NoteDocumentsDTO note:documents){
+                NoteDocumentsDTO noteExist = notesDocumentService.getDocumentsByDocID(note.getDocID());
+                if (noteExist.getNoteID()!=null && !noteExist.getNoteID().isEmpty()){
+                    notesDocumentService.deleteNoteDocument(note.getNoteID(),note.getDocID());
+
+                    File directory = new File(noteExist.getDocument());
+                    if (directory.exists()){
+                        directory.delete();
+                    }
+                }
+            }
+            if (files!=null && !files.isEmpty()){
+                for (MultipartFile file:files){
+                    System.out.println("lenght "+files.size());
+                    if (file!=null){
+                        String originalFileName = file.getOriginalFilename();
+                        String fileExtension = originalFileName;
+                        if (originalFileName != null && originalFileName.contains(".")) {
+                            fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
+                        }
+                        System.out.println("original file name "+originalFileName);
+                        File directory = new File(DIRECTORY);
+                        if(!directory.exists()){
+                            directory.mkdirs();
+                        }
+                        System.out.println("note id "+noteID);
+                        File destinationFile = new File(DIRECTORY, noteID + fileExtension);
+                        if (destinationFile.exists()) {
+                            // Delete the existing file
+                            boolean deleted = destinationFile.delete();
+                            if (!deleted) {
+                                throw new RuntimeException("Failed to delete the existing file: " + destinationFile.getName());
+                            }
+                        }
+                        file.transferTo(destinationFile);
+                        NoteDocumentsDTO docs  = new NoteDocumentsDTO();
+                        docs.setNoteID(noteID);
+                        docs.setDocID(originalFileName+new Date().toString());
+                        docs.setDocument(destinationFile.getAbsolutePath());
+
+                        notesDocumentService.saveNoteDocument(docs);
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return convertToDTO(updatedNote);
     }
 
@@ -103,7 +161,23 @@ public class NotesService {
     }
 
     public void deleteNoteById(String noteID) {
-        notesRepository.deleteById(noteID);
+        try {
+            List<NoteDocumentsDTO> documents = notesDocumentService.getDocumentsByNoteID(noteID);
+            for (NoteDocumentsDTO note:documents){
+                File deleteFile = new File(note.getDocument());
+                if (deleteFile.exists()){
+                    boolean deleted = deleteFile.delete();
+                    if (!deleted) {
+                        throw new RuntimeException("Failed to delete the existing file: " + deleteFile.getName());
+                    }
+                }
+            }
+            notesDocumentService.deleteDocumentsByNoteID(noteID);
+            notesRepository.deleteById(noteID);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     // Manual mapping: NotesDTO -> Notes
@@ -178,6 +252,8 @@ public class NotesService {
         if (note.getCareplanID() != null) {
             dto.setCareplanID(note.getCareplanID().getCareplanID());
         }
+
+        dto.setDocuments(notesDocumentService.getDocumentsByNoteID(note.getNoteID()));
 
         return dto;
     }

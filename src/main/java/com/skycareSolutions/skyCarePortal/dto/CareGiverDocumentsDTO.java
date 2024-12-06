@@ -10,4 +10,5 @@ public class CareGiverDocumentsDTO {
     private String documentTypeID;
     private Date expDate;
     private String status;
+    private String document;
 }

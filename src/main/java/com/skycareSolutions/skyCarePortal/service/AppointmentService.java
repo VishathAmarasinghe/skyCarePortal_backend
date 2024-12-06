@@ -1,9 +1,9 @@
 package com.skycareSolutions.skyCarePortal.service;
 
-import com.skycareSolutions.skyCarePortal.dto.AppointmentAttachmentsDTO;
-import com.skycareSolutions.skyCarePortal.dto.AppointmentDTO;
+import com.skycareSolutions.skyCarePortal.dto.*;
 import com.skycareSolutions.skyCarePortal.model.Appointment;
 import com.skycareSolutions.skyCarePortal.model.Client;
+import com.skycareSolutions.skyCarePortal.model.JobAssigner;
 import com.skycareSolutions.skyCarePortal.repository.AppointmentRepository;
 import com.skycareSolutions.skyCarePortal.repository.AppointmentTypesRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -53,6 +54,21 @@ public class AppointmentService {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Appointment not found!"));
         return mapToDTO(appointment);
+    }
+
+    public List<AppointmentDTO> getAppointmentsbyClientID(String clientID){
+        Client clientInfo = clientService.getClientByIdWithEntitiy(clientID);
+        if (clientInfo!=null){
+            List<Appointment> appointments = appointmentRepository.findAppointmentsByClient(clientInfo);
+            List<AppointmentDTO> appointmentDTOS = new ArrayList<>();
+            for (Appointment app:appointments){
+                appointmentDTOS.add(mapToDTO(app));
+            }
+            return appointmentDTOS;
+        }else{
+            throw new RuntimeException();
+        }
+
     }
 
 
@@ -113,9 +129,57 @@ public class AppointmentService {
         AppointmentDTO dto = new AppointmentDTO();
         dto.setAppointmentID(appointment.getAppointmentID());
         dto.setTitle(appointment.getTitle());
-        // Map other fields
+        dto.setAppointmentTypeID(appointment.getAppointmentType().getAppointmentTypeID());
+        dto.setClientID(appointment.getClient().getClientID());
+        dto.setCaregiverCount(appointment.getCaregiverCount());
+        dto.setStartDate(appointment.getStartDate());
+        dto.setStartTime(appointment.getStartTime());
+        dto.setEndDate(appointment.getEndDate());
+        dto.setEndTime(appointment.getEndTime());
+        dto.setDuration(appointment.getDuration());
+        dto.setComment(appointment.getComment());
+        dto.setBroadcastType(appointment.getBroadcastType());
+
+        // Map AppointmentAddress
+        if (appointment.getAppointmentAddress() != null) {
+            AppointmentAddressDTO addressDTO = new AppointmentAddressDTO();
+            addressDTO.setAppointmentAddressID(appointment.getAppointmentAddress().getAppointmentAddressID());
+            addressDTO.setAddress(appointment.getAppointmentAddress().getAddress());
+            addressDTO.setCity(appointment.getAppointmentAddress().getCity());
+            addressDTO.setState(appointment.getAppointmentAddress().getState());
+            addressDTO.setPostalCode(appointment.getAppointmentAddress().getPostalCode());
+            dto.setAppointmentAddress(addressDTO);
+        }
+
+        if (appointment.getCarePlan()!=null){
+            dto.setCarePlanID(appointment.getCarePlan().getCareplanID());
+        }
+        List<JobAssignerDTO> jobAssigner = jobAssignerService.getAllJobsRelatedToAppointment(appointment.getAppointmentID());
+        JobAssignCreationDTO createDTO = new JobAssignCreationDTO();
+        createDTO.setAppointmentID(appointment.getAppointmentID());
+
+        String[] careGiverList = new String[jobAssigner.size()];
+
+        int index = 0;
+        for (JobAssignerDTO assigner : jobAssigner) {
+            careGiverList[index] = assigner.getCareGiverID();
+            index++;
+        }
+        createDTO.setCareGiverIDs(careGiverList);
+        dto.setJobAssigns(createDTO);
+
+        RecurrentWorkDTO rw = recurrentWorkService.getRecurrentWorkTaskByAppointment(appointment.getAppointmentID());
+
+        if (rw!=null){
+            dto.setRecurrenceState(true);
+            dto.setRecurrentWork(rw);
+        }
+        List<AppointmentAttachmentsDTO> attachments = appointmentAttachmentsService.getAttachmentsbyAppointmentID(appointment.getAppointmentID());
+
+        dto.setAttachments(attachments);
         return dto;
     }
+
 
     // Map to Entity
     private Appointment mapToEntity(AppointmentDTO dto) {
@@ -125,7 +189,7 @@ public class AppointmentService {
         appointment.setAppointmentType(appointmentTypeService.getAppointmentTypeByIdWithEntity(dto.getAppointmentTypeID()));
 
         Client client = clientService.getClientByIdWithEntitiy(dto.getClientID());
-        appointment.setClientID(client);
+        appointment.setClient(client);
 
         // Set AppointmentAddress
         appointmentAddressService.findById(dto.getAppointmentAddress().getAppointmentAddressID())

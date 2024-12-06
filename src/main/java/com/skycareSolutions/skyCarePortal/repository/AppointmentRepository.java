@@ -1,6 +1,7 @@
 package com.skycareSolutions.skyCarePortal.repository;
 
 import com.skycareSolutions.skyCarePortal.model.Appointment;
+import com.skycareSolutions.skyCarePortal.model.Client;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
@@ -12,4 +13,11 @@ public interface AppointmentRepository extends CrudRepository<Appointment,String
     String getLastIdOfAppointments();
 
     @Query(value = "SELECT AP FROM Appointment AP")
-    List<Appointment> findAllAppointments();}
+    List<Appointment> findAllAppointments();
+
+    @Query("SELECT ap FROM Appointment ap WHERE ap.client=:client")
+    List<Appointment> findAppointmentsByClient(Client client);
+
+}
+
+

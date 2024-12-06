@@ -25,6 +25,12 @@ public class CarePlanController {
         return ResponseEntity.ok(carePlans); // 200 OK
     }
 
+    @GetMapping("/{carePlanID}")
+    public ResponseEntity<CarePlanDTO> getCarePlansByPlanID(@PathVariable String carePlanID) {
+        CarePlanDTO carePlan = carePlanService.getCarePlansByCarePlanID(carePlanID);
+        return ResponseEntity.ok(carePlan); // 200 OK
+    }
+
     // Get all CarePlans
     @GetMapping
     public ResponseEntity<List<CarePlanDTO>> getAllCarePlans() {

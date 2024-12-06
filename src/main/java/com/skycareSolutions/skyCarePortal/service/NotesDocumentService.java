@@ -52,6 +52,14 @@ public class NotesDocumentService {
                 .collect(Collectors.toList());
     }
 
+    public NoteDocumentsDTO getDocumentsByDocID(String docID) {
+        return ((List<NoteDocuments>) notesDocumentRepository.findAll())
+                .stream()
+                .filter(doc -> doc.getId().getDocID().equals(docID))
+                .map(this::convertToDTO)
+                .collect(Collectors.toList()).get(0);
+    }
+
     // Delete a document by composite key
     public void deleteNoteDocument(String noteID, String docID) {
         NoteDocumentsKey key = new NoteDocumentsKey(noteID, docID);

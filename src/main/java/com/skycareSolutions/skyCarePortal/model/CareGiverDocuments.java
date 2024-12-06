@@ -29,6 +29,9 @@ public class CareGiverDocuments {
     @Column(name = "expDate")
     private Date expDate;  // Expiration date of the document
 
+    @Column(name = "document")
+    private String document;
+
     @Column(name = "status")
     private String status;  // Status of the document (e.g., Active, Expired)
 }

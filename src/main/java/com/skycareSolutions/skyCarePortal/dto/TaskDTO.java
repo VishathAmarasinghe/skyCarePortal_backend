@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -26,5 +27,6 @@ public class TaskDTO {
     private String broadcastType;
     private String taskStatusID;
     private String taskImportanceID;
-    private String appointmentAddressID;
+    private AppointmentAddressDTO appointmentAddress;
+    private List<TaskItemDTO> taskItems;
 }

@@ -1,6 +1,7 @@
 package com.skycareSolutions.skyCarePortal.service;
 
 import com.skycareSolutions.skyCarePortal.dto.RecurrentWorkDTO;
+import com.skycareSolutions.skyCarePortal.model.Appointment;
 import com.skycareSolutions.skyCarePortal.model.RecurrentWork;
 import com.skycareSolutions.skyCarePortal.repository.RecurrentWorkRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
@@ -77,6 +78,16 @@ public class RecurrentWorkService {
                 .stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+    }
+
+    public RecurrentWorkDTO getRecurrentWorkTaskByAppointment(String appointmentID){
+        Appointment appointment = appointmentService.getAppointmentByIdWithEntity(appointmentID);
+        if (appointment!=null){
+            RecurrentWork work = recurrentWorkRepository.getRecurrentWorkTaskByAppointmentID(appointment);
+            return mapToDTO(work);
+        }else{
+            throw new RuntimeException();
+        }
     }
 
     public Optional<RecurrentWorkDTO> getRecurrentWorkById(String id) {

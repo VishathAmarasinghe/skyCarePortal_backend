@@ -8,6 +8,7 @@ import com.skycareSolutions.skyCarePortal.service.EmployeeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,7 +30,7 @@ public class EmployeeController {
     }
 
     @PostMapping
-    public ApiResponse addEmployee(@RequestPart("employeeData") String employeeData, @RequestParam("profile_photo") MultipartFile profilePhoto){
+    public ApiResponse addEmployee(@RequestPart("employeeData") String employeeData, @RequestParam(value = "profile_photo",required = false) MultipartFile profilePhoto){
         try{
             ObjectMapper objectMapper = new ObjectMapper();
             EmployeeDTO employee = objectMapper.readValue(employeeData,EmployeeDTO.class);
@@ -44,8 +45,17 @@ public class EmployeeController {
 
     }
 
+    @GetMapping("/role/{role}")
+    public ResponseEntity<List<EmployeeDTO>> getEmployeesByState(@PathVariable String role){
+        try {
+            return ResponseEntity.ok(employeeService.getEmployeesByRole(role));
+        }catch (Exception e){
+            throw new RuntimeException();
+        }
+    }
+
     @PatchMapping("/{employeeID}")
-    public EmployeeDTO updateEmployee(@PathVariable String employeeID, @RequestPart("updatedEmployeeDTO") String updatedEmployeeDTO, @RequestParam(required = false) MultipartFile profilePhoto) {
+    public EmployeeDTO updateEmployee(@PathVariable String employeeID, @RequestPart("employeeData") String updatedEmployeeDTO, @RequestParam(required = false) MultipartFile profilePhoto) {
         System.out.println("incomming employee id "+employeeID);
         try{
             ObjectMapper objectMapper = new ObjectMapper();

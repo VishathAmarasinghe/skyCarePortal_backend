@@ -23,6 +23,6 @@ public class CareGiverDocumentTypes {
     private String documentName;  // Name of the document type (e.g., ID card, License)
 
     @Column(name = "expDateNeeded")
-    private Boolean expDateNeeded;  // Whether the document requires an expiration date (true/false)
+    private boolean expDateNeeded;
 
 }

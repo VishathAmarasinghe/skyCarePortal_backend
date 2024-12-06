@@ -46,6 +46,28 @@ public class Micro_utils {
             formatTablePrefix="RW";
         }else if (tableName.equalsIgnoreCase("jobAssigner")){
             formatTablePrefix="JA";
+        }else if (tableName.equalsIgnoreCase("careGiver")){
+            formatTablePrefix="CG";
+        }else if (tableName.equalsIgnoreCase("careGiverdocumentType")){
+            formatTablePrefix="CD";
+        }else if (tableName.equalsIgnoreCase("careGiverPaymentType")){
+            formatTablePrefix="PT";
+        }else if (tableName.equalsIgnoreCase("taskStatus")){
+            formatTablePrefix="TS";
+        }else if (tableName.equalsIgnoreCase("taskImportance")){
+            formatTablePrefix="TI";
+        }else if (tableName.equalsIgnoreCase("taskItems")){
+            formatTablePrefix="TT";
+        }else if (tableName.equalsIgnoreCase("tasks")){
+            formatTablePrefix="TA";
+        }else if (tableName.equalsIgnoreCase("incidents")){
+            formatTablePrefix="IN";
+        }else if (tableName.equalsIgnoreCase("incidentStatus")){
+            formatTablePrefix="IS";
+        }else if (tableName.equalsIgnoreCase("incidentType")){
+            formatTablePrefix="IT";
+        }else if (tableName.equalsIgnoreCase("incidentActionType")){
+            formatTablePrefix="IA";
         }
         return String.format(formatTablePrefix+"%05d", newID);
     }

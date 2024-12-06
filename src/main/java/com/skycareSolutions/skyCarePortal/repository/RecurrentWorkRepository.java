@@ -1,5 +1,6 @@
 package com.skycareSolutions.skyCarePortal.repository;
 
+import com.skycareSolutions.skyCarePortal.model.Appointment;
 import com.skycareSolutions.skyCarePortal.model.RecurrentWork;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -8,4 +9,7 @@ public interface RecurrentWorkRepository extends CrudRepository<RecurrentWork,St
     // Get the last recurrentProcess id
     @Query(value = "SELECT rp.recurrent_workid FROM recurrent_work rp ORDER BY CAST(SUBSTRING(rp.recurrent_workid, 3) AS UNSIGNED) DESC LIMIT 1", nativeQuery = true)
     String getLastIdOfRecurrentTask();
+
+    @Query("SELECT rt FROM RecurrentWork rt WHERE rt.appointment=:appointment")
+    RecurrentWork getRecurrentWorkTaskByAppointmentID(Appointment appointment);
 }

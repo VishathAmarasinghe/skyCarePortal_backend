@@ -5,9 +5,10 @@ import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 @Data
-public class NotesDTO extends NoteDocumentsDTO {
+public class NotesDTO  {
     private String noteID;
     private String title;
     private String createDate;
@@ -22,6 +23,7 @@ public class NotesDTO extends NoteDocumentsDTO {
     private String description;
     private String sharedGroup;
     private String createdBy;
+    private List<NoteDocumentsDTO> documents;
 
 }
 

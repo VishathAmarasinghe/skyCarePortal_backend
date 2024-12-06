@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -58,6 +59,16 @@ public class AppointmentAttachmentsService {
 
      }
 
+     public List<AppointmentAttachmentsDTO> getAttachmentsbyAppointmentID(String appointmentID){
+            Appointment appointment = appointmentService.getAppointmentByIdWithEntity(appointmentID);
+            List<AppointmentAttachments> attachments = appointmentAttachmentsRepository.getAppointmentAttachmentByAppointmentID(appointment);
+            List<AppointmentAttachmentsDTO> attachmentList = new ArrayList<>();
+            for (AppointmentAttachments att:attachments){
+                attachmentList.add(toDTO(att));
+            }
+            return attachmentList;
+     }
+
     private AppointmentAttachments toEntity(AppointmentAttachmentsDTO attachmentsDTO) {
         // Check if the appointment exists
         Appointment appointment = appointmentService.getAppointmentByIdWithEntity(attachmentsDTO.getAppointmentID());
@@ -71,6 +82,14 @@ public class AppointmentAttachmentsService {
         attachments.setId(new AppointmentAttachmentsId(attachmentsDTO.getAppointmentID(),attachmentsDTO.getDocumentID()));
 
         return attachments;
+    }
+
+    private AppointmentAttachmentsDTO toDTO(AppointmentAttachments attachments){
+         AppointmentAttachmentsDTO attachmentsDTO = new AppointmentAttachmentsDTO();
+         attachmentsDTO.setAppointmentID(attachments.getAppointment().getAppointmentID());
+         attachmentsDTO.setDocumentID(attachments.getId().getDocumentID());
+         attachmentsDTO.setDocument(attachments.getDocument());
+         return attachmentsDTO;
     }
 
 

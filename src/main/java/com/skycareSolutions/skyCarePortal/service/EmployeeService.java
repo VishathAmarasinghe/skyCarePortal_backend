@@ -64,6 +64,7 @@ public class EmployeeService {
       employee.setFirstName(employeeDTO.getFirstName());
       employee.setLastName(employeeDTO.getLastName());
       employee.setPassword(employeeDTO.getPassword());
+      employee.setEmail(employeeDTO.getEmail());
       employee.setAccessRole(employeeDTO.getAccessRole());
       employee.setJoinDate(employeeDTO.getJoinDate());
       employee.setProfile_photo(employeeDTO.getProfile_photo());
@@ -175,26 +176,28 @@ public class EmployeeService {
         String newEmployeeID = Micro_utils.idGenerator("employee",lastEmployeeID);
         employee.setEmployeeID(newEmployeeID);
 
-        try {
-            String originalFileName = profilePhoto.getOriginalFilename();
-            String fileExtension = originalFileName;
-            if (originalFileName != null && originalFileName.contains(".")) {
-                fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
-            }
-            System.out.println("original file name "+originalFileName);
-            File directory = new File(DIRECTORY);
-            if(!directory.exists()){
-                directory.mkdirs();
-            }
-            File destinationFile = new File(DIRECTORY, newEmployeeID + fileExtension);
-            profilePhoto.transferTo(destinationFile);
-            employee.setProfile_photo(destinationFile.getAbsolutePath());
+        if (profilePhoto!=null && !profilePhoto.isEmpty()) {
+            try {
 
-            return employeeRepository.save(mapEmployeeFromDTO(employee));
+                String originalFileName = profilePhoto.getOriginalFilename();
+                String fileExtension = originalFileName;
+                if (originalFileName != null && originalFileName.contains(".")) {
+                    fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
+                }
+                System.out.println("original file name " + originalFileName);
+                File directory = new File(DIRECTORY);
+                if (!directory.exists()) {
+                    directory.mkdirs();
+                }
+                File destinationFile = new File(DIRECTORY, newEmployeeID + fileExtension);
+                profilePhoto.transferTo(destinationFile);
+                employee.setProfile_photo(destinationFile.getAbsolutePath());
 
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
+        return employeeRepository.save(mapEmployeeFromDTO(employee));
     }
 
     public EmployeeDTO updateEmployeeDetails(String employeeID, EmployeeDTO updatedEmployeeDTO, MultipartFile profilePhoto) {
@@ -290,6 +293,15 @@ public class EmployeeService {
         }else{
             throw new RuntimeException();
         }
+    }
+
+    public List<EmployeeDTO> getEmployeesByRole(String role){
+        List<Employee> employees = employeeRepository.getEmployeesByRole(role);
+        List<EmployeeDTO> employeeDTO = new ArrayList<>();
+        for (Employee emp:employees){
+            employeeDTO.add(convertToDTO(emp));
+        }
+        return employeeDTO;
     }
 
     public ApiResponse updateEmployeeState(String employeeID,String state){

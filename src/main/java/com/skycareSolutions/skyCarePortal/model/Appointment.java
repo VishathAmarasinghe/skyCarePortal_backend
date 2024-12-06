@@ -30,7 +30,7 @@ public class Appointment {
 
     @ManyToOne
     @JoinColumn(name = "clientID", nullable = false)
-    private Client clientID;
+    private Client client;
 
     @Column(name = "caregiverCount", nullable = false)
     private int caregiverCount;

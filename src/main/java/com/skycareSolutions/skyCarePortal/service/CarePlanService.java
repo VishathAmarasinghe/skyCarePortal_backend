@@ -8,6 +8,7 @@ import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.*;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -64,7 +65,7 @@ public class CarePlanService {
         carePlanDTO.setStartDate(carePlan.getStartDate());
         carePlanDTO.setEndDate(carePlan.getEndDate());
         carePlanDTO.setClientID(carePlan.getClientID().getClientID());
-        carePlanDTO.setCarePlanStatusID(carePlan.getCarePlanStatus().getCareplanStatusID());
+        carePlanDTO.setCarePlanStatusID(carePlan.getCarePlanStatus().getStatus());
 
 
         List<CarePlanBilablesDTO> carePlanBilllist = carePlanBillablesService.getBillsByCarePlanID(carePlan);
@@ -89,6 +90,13 @@ public class CarePlanService {
         return carePlanRepository.findByClient(client).stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    // Get CarePlans by careplan id
+    public CarePlanDTO getCarePlansByCarePlanID(String carePlanID) {
+        return carePlanRepository.findById(carePlanID)
+                .map(this::toDTO) // Map the entity to DTO
+                .orElseThrow(() -> new RuntimeException());
     }
 
     // Get all CarePlans
@@ -148,12 +156,95 @@ public class CarePlanService {
 
     // Update a CarePlan
     public CarePlanDTO updateCarePlan(String id, CarePlanDTO carePlanDTO) {
-        CarePlan carePlan = carePlanRepository.findById(id).orElseThrow(() -> new RuntimeException("CarePlan not found"));
+        // Find existing CarePlan
+        CarePlan carePlan = carePlanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("CarePlan not found"));
+
+        // Update basic details
         carePlan.setStartDate(carePlanDTO.getStartDate());
+        carePlan.setTitle(carePlanDTO.getTitle());
         carePlan.setEndDate(carePlanDTO.getEndDate());
+
+        // Update associated Client
+        Client clientValue = clientRepository.findById(carePlanDTO.getClientID())
+                .orElseThrow(() -> new RuntimeException("Client not found with ID: " + carePlanDTO.getClientID()));
+        carePlan.setClientID(clientValue);
+
+        // Update CarePlan Status
+        CarePlanStatus carePlanStatusValue = carePlanStatusRepository.findById(carePlanDTO.getCarePlanStatusID())
+                .orElseThrow(() -> new RuntimeException("Care Plan Status not found with ID: " + carePlanDTO.getCarePlanStatusID()));
+        carePlan.setCarePlanStatus(carePlanStatusValue);
+
+        // Save updated CarePlan
         carePlanRepository.save(carePlan);
+
+        // --- Long-Term Goals Management ---
+        List<CarePlanLongTermGoal> existingLongTermGoals = carePlanLongTermRepository.findLongTermCarePlansByCarePlanID(carePlan);
+        List<String> incomingLongTermGoalIDs = carePlanDTO.getCarePlanLongTermGoals().stream()
+                .map(CarePlanLongTermGoalDTO::getLongGoalID)
+                .collect(Collectors.toList());
+
+        // Delete removed long-term goals and their associated short-term goals
+        for (CarePlanLongTermGoal existingGoal : existingLongTermGoals) {
+            if (!incomingLongTermGoalIDs.contains(existingGoal.getLongGoalID())) {
+                List<CarePlanShortTermGoal> associatedShortTermGoals = carePlanShortTermRepository.findbyLongTermGoalID(existingGoal);
+                for (CarePlanShortTermGoal shortTermGoal : associatedShortTermGoals) {
+                    carePlanShortTermRepository.delete(shortTermGoal);
+                }
+                carePlanLongTermRepository.delete(existingGoal);
+            }
+        }
+
+        // Add or update long-term and short-term goals
+        for (CarePlanLongTermGoalDTO lPlan : carePlanDTO.getCarePlanLongTermGoals()) {
+            if (lPlan.getLongGoalID() == null || lPlan.getLongGoalID().isEmpty()) {
+                String lastLongTermCarePlanID = carePlanLongTermRepository.getLastIdOfLongTermCarePlan();
+                String newLongTermCarePlanID = Micro_utils.idGenerator("longTermCarePlan", lastLongTermCarePlanID);
+                lPlan.setCareplanID(id);
+                lPlan.setLongGoalID(newLongTermCarePlanID);
+            }
+            carePlanLongTermGoalService.saveOrUpdate(lPlan);
+
+            for (CarePlanShortTermGoalDTO sPlan : lPlan.getCarePlanShortTermGoals()) {
+                if (sPlan.getShortTermGoalID() == null || sPlan.getShortTermGoalID().isEmpty()) {
+                    String lastShortTermCarePlanID = carePlanShortTermRepository.getLastIdOfShortTermCarePlan();
+                    String newShortTermCarePlanID = Micro_utils.idGenerator("shortTermCarePlan", lastShortTermCarePlanID);
+                    sPlan.setCareplanID(id);
+                    sPlan.setLongTermGoalID(lPlan.getLongGoalID());
+                    sPlan.setShortTermGoalID(newShortTermCarePlanID);
+                }
+                carePlanShortTermGoalService.saveOrUpdate(sPlan);
+            }
+        }
+
+        // --- Billables Management ---
+        List<CarePlanBilables> existingBillables = carePlanBillableRepository.findAllBillablesByCarePlanID(carePlan);
+        List<String> incomingBillableIDs = carePlanDTO.getCarePlanBillables().stream()
+                .map(CarePlanBilablesDTO::getBillID)
+                .collect(Collectors.toList());
+
+        // Delete removed billables
+        for (CarePlanBilables existingBill : existingBillables) {
+            if (!incomingBillableIDs.contains(existingBill.getBillID())) {
+                carePlanBillableRepository.delete(existingBill);
+            }
+        }
+
+        // Add or update billables
+        for (CarePlanBilablesDTO bill : carePlanDTO.getCarePlanBillables()) {
+            if (bill.getBillID() == null || bill.getBillID().isEmpty()) {
+                bill.setCareplanID(id);
+                carePlanBillablesService.createCarePlanBill(bill);
+            }else{
+                carePlanBillablesService.updateCarePlanBill(bill.getBillID(),bill);
+            }
+
+        }
+
+        // Return updated CarePlan as DTO
         return toDTO(carePlan);
     }
+
 
     // Delete a CarePlan
     public void deleteCarePlan(String id) {
