@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -36,13 +37,13 @@ public class Appointment {
     private int caregiverCount;
 
     @Column(name = "startDate", nullable = false)
-    private String startDate;
+    private Date startDate;
 
     @Column(name = "startTime")
     private String startTime;
 
     @Column(name = "endDate", nullable = false)
-    private String endDate;
+    private Date endDate;
 
     @Column(name = "endTime")
     private String endTime;

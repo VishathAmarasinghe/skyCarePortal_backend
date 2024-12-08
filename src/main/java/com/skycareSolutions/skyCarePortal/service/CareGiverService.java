@@ -30,12 +30,12 @@ public class CareGiverService {
     @Lazy
     private EmployeeService employeeService;
 
-    public ResponseEntity<List<CareGiverDTO>> getAllCareGivers() {
+    public List<CareGiverDTO> getAllCareGivers() {
         List<CareGiverDTO> caregivers = careGiverRepository.findAll()
                 .stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(caregivers);
+        return caregivers;
     }
 
     public ResponseEntity<CareGiverDTO> getCareGiverById(String id) {
@@ -63,6 +63,7 @@ public class CareGiverService {
 
 
     public ResponseEntity<CareGiverDTO> addCareGiver(CareGiverDTO dto, MultipartFile profilePhoto,List<MultipartFile> documents) {
+        dto.getEmployee().setAccessRole("CareGiver");
         Employee employee = employeeService.saveNewEmployee(dto.getEmployee(),profilePhoto);
         String lastCaregiverID = careGiverRepository.getLastIdOfcareGiver();
         String newCaregiverID = Micro_utils.idGenerator("careGiver",lastCaregiverID);
@@ -77,8 +78,9 @@ public class CareGiverService {
         for (CareGiverPaymentsDTO payment:dto.getCareGiverPayments()){
             payment.setCareGiverID(newCaregiverID);
         }
-        careGiverDocumentService.addDocument(dto.getCareGiverDocuments(),documents);
         careGiverPaymentService.addPayment(dto.getCareGiverPayments());
+        careGiverDocumentService.addDocument(dto.getCareGiverDocuments(),documents);
+
 
         return ResponseEntity.ok(mapToDTO(caregiver));
     }

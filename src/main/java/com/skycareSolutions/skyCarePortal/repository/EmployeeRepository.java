@@ -5,8 +5,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface EmployeeRepository extends CrudRepository<Employee,String> {
+
+    Optional<Employee> findByEmail(String email);
 
     @Query("SELECT e FROM Employee e ORDER BY e.joinDate DESC")
     List<Employee> getAllEmployees();

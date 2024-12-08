@@ -29,7 +29,7 @@ public class CareGiverController {
 
     @GetMapping
     public ResponseEntity<List<CareGiverDTO>> getAllCareGivers() {
-        return careGiverService.getAllCareGivers();
+        return ResponseEntity.ok(careGiverService.getAllCareGivers());
     }
 
     @GetMapping("/{id}")

@@ -6,8 +6,10 @@ import com.skycareSolutions.skyCarePortal.repository.EmployeeAddressRepository;
 import com.skycareSolutions.skyCarePortal.repository.EmployeeJobRolesRepository;
 import com.skycareSolutions.skyCarePortal.repository.EmployeePhoneNoRepository;
 import com.skycareSolutions.skyCarePortal.repository.EmployeeRepository;
+import com.skycareSolutions.skyCarePortal.utils.AuthenticationUtils;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,6 +18,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class EmployeeService {
@@ -30,6 +33,27 @@ public class EmployeeService {
     private EmployeeJobRolesRepository employeeJobRolesRepository;
     @Autowired
     private EmployeeAddressRepository employeeAddressRepository;
+    @Autowired
+    private EmailService emailService;
+
+    AuthenticationUtils authenticationUtils= new AuthenticationUtils();
+
+    @Value("${app.external.service.frontendUrl}")
+    private String frontendUrl;
+
+    AuthenticationUtils passwordUtil = new AuthenticationUtils();
+
+    public EmployeeDTO loginUser(String email, String password) {
+        Optional<Employee> userOptional = employeeRepository.findByEmail(email);
+
+        if (userOptional.isPresent()) {
+            Employee user = userOptional.get();
+            if (passwordUtil.matchPassword(password, user.getPassword())) {
+                return convertToDTO(user);
+            }
+        }
+        throw new RuntimeException("Invalid email or password");
+    }
 
     private List<Employee_phoneNo> mapPhoneNumbersFromDTO(String employeeID, List<String> phoneNumbers) {
         List<Employee_phoneNo> empPhoneNoList = new ArrayList<>();
@@ -171,7 +195,8 @@ public class EmployeeService {
         return empResult;
     }
 
-    public Employee saveNewEmployee(EmployeeDTO employee, MultipartFile profilePhoto){
+    public Employee  saveNewEmployee(EmployeeDTO employee, MultipartFile profilePhoto){
+
         String lastEmployeeID = employeeRepository.getLastIdOfEmployees();
         String newEmployeeID = Micro_utils.idGenerator("employee",lastEmployeeID);
         employee.setEmployeeID(newEmployeeID);
@@ -197,6 +222,10 @@ public class EmployeeService {
                 throw new RuntimeException(e);
             }
         }
+        String password = Micro_utils.generateRandomPassword(10);
+        employee.setPassword(authenticationUtils.hashPassword(password));
+
+        CompletableFuture.runAsync(()->emailService.generateWelcomeLoginEmail(employee.getFirstName(),employee.getEmail(),password,frontendUrl));
         return employeeRepository.save(mapEmployeeFromDTO(employee));
     }
 

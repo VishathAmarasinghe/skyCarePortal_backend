@@ -37,6 +37,16 @@ public class JobAssignerController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PutMapping("/acceptanceType/{id}")
+    public ResponseEntity<ApiResponse> updateJobAcceptanceType(@PathVariable String id,@RequestParam(name = "status") String status){
+        boolean result = jobAssignerService.updateJobAcceptanceState(status,id);
+        if (result){
+            return ResponseEntity.ok(new ApiResponse("Acceptance Type Updated Successfully",true));
+        }else{
+            return ResponseEntity.internalServerError().body(new ApiResponse("Fail to update acceptance Type",false));
+        }
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<JobAssignerDTO> updateJobAssigner(@PathVariable String id, @RequestBody JobAssignerDTO dto) {
         return jobAssignerService.updateJobAssigner(id, dto)

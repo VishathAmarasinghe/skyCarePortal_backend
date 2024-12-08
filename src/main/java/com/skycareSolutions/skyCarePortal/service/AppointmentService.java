@@ -1,23 +1,32 @@
 package com.skycareSolutions.skyCarePortal.service;
 
 import com.skycareSolutions.skyCarePortal.dto.*;
-import com.skycareSolutions.skyCarePortal.model.Appointment;
-import com.skycareSolutions.skyCarePortal.model.Client;
-import com.skycareSolutions.skyCarePortal.model.JobAssigner;
+import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.AppointmentRepository;
 import com.skycareSolutions.skyCarePortal.repository.AppointmentTypesRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.xml.crypto.Data;
 import java.nio.file.Paths;
+import java.sql.Date;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class AppointmentService {
+
+    @Autowired
+    private EmployeeService employeeService;
 
     @Autowired
     private AppointmentAttachmentsService appointmentAttachmentsService;
@@ -42,6 +51,22 @@ public class AppointmentService {
 
     @Autowired
     private RecurrentWorkService recurrentWorkService;
+
+    @Autowired
+    private CareGiverService careGiverService;
+
+    @Autowired
+    @Lazy
+    private RecurrenceService recurrenceService;
+
+    public List<AppointmentCalenderDTO> getAllEventsRelatedToDateRange(String startDate,String endDate){
+        List<Appointment> events = appointmentRepository.findAppointmentsWithinDateRange( Date.valueOf(startDate),Date.valueOf(endDate));
+        List<AppointmentCalenderDTO> eventDTOs = new ArrayList<>();
+        for (Appointment ep:events){
+            eventDTOs.add(toCalenderDTO(ep));
+        }
+        return eventDTOs;
+    }
 
     public List<AppointmentDTO> getAllAppointments() {
         return appointmentRepository.findAllAppointments()
@@ -78,6 +103,25 @@ public class AppointmentService {
         return appointment;
     }
 
+    public List<CareGiverAppointmentDTO> getAppointmentsAssignedToCareGiver(String employeeiD,String state){
+        CareGiverDTO careGiver = careGiverService.getCareGiverByEmployee(employeeiD);
+        List<JobAssignerDTO> jobs= jobAssignerService.assignedJobsBasedOnCareGiverAndStatus(careGiver.getCareGiverID(),state);
+        List<CareGiverAppointmentDTO> result = new ArrayList<>();
+        for (JobAssignerDTO job:jobs){
+            AppointmentDTO appointment = getAppointmentById(job.getAppointmentID());
+            int participantCount = appointment.getCaregiverCount();
+            int acceptedCount = jobAssignerService.careGiverCountByAppointmentAcceptanceType(appointment.getAppointmentID(),"Accepted");
+            if (acceptedCount<participantCount){
+                CareGiverAppointmentDTO data = new CareGiverAppointmentDTO();
+                data.setAppointmentData(appointment);
+                data.setCareGiverID(careGiver.getCareGiverID());
+                data.setJobAssignData(job);
+                result.add(data);
+            }
+        }
+        return result;
+    }
+
 
 
     public AppointmentDTO createAppointment(AppointmentDTO appointmentDTO, List<MultipartFile> files) {
@@ -93,7 +137,21 @@ public class AppointmentService {
 
         if (appointmentDTO.getRecurrenceState()){
             appointmentDTO.getRecurrentWork().setAppointmentID(newAppointmentID);
-            recurrentWorkService.createRecurrentWork(appointmentDTO.getRecurrentWork());
+            RecurrentWorkDTO recurrentWorkDTO =  recurrentWorkService.createRecurrentWork(appointmentDTO.getRecurrentWork());
+            recurrenceService.createRecurrentAppointment(appointment.getAppointmentID(),recurrentWorkDTO.getRecurrentWorkID());
+        }else{
+            RecurrentWorkDTO recurrentWorkDTO  = new RecurrentWorkDTO();
+            recurrentWorkDTO.setAppointmentID(appointment.getAppointmentID());
+            recurrentWorkDTO.setStartDate(appointment.getStartDate().toLocalDate());
+            recurrentWorkDTO.setEndDate(appointment.getEndDate().toLocalDate());
+            recurrentWorkDTO.setRecurrenceType("Once");
+            recurrentWorkDTO.setOccurrenceLimit(1);
+
+            LocalDate date  = LocalDate.of(appointment.getStartDate().getYear(),appointment.getStartDate().getMonth(),appointment.getStartDate().getDay());
+            DayOfWeek dayOfWeek  = date.getDayOfWeek();
+            recurrentWorkDTO.setDay(dayOfWeek.toString());
+            RecurrentWorkDTO recurrentWork =  recurrentWorkService.createRecurrentWork(recurrentWorkDTO);
+            recurrenceService.createRecurrentAppointment(appointment.getAppointmentID(),recurrentWork.getRecurrentWorkID());
         }
 
         appointmentDTO.getJobAssigns().setAppointmentID(newAppointmentID);
@@ -110,15 +168,152 @@ public class AppointmentService {
         return mapToDTO(appointment);
     }
 
-    public AppointmentDTO updateAppointment(String id, AppointmentDTO appointmentDTO) {
+    public AppointmentDTO updateAppointment(String id, AppointmentDTO appointmentDTO, List<MultipartFile> files) {
+        // Retrieve the existing appointment entity
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Appointment not found!"));
-        // Update entity fields
+
+        // Update basic fields
         appointment.setTitle(appointmentDTO.getTitle());
-        // Other field updates here
+        appointment.setBroadcastType(appointmentDTO.getBroadcastType());
+        appointment.setComment(appointmentDTO.getComment());
+        appointment.setDuration(appointmentDTO.getDuration());
+        appointment.setStartDate(Date.valueOf(appointmentDTO.getStartDate()));
+        appointment.setStartTime(appointmentDTO.getStartTime());
+        appointment.setEndDate(Date.valueOf(appointmentDTO.getEndDate()));
+        appointment.setEndTime(appointmentDTO.getEndTime());
+        appointment.setCaregiverCount(appointmentDTO.getCaregiverCount());
+
+        // Update AppointmentType
+        appointment.setAppointmentType(
+                appointmentTypeService.getAppointmentTypeByIdWithEntity(appointmentDTO.getAppointmentTypeID())
+        );
+
+        // Update Client
+        Client client = clientService.getClientByIdWithEntitiy(appointmentDTO.getClientID());
+        appointment.setClient(client);
+
+        // Update AppointmentAddress
+        if (appointmentDTO.getAppointmentAddress() != null) {
+            appointmentAddressService.findById(appointmentDTO.getAppointmentAddress().getAppointmentAddressID())
+                    .ifPresentOrElse(
+                            appointment::setAppointmentAddress,
+                            () -> {
+                                throw new RuntimeException("AppointmentAddress not found for ID: "
+                                        + appointmentDTO.getAppointmentAddress().getAppointmentAddressID());
+                            }
+                    );
+        }
+
+        // Update CarePlan if present
+        if (appointmentDTO.getCarePlanID() != null && !appointmentDTO.getCarePlanID().isEmpty()) {
+            carePlanService.findById(appointmentDTO.getCarePlanID())
+                    .ifPresentOrElse(
+                            appointment::setCarePlan,
+                            () -> {
+                                throw new RuntimeException("CarePlan not found for ID: "
+                                        + appointmentDTO.getCarePlanID());
+                            }
+                    );
+        }
+
+        // Save the updated appointment
         appointment = appointmentRepository.save(appointment);
+
+        RecurrentWorkDTO recurrentWorkDTO = recurrentWorkService.getRecurrentWorkTaskByAppointment(id);
+        if (recurrentWorkDTO!=null){
+
+            if (appointmentDTO.getRecurrenceState()){
+                recurrentWorkDTO.setTaskID(appointmentDTO.getTaskID());
+                recurrentWorkDTO.setEndDate(appointmentDTO.getRecurrentWork().getEndDate());
+                recurrentWorkDTO.setStartDate(appointmentDTO.getRecurrentWork().getStartDate());
+                recurrentWorkDTO.setDay(appointmentDTO.getRecurrentWork().getDay());
+                recurrentWorkDTO.setFrequencyCount(appointmentDTO.getRecurrentWork().getFrequencyCount());
+                recurrentWorkDTO.setOccurrenceLimit(appointmentDTO.getRecurrentWork().getOccurrenceLimit());
+                recurrentWorkDTO.setRecurrenceType(appointmentDTO.getRecurrentWork().getRecurrenceType());
+
+                recurrentWorkService.updateRecurrentWork(recurrentWorkDTO.getRecurrentWorkID(),recurrentWorkDTO);
+            }else{
+                recurrentWorkService.deleteRecurrentWork(recurrentWorkDTO.getRecurrentWorkID());
+            }
+        }else{
+            if (appointmentDTO.getRecurrenceState()){
+                appointmentDTO.getRecurrentWork().setAppointmentID(id);
+                recurrentWorkService.createRecurrentWork(appointmentDTO.getRecurrentWork());
+            }
+        }
+
+        List<JobAssignerDTO> alreadyAssigners = jobAssignerService.getAllJobsRelatedToAppointment(id);
+        List<String> newCareGivers = new ArrayList<>();
+        if (appointmentDTO.getBroadcastType().equalsIgnoreCase("All Caregivers")){
+            List<CareGiverDTO> careGivers = careGiverService.getAllCareGivers();
+            for (CareGiverDTO careGiver:careGivers){
+                JobAssignerDTO matchedAssigner = alreadyAssigners.stream()
+                        .filter(assigner -> assigner.getCareGiverID().equals(careGiver.getCareGiverID()))
+                        .findFirst()
+                        .orElse(null);
+                if (matchedAssigner==null){
+                    newCareGivers.add(careGiver.getCareGiverID());
+                }
+            }
+            String[] careGiverIDs = new String[newCareGivers.size()];
+            int index=0;
+            for (String careGiverID:newCareGivers){
+                System.out.println("careGivers"+careGiverID);
+                careGiverIDs[index]=careGiverID;
+            }
+
+            appointmentDTO.getJobAssigns().setCareGiverIDs(careGiverIDs);
+            jobAssignerService.createJobAssigner(appointmentDTO.getJobAssigns(),"Selected Caregivers");
+        }else{
+            for(String jober:appointmentDTO.getJobAssigns().getCareGiverIDs()){
+                JobAssignerDTO matchedAssigner = alreadyAssigners.stream()
+                        .filter(assigner -> assigner.getCareGiverID().equals(jober))
+                        .findFirst()
+                        .orElse(null);
+                if (matchedAssigner==null){
+                    newCareGivers.add(jober);
+                }
+            }
+            List<JobAssignerDTO> toRemove = new ArrayList<>();
+
+            for (JobAssignerDTO assigned : alreadyAssigners) {
+                boolean isPresent = Arrays.stream(appointmentDTO.getJobAssigns().getCareGiverIDs())
+                        .anyMatch(person -> person.equals(assigned.getCareGiverID()));
+
+                if (!isPresent) {
+                    toRemove.add(assigned);
+                }
+            }
+
+            for (JobAssignerDTO remover : toRemove) {
+                String jobID = alreadyAssigners.stream().filter(alreadyAssigner->alreadyAssigner.getCareGiverID().equalsIgnoreCase(remover.getCareGiverID())).
+                        map(JobAssignerDTO::getAssignID).findFirst().orElse(null);
+                jobAssignerService.deleteJobAssigner(jobID);
+            }
+        }
+
+        // Update attachments
+        AppointmentAttachmentsDTO attachmentInfo = new AppointmentAttachmentsDTO();
+        attachmentInfo.setAppointmentID(id);
+
+        List<AppointmentAttachmentsDTO> attachmentsDTOS= appointmentAttachmentsService.getAttachmentsbyAppointmentID(id);
+        List<AppointmentAttachmentsDTO> toRemove = attachmentsDTOS.stream()
+                .filter(attachment -> appointmentDTO.getAttachments().stream()
+                        .noneMatch(attachmentData -> attachmentData.getDocumentID().equals(attachment.getDocumentID())))
+                .collect(Collectors.toList());
+
+        // Remove the identified attachments
+        for (AppointmentAttachmentsDTO attachment : toRemove) {
+            appointmentAttachmentsService.deleteAttachment(attachment);
+        }
+
+        if (files != null && !files.isEmpty()) {
+            appointmentAttachmentsService.createAttachements(attachmentInfo, files);
+        }
         return mapToDTO(appointment);
     }
+
 
     public void deleteAppointment(String id) {
         appointmentRepository.deleteById(id);
@@ -132,9 +327,9 @@ public class AppointmentService {
         dto.setAppointmentTypeID(appointment.getAppointmentType().getAppointmentTypeID());
         dto.setClientID(appointment.getClient().getClientID());
         dto.setCaregiverCount(appointment.getCaregiverCount());
-        dto.setStartDate(appointment.getStartDate());
+        dto.setStartDate(appointment.getStartDate().toString());
         dto.setStartTime(appointment.getStartTime());
-        dto.setEndDate(appointment.getEndDate());
+        dto.setEndDate(appointment.getEndDate().toString());
         dto.setEndTime(appointment.getEndTime());
         dto.setDuration(appointment.getDuration());
         dto.setComment(appointment.getComment());
@@ -163,6 +358,7 @@ public class AppointmentService {
         int index = 0;
         for (JobAssignerDTO assigner : jobAssigner) {
             careGiverList[index] = assigner.getCareGiverID();
+            System.out.println("care givers "+assigner.getCareGiverID());
             index++;
         }
         createDTO.setCareGiverIDs(careGiverList);
@@ -203,9 +399,9 @@ public class AppointmentService {
         appointment.setBroadcastType(dto.getBroadcastType());
         appointment.setComment(dto.getComment());
         appointment.setDuration(dto.getDuration());
-        appointment.setStartDate(dto.getStartDate());
+        appointment.setStartDate(Date.valueOf(dto.getStartDate()));
         appointment.setStartTime(dto.getStartTime());
-        appointment.setEndDate(dto.getEndDate());
+        appointment.setEndDate(Date.valueOf(dto.getEndDate()));
         appointment.setEndTime(dto.getEndTime());
         appointment.setCaregiverCount(dto.getCaregiverCount());
         if (dto.getCarePlanID()!=null && !dto.getCarePlanID().equalsIgnoreCase("")){
@@ -233,5 +429,40 @@ public class AppointmentService {
 
         // Map other fields
         return appointment;
+    }
+
+    private AppointmentCalenderDTO toCalenderDTO(Appointment appointment){
+        AppointmentCalenderDTO calenderDTO = new AppointmentCalenderDTO();
+
+        calenderDTO.setAppointmentID(appointment.getAppointmentID());
+        calenderDTO.setTitle(appointment.getTitle());
+
+        // Assuming startDate and endDate are Date objects and startTime/endTime are Strings
+        LocalDateTime startDateTime = appointment.getStartDate().toLocalDate().atStartOfDay(); // Defaulting to start of day if no time is provided
+        if (appointment.getStartTime() != null) {
+            // Adding the time component if available
+            String[] timeParts = appointment.getStartTime().split(":");
+            startDateTime = startDateTime.withHour(Integer.parseInt(timeParts[0])).withMinute(Integer.parseInt(timeParts[1]));
+        }
+
+        LocalDateTime endDateTime = appointment.getEndDate().toLocalDate().atStartOfDay(); // Defaulting to start of day if no time is provided
+        if (appointment.getEndTime() != null) {
+            // Adding the time component if available
+            String[] timeParts = appointment.getEndTime().split(":");
+            endDateTime = endDateTime.withHour(Integer.parseInt(timeParts[0])).withMinute(Integer.parseInt(timeParts[1]));
+        }
+
+        // Format to ISO 8601 format, suitable for React calendar
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+        String startFormatted = startDateTime.format(formatter);
+        String endFormatted = endDateTime.format(formatter);
+
+        // Set the start and end times in the DTO
+        calenderDTO.setStartDateAndTime(startFormatted);  // Assuming the method accepts the formatted string
+        calenderDTO.setEndDateAndTime(endFormatted);
+
+        calenderDTO.setEventColor(appointment.getAppointmentType().getColor());
+
+        return calenderDTO;
     }
 }

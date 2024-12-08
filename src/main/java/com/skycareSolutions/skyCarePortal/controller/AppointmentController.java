@@ -2,7 +2,9 @@ package com.skycareSolutions.skyCarePortal.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.skycareSolutions.skyCarePortal.dto.AppointmentCalenderDTO;
 import com.skycareSolutions.skyCarePortal.dto.AppointmentDTO;
+import com.skycareSolutions.skyCarePortal.dto.CareGiverAppointmentDTO;
 import com.skycareSolutions.skyCarePortal.service.AppointmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +33,14 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getAllAppointments());
     }
 
+    @GetMapping("/calender")
+    public ResponseEntity<List<AppointmentCalenderDTO>> getCalenderEvents(
+            @RequestParam(value = "startDate") String startDate,
+            @RequestParam(value = "endDate") String endDate
+            ){
+        return ResponseEntity.ok(appointmentService.getAllEventsRelatedToDateRange(startDate,endDate));
+    }
+
     @GetMapping("/client/{clientID}")
     public ResponseEntity<List<AppointmentDTO>> getAppointmentsByClientID(@PathVariable String clientID){
         return ResponseEntity.ok(appointmentService.getAppointmentsbyClientID(clientID));
@@ -56,8 +66,29 @@ public class AppointmentController {
     @PutMapping("/{id}")
     public ResponseEntity<AppointmentDTO> updateAppointment(
             @PathVariable String id,
-            @RequestBody AppointmentDTO appointmentDTO) {
-        return ResponseEntity.ok(appointmentService.updateAppointment(id, appointmentDTO));
+            @RequestPart(value = "appointment") String appointmentString,
+            @RequestPart(value = "files",required = false) List<MultipartFile> files) {
+
+        try {
+            System.out.println("id is "+id);
+            AppointmentDTO appointmentDTO = objectMapper.readValue(appointmentString, AppointmentDTO.class);
+            return ResponseEntity.ok(appointmentService.updateAppointment(id,appointmentDTO,files));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    @GetMapping("/careGiver/{employeeID}")
+    public ResponseEntity<List<CareGiverAppointmentDTO>> getAppointmentsAssignedToCareGiver(
+            @PathVariable(name = "employeeID") String employeeID,
+            @RequestParam(name = "status") String status
+    ){
+        try {
+            return ResponseEntity.ok(appointmentService.getAppointmentsAssignedToCareGiver(employeeID,status));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @DeleteMapping("/{id}")

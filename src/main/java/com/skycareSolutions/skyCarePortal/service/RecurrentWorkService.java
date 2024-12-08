@@ -108,6 +108,15 @@ public class RecurrentWorkService {
         });
     }
 
+    public RecurrentWork getRecurrentWorkByIDWithEntity(String recurrentWorkID){
+        Optional<RecurrentWork> work = recurrentWorkRepository.findById(recurrentWorkID);
+        if (work.isPresent()){
+            return work.get();
+        }else{
+            return new RecurrentWork();
+        }
+    }
+
     public boolean deleteRecurrentWork(String id) {
         if (recurrentWorkRepository.existsById(id)) {
             recurrentWorkRepository.deleteById(id);

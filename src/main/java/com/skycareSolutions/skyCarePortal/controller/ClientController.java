@@ -2,7 +2,9 @@ package com.skycareSolutions.skyCarePortal.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skycareSolutions.skyCarePortal.dto.ClientDTO;
+import com.skycareSolutions.skyCarePortal.model.Employee;
 import com.skycareSolutions.skyCarePortal.service.ClientService;
+import com.skycareSolutions.skyCarePortal.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,9 @@ public class ClientController {
 
     @Autowired
     private ClientService clientService;
+
+    @Autowired
+    private EmailService emailService;
 
     // Get all clients
     @GetMapping

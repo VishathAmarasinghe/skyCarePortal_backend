@@ -69,6 +69,14 @@ public class AppointmentAttachmentsService {
             return attachmentList;
      }
 
+     public void deleteAttachment(AppointmentAttachmentsDTO attachment){
+         appointmentAttachmentsRepository.deleteById(toEntity(attachment).getId().toString());
+         File directory = new File(attachment.getDocument());
+         if (directory.exists()){
+             directory.delete();
+         }
+     }
+
     private AppointmentAttachments toEntity(AppointmentAttachmentsDTO attachmentsDTO) {
         // Check if the appointment exists
         Appointment appointment = appointmentService.getAppointmentByIdWithEntity(attachmentsDTO.getAppointmentID());
