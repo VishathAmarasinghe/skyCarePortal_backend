@@ -56,8 +56,17 @@ public class CareGiverController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CareGiverDTO> updateCareGiver(@PathVariable String id, @RequestBody CareGiverDTO dto) {
-        return careGiverService.updateCareGiver(id, dto);
+    public ResponseEntity<CareGiverDTO> updateCareGiver(
+            @PathVariable String id,
+            @RequestPart("careGiver") String careGiverData,
+            @RequestParam(value = "profile_photo",required = false) MultipartFile profilePhoto,
+            @RequestParam("documents") List<MultipartFile> documents) {
+        try{
+            CareGiverDTO careGiverDTO = objectMapper.readValue(careGiverData, CareGiverDTO.class);
+            return careGiverService.updateCareGiver(id, careGiverDTO,profilePhoto,documents);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @DeleteMapping("/{id}")

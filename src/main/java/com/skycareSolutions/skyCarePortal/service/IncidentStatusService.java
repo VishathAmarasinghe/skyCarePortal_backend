@@ -42,6 +42,7 @@ public class IncidentStatusService {
         String lastIncidentStatusID = incidentStatusRepository.getLastIdOfIncidentStatus();
         String newIncidentStatusID = Micro_utils.idGenerator("incidentStatus",lastIncidentStatusID);
         dto.setIncidentStatusID(newIncidentStatusID);
+        dto.setStatus("Active");
 
         IncidentStatus status = convertToEntity(dto);
         return convertToDTO(incidentStatusRepository.save(status));
@@ -52,7 +53,6 @@ public class IncidentStatusService {
                 .orElseThrow(() -> new RuntimeException("Status not found"));
         status.setStatus(dto.getStatus());
         status.setDescription(dto.getDescription());
-        status.setActiveState(dto.getActiveState());
         return convertToDTO(incidentStatusRepository.save(status));
     }
 
@@ -61,10 +61,20 @@ public class IncidentStatusService {
     }
 
     private IncidentStatusDTO convertToDTO(IncidentStatus entity) {
-        return new IncidentStatusDTO(entity.getIncidentStatusID(), entity.getStatus(), entity.getDescription(), entity.getActiveState());
+        IncidentStatusDTO incidentStatusDTO = new IncidentStatusDTO();
+        incidentStatusDTO.setIncidentStatusID(entity.getIncidentStatusID());
+        incidentStatusDTO.setStatus(entity.getStatus());
+        incidentStatusDTO.setDescription(entity.getDescription());
+        incidentStatusDTO.setActiveStatus(entity.getActiveStatus());
+        return incidentStatusDTO;
     }
 
     private IncidentStatus convertToEntity(IncidentStatusDTO dto) {
-        return new IncidentStatus(dto.getIncidentStatusID(), dto.getStatus(), dto.getDescription(), dto.getActiveState());
+        IncidentStatus incidentStatus = new IncidentStatus();
+        incidentStatus.setStatus(dto.getStatus());
+        incidentStatus.setIncidentStatusID(dto.getIncidentStatusID());
+        incidentStatus.setDescription(dto.getDescription());
+        incidentStatus.setActiveStatus(dto.getActiveStatus());
+        return incidentStatus;
     }
 }

@@ -10,12 +10,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class CareGiverService {
+
+    private static final String DIRECTORY = Paths.get(System.getProperty("user.home"), "skyCareUploads", "careGiverDocuments").toString();
 
     @Autowired
     private CareGiverRepository careGiverRepository;
@@ -64,6 +68,7 @@ public class CareGiverService {
 
     public ResponseEntity<CareGiverDTO> addCareGiver(CareGiverDTO dto, MultipartFile profilePhoto,List<MultipartFile> documents) {
         dto.getEmployee().setAccessRole("CareGiver");
+        dto.getEmployee().setStatus("Pending");
         Employee employee = employeeService.saveNewEmployee(dto.getEmployee(),profilePhoto);
         String lastCaregiverID = careGiverRepository.getLastIdOfcareGiver();
         String newCaregiverID = Micro_utils.idGenerator("careGiver",lastCaregiverID);
@@ -80,18 +85,71 @@ public class CareGiverService {
         }
         careGiverPaymentService.addPayment(dto.getCareGiverPayments());
         careGiverDocumentService.addDocument(dto.getCareGiverDocuments(),documents);
-
-
         return ResponseEntity.ok(mapToDTO(caregiver));
     }
 
 
-    public ResponseEntity<CareGiverDTO> updateCareGiver(String id, CareGiverDTO dto) {
+    public ResponseEntity<CareGiverDTO> updateCareGiver(String id, CareGiverDTO dto, MultipartFile profilePhoto,List<MultipartFile> documents) {
         if (!careGiverRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
         CareGiver caregiver = mapToEntity(dto);
         caregiver.setCareGiverID(id);
+        employeeService.updateEmployeeDetails(dto.getEmployee().getEmployeeID(),dto.getEmployee(),profilePhoto);
+        List<CareGiverDocumentsDTO>  exisitingDocuments = careGiverDocumentService.getDocumentsByCareGiverId(id);
+
+        for (CareGiverDocumentsDTO exisitDoc:exisitingDocuments){
+            CareGiverDocumentsDTO inputDoc = dto.getCareGiverDocuments()
+                    .stream()
+                    .filter(row -> exisitDoc != null &&
+                            row.getDocumentTypeID() != null &&
+                            row.getDocumentTypeID().equalsIgnoreCase(exisitDoc.getDocumentTypeID()))
+                    .findFirst()
+                    .orElse(null);
+            if (inputDoc!=null){
+                if (!inputDoc.getDocument().equalsIgnoreCase(exisitDoc.getDocument())){
+                    try {
+                        File existingFile = new File(exisitDoc.getDocument());
+                        if (existingFile.exists()) {
+                            existingFile.delete();
+                        }
+                        // Add new file
+                        MultipartFile newFile = documents.stream()
+                                .filter(file -> file.getOriginalFilename() != null &&
+                                        file.getOriginalFilename().equalsIgnoreCase(inputDoc.getDocument()))
+                                .findFirst()
+                                .orElse(null);
+
+                        if (newFile != null) {
+                            try {
+                                String originalFileName = newFile.getOriginalFilename();
+                                String fileExtension = originalFileName != null && originalFileName.contains(".")
+                                        ? originalFileName.substring(originalFileName.lastIndexOf("."))
+                                        : "";
+
+                                File directory = new File(DIRECTORY);
+                                if (!directory.exists()) {
+                                    directory.mkdirs();
+                                }
+
+                                File newFilePath = new File(directory,
+                                        inputDoc.getCareGiverID() + "_" +
+                                                inputDoc.getDocumentTypeID() + "_" +
+                                                originalFileName + fileExtension);
+                                newFile.transferTo(newFilePath);
+                                inputDoc.setDocument(newFilePath.getAbsolutePath());
+                                careGiverDocumentService.updateDocument(id,inputDoc.getDocumentTypeID(),inputDoc);
+                            } catch (Exception e) {
+                                throw new RuntimeException("Error uploading new document", e);
+                            }
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }
+
         careGiverRepository.save(caregiver);
         return ResponseEntity.ok(mapToDTO(caregiver));
     }
@@ -114,6 +172,7 @@ public class CareGiverService {
         EmployeeDTO employeeDTO = new EmployeeDTO();
         employeeDTO.setEmployeeID(entity.getEmployee().getEmployeeID());
         employeeDTO.setProfile_photo(entity.getEmployee().getProfile_photo());
+        employeeDTO.setAccessRole(entity.getEmployee().getAccessRole());
         List<Employee_address_DTO> employeeAddressDtos = new ArrayList<>();
         for (Employee_address address:entity.getEmployee().getEmployeeAddresses()){
             Employee_address_DTO employeeAddressDto = getEmployeeAddressDto(address);
@@ -142,6 +201,9 @@ public class CareGiverService {
 
         dto.setEmployee(employeeDTO);
         dto.setStatus(entity.getStatus());
+
+        List<CareGiverDocumentsDTO> documentsDTOList = careGiverDocumentService.getDocumentsByCareGiverId(entity.getCareGiverID());
+        dto.setCareGiverDocuments(documentsDTOList);
         return dto;
     }
 

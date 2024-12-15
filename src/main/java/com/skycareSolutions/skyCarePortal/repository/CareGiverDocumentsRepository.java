@@ -10,6 +10,6 @@ import java.util.List;
 
 public interface CareGiverDocumentsRepository extends JpaRepository<CareGiverDocuments, CareGiverDocumentsId> {
     // Custom query to get documents by caregiver ID
-    @Query("SELECT d FROM CareGiverDocuments d WHERE d.id.careGiverID = :careGiver")
+    @Query("SELECT d FROM CareGiverDocuments d WHERE d.careGiver = :careGiver")
     List<CareGiverDocuments> findByCareGiverID(CareGiver careGiver);
 }

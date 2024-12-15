@@ -11,4 +11,5 @@ public class IncidentTypeDTO {
     private String incidentTypeID;
     private String title;
     private String description;
+    private String status;
 }

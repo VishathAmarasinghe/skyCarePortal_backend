@@ -1,8 +1,11 @@
 package com.skycareSolutions.skyCarePortal.dto;
 
+import com.skycareSolutions.skyCarePortal.model.IncidentActionTypes;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -10,5 +13,7 @@ import lombok.NoArgsConstructor;
 public class IncidentActionTypesDTO {
     private String incidentActionID;
     private String question;
-    private boolean answer;
+    private boolean yesNoAnswer;
+    private String status;
+    private List<IncidentSubActionTypesDTO> incidentSubActionList;
 }

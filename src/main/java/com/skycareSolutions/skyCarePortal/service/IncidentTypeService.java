@@ -39,6 +39,7 @@ public class IncidentTypeService {
         String lastIncidentTypeID = incidentTypeRepository.getLastIdOfIncidentType();
         String newIncidentTypeID = Micro_utils.idGenerator("incidentType",lastIncidentTypeID);
         dto.setIncidentTypeID(newIncidentTypeID);
+        dto.setStatus("Active");
 
         IncidentType incidentType = convertToEntity(dto);
         incidentType = incidentTypeRepository.save(incidentType);
@@ -59,10 +60,20 @@ public class IncidentTypeService {
     }
 
     private IncidentTypeDTO convertToDTO(IncidentType entity) {
-        return new IncidentTypeDTO(entity.getIncidentTypeID(), entity.getTitle(), entity.getDescription());
+        IncidentTypeDTO incidentTypeDTO = new IncidentTypeDTO();
+        incidentTypeDTO.setDescription(entity.getDescription());
+        incidentTypeDTO.setTitle(entity.getTitle());
+        incidentTypeDTO.setStatus(entity.getStatus());
+        incidentTypeDTO.setIncidentTypeID(entity.getIncidentTypeID());
+        return incidentTypeDTO;
     }
 
     private IncidentType convertToEntity(IncidentTypeDTO dto) {
-        return new IncidentType(dto.getIncidentTypeID(), dto.getTitle(), dto.getDescription());
+        IncidentType incidentType = new IncidentType();
+        incidentType.setIncidentTypeID(dto.getIncidentTypeID());
+        incidentType.setDescription(dto.getDescription());
+        incidentType.setStatus(dto.getStatus());
+        incidentType.setTitle(dto.getTitle());
+        return incidentType;
     }
 }

@@ -11,5 +11,5 @@ public class IncidentStatusDTO {
     private String incidentStatusID;
     private String status;
     private String description;
-    private String activeState;
+    private String activeStatus;
 }

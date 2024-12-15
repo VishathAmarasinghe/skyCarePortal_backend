@@ -65,6 +65,9 @@ public class Appointment {
     @Column(name = "broadcastType", nullable = false)
     private String broadcastType;
 
+    @Column(name = "recurrentState", columnDefinition = "BOOLEAN DEFAULT false")
+    private boolean recurrentState = false;
+
     @ManyToOne
     @JoinColumn(name = "appointmentAddressID",nullable = true)
     private AppointmentAddress appointmentAddress;

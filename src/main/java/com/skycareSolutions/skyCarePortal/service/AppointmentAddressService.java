@@ -50,6 +50,30 @@ public class AppointmentAddressService {
         return repository.findById(id);
     }
 
+    public AppointmentAddress findByIDWithEntity(String id){
+        Optional<AppointmentAddress> appointmentAddress = repository.findById(id);
+        if (appointmentAddress.isPresent()){
+            return appointmentAddress.get();
+        }else{
+            throw new RuntimeException();
+        }
+    }
+    public AppointmentAddressDTO findAppointmentAddressByID(String id){
+        Optional<AppointmentAddress> appointmentAddress = repository.findById(id);
+        if (appointmentAddress.isPresent()){
+            AppointmentAddress appointmentAddress1 = appointmentAddress.get();
+            AppointmentAddressDTO appointmentAddressDTO = new AppointmentAddressDTO();
+            appointmentAddressDTO.setAppointmentAddressID(appointmentAddress1.getAppointmentAddressID());
+            appointmentAddressDTO.setAddress(appointmentAddress1.getAddress());
+            appointmentAddressDTO.setCity(appointmentAddress1.getCity());
+            appointmentAddressDTO.setState(appointmentAddress1.getState());
+            appointmentAddressDTO.setPostalCode(appointmentAddress1.getPostalCode());
+            return appointmentAddressDTO;
+        }else{
+            throw new RuntimeException();
+        }
+    }
+
     /**
      * Retrieve all AppointmentAddresses.
      *

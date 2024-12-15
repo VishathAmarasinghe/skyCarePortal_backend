@@ -24,6 +24,9 @@ public class IncidentActionTypes {
     @Column(name = "question")
     private String question;
 
-    @Column(name = "answer")
-    private boolean answer;
+    @Column(name = "yesNoType")
+    private boolean yesNoType;
+
+    @Column(name = "status")
+    private String status;
 }

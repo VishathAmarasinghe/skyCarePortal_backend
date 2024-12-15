@@ -1,15 +1,19 @@
 package com.skycareSolutions.skyCarePortal.service;
 
 import com.skycareSolutions.skyCarePortal.dto.RecurrentAppointmentDTO;
+import com.skycareSolutions.skyCarePortal.dto.RecurrentAppointmentUpdateDTO;
 import com.skycareSolutions.skyCarePortal.model.Appointment;
 import com.skycareSolutions.skyCarePortal.model.RecurrentAppointment;
 import com.skycareSolutions.skyCarePortal.model.RecurrentWork;
 import com.skycareSolutions.skyCarePortal.repository.RecurrentAppointmentRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Date;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -50,15 +54,10 @@ public class RecurrenceService {
         String lastRecurrentAppointmentID = recurrentAppointmentRepository.getLastIdOfRecurrentAppointment();
         lastRecurrentAppointmentID = Micro_utils.idGenerator("recurrentAppointments",lastRecurrentAppointmentID);
 
-        System.out.println("recurrent is here ");
-
         // Loop through and create recurrent appointments
         while ((occurrenceLimit == 0 || occurrenceNumber <= occurrenceLimit) &&
                 (endDate == null || currentStartDate.isBefore(endDate) || currentStartDate.isEqual(endDate))) {
             // Calculate the appointment start and end time for the current recurrence
-
-            System.out.println("recurrent ongoing start"+startDate+"   end "+endDate+" occ Numer"+occurrenceNumber);
-
             RecurrentAppointment recurrentAppointment = new RecurrentAppointment();
 
             recurrentAppointment.setRecurrentAppointmentID(lastRecurrentAppointmentID); // Use a method to generate unique IDs
@@ -101,10 +100,8 @@ public class RecurrenceService {
             RecurrentWork recurrentWork = recurrentWorkService.getRecurrentWorkByIDWithEntity(recurrentID);
 
             List<RecurrentAppointment> recurrentTask = generateRecurrentAppointments(recurrentWork,appointment);
-            System.out.println("arry length "+recurrentTask.size());
 
             for (RecurrentAppointment app:recurrentTask){
-                System.out.println("app id "+app.getRecurrentAppointmentID());
                 recurrentAppointmentRepository.saveAll(recurrentTask);
             }
         } catch (Exception e) {
@@ -122,6 +119,13 @@ public class RecurrenceService {
                 .toList();
     }
 
+    public List<RecurrentAppointmentDTO> getAppointmentsWithinGivenDateRange(String startDate,String endDate){
+        LocalDate start = LocalDate.parse(startDate);
+        LocalDate end = LocalDate.parse(endDate);
+        return recurrentAppointmentRepository.findAppointmentsWithinDateRange(start,end)
+                .stream().map(this::mapToDTO).toList();
+    }
+
     /**
      * Get a recurrent appointment by ID.
      */
@@ -129,6 +133,61 @@ public class RecurrenceService {
         RecurrentAppointment recurrentAppointment = recurrentAppointmentRepository.findById(recurrentAppointmentID)
                 .orElseThrow(() -> new RuntimeException("Recurrent Appointment not found"));
         return mapToDTO(recurrentAppointment);
+    }
+
+    public RecurrentAppointment getRecurrentAppointmentByIDWithEntity(String recurrentAppointmentID) {
+        RecurrentAppointment recurrentAppointment = recurrentAppointmentRepository.findById(recurrentAppointmentID)
+                .orElseThrow(() -> new RuntimeException("Recurrent Appointment not found"));
+        return recurrentAppointment;
+    }
+
+    @Transactional
+    public Boolean cancelAppointment(String recurrentAppointmentID){
+        try {
+            RecurrentAppointment appointment = getRecurrentAppointmentByIDWithEntity(recurrentAppointmentID);
+            recurrentAppointmentRepository.cancelRecurrentAppointmentById(appointment);
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    @Transactional
+    public Boolean updateAppointmentState(String recurrentAppointmentID,String state){
+        try {
+            RecurrentAppointment appointment = getRecurrentAppointmentByIDWithEntity(recurrentAppointmentID);
+            recurrentAppointmentRepository.updateStateOfRecurrentAppointmentById(appointment,state);
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+
+    @Transactional
+    public Boolean updateRecurrentAppointment(RecurrentAppointmentUpdateDTO recurrentAppointmentUpdateDTO){
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+            // Convert startDate and endDate to LocalDate
+            LocalDate startDate = LocalDate.parse(recurrentAppointmentUpdateDTO.getStartDate(), formatter);
+            LocalDate endDate = LocalDate.parse(recurrentAppointmentUpdateDTO.getEndDate(), formatter);
+
+            RecurrentAppointment recurrentAppointment = getRecurrentAppointmentByIDWithEntity(recurrentAppointmentUpdateDTO.getRecurrentAppointmentID());
+            recurrentAppointmentRepository.updateRecurrentAppointment(
+                    startDate,
+                    endDate,
+                    recurrentAppointmentUpdateDTO.getStartTime(),
+                    recurrentAppointmentUpdateDTO.getEndTime(),
+                    recurrentAppointmentUpdateDTO.getComment(),
+                    recurrentAppointment
+            );
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

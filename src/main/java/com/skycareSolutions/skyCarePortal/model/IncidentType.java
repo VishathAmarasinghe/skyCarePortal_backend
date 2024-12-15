@@ -26,4 +26,6 @@ public class IncidentType {
 
     @Column(name = "description")
     private String description;
+
+    private String status;
 }

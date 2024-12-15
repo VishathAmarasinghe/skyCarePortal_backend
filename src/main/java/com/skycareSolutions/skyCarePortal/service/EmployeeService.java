@@ -15,9 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -35,6 +33,9 @@ public class EmployeeService {
     private EmployeeAddressRepository employeeAddressRepository;
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private CareGiverService careGiverService;
 
     AuthenticationUtils authenticationUtils= new AuthenticationUtils();
 
@@ -195,6 +196,15 @@ public class EmployeeService {
         return empResult;
     }
 
+    public EmployeeDTO getSingleEmployee(String employeeID){
+        Optional<Employee> employee = employeeRepository.findById(employeeID);
+        if (employee.isPresent()){
+            return convertToDTO(employee.get());
+        }else{
+            throw new RuntimeException();
+        }
+    }
+
     public Employee  saveNewEmployee(EmployeeDTO employee, MultipartFile profilePhoto){
 
         String lastEmployeeID = employeeRepository.getLastIdOfEmployees();
@@ -222,11 +232,38 @@ public class EmployeeService {
                 throw new RuntimeException(e);
             }
         }
-        String password = Micro_utils.generateRandomPassword(10);
-        employee.setPassword(authenticationUtils.hashPassword(password));
+        if (!employee.getAccessRole().equalsIgnoreCase("CareGiver") && !employee.getStatus().equalsIgnoreCase("Pending")){
+            String password = Micro_utils.generateRandomPassword(10);
+            employee.setPassword(authenticationUtils.hashPassword(password));
 
-        CompletableFuture.runAsync(()->emailService.generateWelcomeLoginEmail(employee.getFirstName(),employee.getEmail(),password,frontendUrl));
+            CompletableFuture.runAsync(()->emailService.generateWelcomeLoginEmail(employee.getFirstName(),employee.getEmail(),password,frontendUrl));
+        }
         return employeeRepository.save(mapEmployeeFromDTO(employee));
+    }
+
+    public String updateEmployeeBasicInfoWithPanel(EmployeeBasicInfoUpdaterDTO employeeBasicInfoUpdaterDTO,MultipartFile profilePhoto){
+        EmployeeDTO employeeDTO = getSingleEmployee(employeeBasicInfoUpdaterDTO.getEmployeeID());
+        if (!employeeDTO.getEmail().equalsIgnoreCase(employeeBasicInfoUpdaterDTO.getEmail())){
+            EmployeeDTO checkEmployee = findEmployeeByEmail(employeeBasicInfoUpdaterDTO.getEmail());
+            if (employeeDTO!=null){
+                return "User exist with new email";
+            }
+        }
+        employeeDTO.setFirstName(employeeBasicInfoUpdaterDTO.getFirstName());
+        employeeDTO.setLastName(employeeBasicInfoUpdaterDTO.getLastName());
+        employeeDTO.setEmail(employeeBasicInfoUpdaterDTO.getEmail());
+
+        if (employeeBasicInfoUpdaterDTO.getCurrentPassword()!=null && employeeBasicInfoUpdaterDTO.getCurrentPassword()!="") {
+            if (!passwordUtil.matchPassword(employeeBasicInfoUpdaterDTO.getCurrentPassword(), employeeDTO.getPassword())) {
+                return "Old Password is incorrect";
+            }
+
+            String newPassword = passwordUtil.hashPassword(employeeBasicInfoUpdaterDTO.getNewPassword());
+            employeeDTO.setPassword(newPassword);
+        }
+
+        updateEmployeeDetails(employeeDTO.getEmployeeID(),employeeDTO,profilePhoto);
+        return "Account Updated Successfully";
     }
 
     public EmployeeDTO updateEmployeeDetails(String employeeID, EmployeeDTO updatedEmployeeDTO, MultipartFile profilePhoto) {
@@ -315,6 +352,12 @@ public class EmployeeService {
         return employeeDetails;
     }
 
+    public EmployeeDTO findEmployeeByEmail(String email){
+        Optional<Employee> employee = employeeRepository.findByEmail(email);
+        EmployeeDTO employeeDTO = null;
+        return employee.map(this::convertToDTO).orElse(employeeDTO);
+    }
+
     public Employee findOneEmployeeWithEntity(String employeeID){
         Optional<Employee> existingEmployeeOpt = employeeRepository.findById(employeeID);
         if (existingEmployeeOpt.isPresent()) {
@@ -342,6 +385,46 @@ public class EmployeeService {
         employeeData.setStatus(state);
         employeeRepository.save(employeeData);
         return new ApiResponse("User "+state+" successfully",true);
+    }
+
+    public List<MetaEmployeeDetailsDTO> getAllEmployees(){
+        List<Employee> employees = employeeRepository.getAllEmployees();
+        List<MetaEmployeeDetailsDTO> employeeDetailsDTOS = new ArrayList<>();
+        for (Employee employee:employees){
+            MetaEmployeeDetailsDTO singleEmployeeDetails = new MetaEmployeeDetailsDTO();
+            singleEmployeeDetails.setEmployeeID(employee.getEmployeeID());
+            singleEmployeeDetails.setStatus(employee.getStatus());
+            singleEmployeeDetails.setEmail(employee.getEmail());
+            singleEmployeeDetails.setProfile_photo(employee.getProfile_photo());
+            singleEmployeeDetails.setFirstName(employee.getFirstName());
+            singleEmployeeDetails.setLastName(employee.getLastName());
+            singleEmployeeDetails.setAccessRole(employee.getAccessRole());
+            employeeDetailsDTOS.add(singleEmployeeDetails);
+        }
+        return employeeDetailsDTOS;
+    }
+
+    public Map<String, String> getAllCareGiverEmployeeMapping() {
+        List<CareGiverDTO> careGiverDTOs = careGiverService.getAllCareGivers();
+        Map<String, String> employeeCareGiverMap = new HashMap<>();
+
+        for (CareGiverDTO careGiver : careGiverDTOs) {
+            // Assuming CareGiverDTO contains the mapping information
+            String careGiverID = careGiver.getCareGiverID();
+            String employeeID = careGiver.getEmployee().getEmployeeID(); // Adjust based on DTO
+
+            // Add mapping to the map
+            employeeCareGiverMap.put(employeeID, careGiverID);
+        }
+
+        return employeeCareGiverMap;
+    }
+
+    public Boolean resetPassword(PasswordResetDTO passwordResetDTO){
+        EmployeeDTO employee = findEmployeeByEmail(passwordResetDTO.getEmail());
+        employee.setPassword(authenticationUtils.hashPassword(passwordResetDTO.getPassword()));
+        employeeRepository.save(mapEmployeeFromDTO(employee));
+        return true;
     }
 
 }

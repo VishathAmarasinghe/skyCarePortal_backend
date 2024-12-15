@@ -17,9 +17,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -60,10 +58,13 @@ public class AppointmentService {
     private RecurrenceService recurrenceService;
 
     public List<AppointmentCalenderDTO> getAllEventsRelatedToDateRange(String startDate,String endDate){
-        List<Appointment> events = appointmentRepository.findAppointmentsWithinDateRange( Date.valueOf(startDate),Date.valueOf(endDate));
+        List<RecurrentAppointmentDTO> appointments = recurrenceService.getAppointmentsWithinGivenDateRange(startDate,endDate);
         List<AppointmentCalenderDTO> eventDTOs = new ArrayList<>();
-        for (Appointment ep:events){
-            eventDTOs.add(toCalenderDTO(ep));
+        for (RecurrentAppointmentDTO ap:appointments){
+            Appointment appointment = getAppointmentByIdWithEntity(ap.getAppointmentID());
+            appointment.setStartDate(Date.valueOf(ap.getStartDate()));
+            appointment.setEndDate(Date.valueOf(ap.getEndDate()));
+            eventDTOs.add(toCalenderDTO(appointment));
         }
         return eventDTOs;
     }
@@ -103,24 +104,91 @@ public class AppointmentService {
         return appointment;
     }
 
-    public List<CareGiverAppointmentDTO> getAppointmentsAssignedToCareGiver(String employeeiD,String state){
-        CareGiverDTO careGiver = careGiverService.getCareGiverByEmployee(employeeiD);
-        List<JobAssignerDTO> jobs= jobAssignerService.assignedJobsBasedOnCareGiverAndStatus(careGiver.getCareGiverID(),state);
-        List<CareGiverAppointmentDTO> result = new ArrayList<>();
+    public NextAppointmentCareGiverDTO getNextAssignedAppointmentToCareGiver(String employeeID){
+        CareGiverDTO careGiver = careGiverService.getCareGiverByEmployee(employeeID);
+        List<JobAssignerDTO> jobs = jobAssignerService.assignedJobsBasedOnCareGiverAndStatus(careGiver.getCareGiverID(),"Accepted");
+        List<RecurrentAppointmentDTO> appointmentDTOS = new ArrayList<>();
         for (JobAssignerDTO job:jobs){
-            AppointmentDTO appointment = getAppointmentById(job.getAppointmentID());
-            int participantCount = appointment.getCaregiverCount();
-            int acceptedCount = jobAssignerService.careGiverCountByAppointmentAcceptanceType(appointment.getAppointmentID(),"Accepted");
-            if (acceptedCount<participantCount){
-                CareGiverAppointmentDTO data = new CareGiverAppointmentDTO();
-                data.setAppointmentData(appointment);
-                data.setCareGiverID(careGiver.getCareGiverID());
-                data.setJobAssignData(job);
-                result.add(data);
+            RecurrentAppointmentDTO appointment = recurrenceService.getRecurrentAppointmentByID(job.getRecurrentAppointmentID());
+            appointmentDTOS.add(appointment);
+        }
+        appointmentDTOS.removeIf(appointment->!appointment.getStatus().equalsIgnoreCase("Scheduled"));
+
+        appointmentDTOS.sort(Comparator.comparing(RecurrentAppointmentDTO::getStartDate)
+                .thenComparing(RecurrentAppointmentDTO::getStartTime));
+
+        if (!appointmentDTOS.isEmpty()){
+            NextAppointmentCareGiverDTO nextAppointmentCareGiverDTO = new NextAppointmentCareGiverDTO();
+            nextAppointmentCareGiverDTO.setAppointment(getAppointmentById(appointmentDTOS.get(0).getAppointmentID()));
+            nextAppointmentCareGiverDTO.setRecurrentTask(recurrenceService.getRecurrentAppointmentByID(appointmentDTOS.get(0).getRecurrentAppointmentID()));
+            return nextAppointmentCareGiverDTO;
+        }else{
+            return new NextAppointmentCareGiverDTO();
+        }
+    }
+
+    public List<CareGiverAllocatedAppointmentsDTO> getAppointmentsAssignedToCareGiver(String employeeID, String state) {
+        CareGiverDTO careGiver = careGiverService.getCareGiverByEmployee(employeeID);
+        List<JobAssignerDTO> jobs = jobAssignerService.assignedJobsBasedOnCareGiverAndStatus(careGiver.getCareGiverID(), state);
+        List<CareGiverAppointmentDTO> result = new ArrayList<>();
+        Set<String> addedAppointmentIDs = new HashSet<>();
+        HashMap<String, JobAssignerDTO[]> appointmentAllocationMap = new HashMap<>();
+        List<CareGiverAllocatedAppointmentsDTO> allocationList =  new ArrayList<>();
+
+        for (JobAssignerDTO job : jobs) {
+            String appointmentID = job.getAppointmentID();
+            if (appointmentAllocationMap.containsKey(appointmentID)) {
+                // Get the existing array
+                JobAssignerDTO[] existingArray = appointmentAllocationMap.get(appointmentID);
+
+                // Create a new array with an additional slot
+                JobAssignerDTO[] updatedArray = Arrays.copyOf(existingArray, existingArray.length + 1);
+
+                // Add the new job to the array
+                updatedArray[existingArray.length] = job;
+
+                // Put the updated array back into the map
+                appointmentAllocationMap.put(appointmentID, updatedArray);
+            } else {
+                // Create a new array with the job
+                appointmentAllocationMap.put(appointmentID, new JobAssignerDTO[]{job});
             }
         }
-        return result;
+        for (Map.Entry<String, JobAssignerDTO[]> entry : appointmentAllocationMap.entrySet()) {
+            CareGiverAllocatedAppointmentsDTO singleAllocation = new CareGiverAllocatedAppointmentsDTO();
+            AppointmentDTO appointmentDTO = getAppointmentById(entry.getKey());
+            singleAllocation.setCareGiverID(careGiver.getCareGiverID());
+            singleAllocation.setAppointmentData(appointmentDTO);
+
+            JobAssignerDTO[] jobList = entry.getValue();
+            List<CareGiverAllocationResponseDTO> subRecurrentAllocationList = new ArrayList<>();
+            for (JobAssignerDTO job:jobList){
+                CareGiverAllocationResponseDTO careGiverAllocationResponseDTO = new CareGiverAllocationResponseDTO();
+                int totalRequiredCareGiverCount = appointmentDTO.getCaregiverCount();
+                int acceptedCount = jobAssignerService.careGiverCountByAppointmentAcceptanceType(appointmentDTO.getAppointmentID(), "Accepted", job.getRecurrentAppointmentID());
+                if (totalRequiredCareGiverCount>acceptedCount){
+                    RecurrentAppointmentDTO recurrentAppointmentDTO = recurrenceService.getRecurrentAppointmentByID(job.getRecurrentAppointmentID());
+                    careGiverAllocationResponseDTO.setRecurrentAppointmentData(recurrentAppointmentDTO);
+                    careGiverAllocationResponseDTO.setJobAssignData(job);
+                    careGiverAllocationResponseDTO.setTotalRequired(totalRequiredCareGiverCount);
+                    careGiverAllocationResponseDTO.setPendingRequired(totalRequiredCareGiverCount-acceptedCount);
+                    subRecurrentAllocationList.add(careGiverAllocationResponseDTO);
+                }
+
+            }
+            singleAllocation.setAllocations(subRecurrentAllocationList);
+            allocationList.add(singleAllocation);
+        }
+        Iterator<CareGiverAllocatedAppointmentsDTO> iterator = allocationList.iterator();
+        while (iterator.hasNext()) {
+            CareGiverAllocatedAppointmentsDTO item = iterator.next();
+            if (item.getAllocations().isEmpty()) {
+                iterator.remove(); // Safely remove the item
+            }
+        }
+        return allocationList;
     }
+
 
 
 
@@ -149,7 +217,9 @@ public class AppointmentService {
 
             LocalDate date  = LocalDate.of(appointment.getStartDate().getYear(),appointment.getStartDate().getMonth(),appointment.getStartDate().getDay());
             DayOfWeek dayOfWeek  = date.getDayOfWeek();
-            recurrentWorkDTO.setDay(dayOfWeek.toString());
+            String formattedDay = dayOfWeek.toString().toLowerCase(); // Convert to lowercase
+            formattedDay = formattedDay.substring(0, 1).toUpperCase() + formattedDay.substring(1); // Capitalize first letter
+            recurrentWorkDTO.setDay(formattedDay);
             RecurrentWorkDTO recurrentWork =  recurrentWorkService.createRecurrentWork(recurrentWorkDTO);
             recurrenceService.createRecurrentAppointment(appointment.getAppointmentID(),recurrentWork.getRecurrentWorkID());
         }
@@ -371,7 +441,7 @@ public class AppointmentService {
             dto.setRecurrentWork(rw);
         }
         List<AppointmentAttachmentsDTO> attachments = appointmentAttachmentsService.getAttachmentsbyAppointmentID(appointment.getAppointmentID());
-
+        dto.setRecurrenceState(appointment.isRecurrentState());
         dto.setAttachments(attachments);
         return dto;
     }
@@ -404,6 +474,7 @@ public class AppointmentService {
         appointment.setEndDate(Date.valueOf(dto.getEndDate()));
         appointment.setEndTime(dto.getEndTime());
         appointment.setCaregiverCount(dto.getCaregiverCount());
+        appointment.setRecurrentState(dto.getRecurrenceState());
         if (dto.getCarePlanID()!=null && !dto.getCarePlanID().equalsIgnoreCase("")){
             System.out.println("care plan id is there "+dto.getCarePlanID());
             carePlanService.findById(dto.getCarePlanID())

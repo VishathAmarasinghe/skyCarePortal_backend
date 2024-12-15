@@ -6,6 +6,6 @@ import lombok.Data;
 public class CareGiverAppointmentDTO {
     private String careGiverID;
     private AppointmentDTO appointmentData;
-    private JobAssignerDTO jobAssignData;
+    private JobAssignShowerDTO vacancies;
 
 }

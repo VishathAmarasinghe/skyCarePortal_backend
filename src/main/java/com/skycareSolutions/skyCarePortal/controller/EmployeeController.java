@@ -2,8 +2,7 @@ package com.skycareSolutions.skyCarePortal.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.skycareSolutions.skyCarePortal.dto.ApiResponse;
-import com.skycareSolutions.skyCarePortal.dto.EmployeeDTO;
+import com.skycareSolutions.skyCarePortal.dto.*;
 import com.skycareSolutions.skyCarePortal.model.Employee;
 import com.skycareSolutions.skyCarePortal.repository.EmployeeRepository;
 import com.skycareSolutions.skyCarePortal.service.EmployeeService;
@@ -16,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -44,7 +44,7 @@ public class EmployeeController {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             EmployeeDTO employee = objectMapper.readValue(employeeData, EmployeeDTO.class);
-
+            employee.setStatus("Activated");
             // Check if the email already exists
             Optional<Employee> existingUser = employeeRepository.findByEmail(employee.getEmail());
             if (existingUser.isPresent()) {
@@ -82,6 +82,19 @@ public class EmployeeController {
         }
     }
 
+    @GetMapping("/meta/allemployees")
+    public ResponseEntity<List<MetaEmployeeDetailsDTO>> getAllEmployeeMetaDetails(){
+        return ResponseEntity.ok(employeeService.getAllEmployees());
+    }
+
+    @GetMapping("/meta/careGiverMapping")
+    public ResponseEntity<Map<String, String>> getCareGiverEmployeeMapping() {
+        // Directly return the map from the service
+        Map<String, String> careGiverEmployeeMap = employeeService.getAllCareGiverEmployeeMapping();
+        return ResponseEntity.ok(careGiverEmployeeMap);
+    }
+
+
     @PatchMapping("/{employeeID}")
     public EmployeeDTO updateEmployee(@PathVariable String employeeID, @RequestPart("employeeData") String updatedEmployeeDTO, @RequestParam(required = false) MultipartFile profilePhoto) {
         System.out.println("incomming employee id "+employeeID);
@@ -104,6 +117,21 @@ public class EmployeeController {
     @PatchMapping("/{employeeID}/{state}")
     public ApiResponse updateEmployeeState(@PathVariable("employeeID") String employeeID,@PathVariable("state") String state){
         return employeeService.updateEmployeeState(employeeID,state);
+    }
+
+    @PostMapping("/update-basic-info")
+    public ResponseEntity<String> updateUserBasicInfo(
+            @RequestPart("employeeBasicInfo") String employeeBasicInfoUpdaterDTO,
+            @RequestParam(name = "profilePic", required = false) MultipartFile profilePhoto){
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            EmployeeBasicInfoUpdaterDTO employee = objectMapper.readValue(employeeBasicInfoUpdaterDTO, EmployeeBasicInfoUpdaterDTO.class);
+            return ResponseEntity.ok(employeeService.updateEmployeeBasicInfoWithPanel(employee,profilePhoto));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+
     }
 
 

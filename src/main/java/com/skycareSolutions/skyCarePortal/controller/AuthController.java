@@ -2,6 +2,7 @@ package com.skycareSolutions.skyCarePortal.controller;
 
 import com.skycareSolutions.skyCarePortal.dto.EmployeeDTO;
 import com.skycareSolutions.skyCarePortal.dto.LoginRequestDTO;
+import com.skycareSolutions.skyCarePortal.dto.PasswordResetDTO;
 import com.skycareSolutions.skyCarePortal.service.EmployeeService;
 import com.skycareSolutions.skyCarePortal.utils.AuthenticationUtils;
 import org.springframework.http.ResponseEntity;
@@ -30,5 +31,15 @@ public class AuthController {
             System.out.println(e);
             return ResponseEntity.status(401).body("Invalid email or password");
         }
+    }
+
+    @PostMapping("/reset")
+    public ResponseEntity<String> resetPassword(@RequestBody PasswordResetDTO passwordResetDTO){
+        if (employeeService.resetPassword(passwordResetDTO)){
+            return ResponseEntity.ok("Password Changed Successfully");
+        }else{
+            return ResponseEntity.internalServerError().body("Error occurred in password saving");
+        }
+
     }
 }

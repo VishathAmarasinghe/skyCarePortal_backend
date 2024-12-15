@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -95,6 +96,15 @@ public class IncidentService {
     // Delete an incident by ID
     public void deleteIncident(String id) {
         incidentRepository.deleteById(id);
+    }
+
+    public Incidents getIncidentByIDWithEntity(String incidentID){
+        Optional<Incidents> incident = incidentRepository.findById(incidentID);
+        if (incident.isPresent()){
+            return incident.get();
+        }else{
+            throw new RuntimeException();
+        }
     }
 
 

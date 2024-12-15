@@ -1,11 +1,7 @@
 package com.skycareSolutions.skyCarePortal.service;
 
-import com.skycareSolutions.skyCarePortal.dto.CareGiverDTO;
-import com.skycareSolutions.skyCarePortal.dto.JobAssignCreationDTO;
-import com.skycareSolutions.skyCarePortal.dto.JobAssignerDTO;
-import com.skycareSolutions.skyCarePortal.model.Appointment;
-import com.skycareSolutions.skyCarePortal.model.CareGiver;
-import com.skycareSolutions.skyCarePortal.model.JobAssigner;
+import com.skycareSolutions.skyCarePortal.dto.*;
+import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.JobAssignerRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,10 +31,15 @@ public class JobAssignerService {
     @Lazy
     private CareGiverService careGiverService;
 
+    @Autowired
+    @Lazy
+    private RecurrenceService recurrenceService;
+
     // Map DTO to Entity
     private JobAssigner mapToEntity(JobAssignerDTO dto) {
         JobAssigner entity = new JobAssigner();
         entity.setAssignID(dto.getAssignID());
+        entity.setRecurrentAppointment(recurrenceService.getRecurrentAppointmentByIDWithEntity(dto.getRecurrentAppointmentID()));
         entity.setAcceptanceType(dto.getAcceptanceType());
         if (dto.getAppointmentID()!=null && dto.getAppointmentID()!=""){
             entity.setAppointment(appointmentService.getAppointmentByIdWithEntity(dto.getAppointmentID()));
@@ -59,6 +60,7 @@ public class JobAssignerService {
 
         dto.setAssigner(entity.getEmployee().getEmployeeID());
         dto.setAssignType(entity.getAssignType());
+        dto.setRecurrentAppointmentID(entity.getRecurrentAppointment().getRecurrentAppointmentID());
         dto.setAcceptanceType(entity.getAcceptanceType());
         if (entity.getAppointment()!=null){
             dto.setAppointmentID(entity.getAppointment().getAppointmentID());
@@ -68,9 +70,30 @@ public class JobAssignerService {
 
     // Create a new JobAssigner
     public void createJobAssigner(JobAssignCreationDTO dto, String broadcastType) {
+        List<RecurrentAppointmentDTO> recurrentAppointmentDTOList = recurrenceService.getRecurrentAppointmentsByAppointmentID(dto.getAppointmentID());
         if (broadcastType.equalsIgnoreCase("All Caregivers")){
                 List<CareGiverDTO> careGivers = careGiverService.getAllCareGivers();
                 for (CareGiverDTO careGiver : careGivers) {
+                    for (RecurrentAppointmentDTO recurrentAppointmentDTO:recurrentAppointmentDTOList){
+                        String lastAssignID = jobAssignerRepository.getLastIdOfJobAssigner();
+                        String newAssignID = Micro_utils.idGenerator("jobAssigner", lastAssignID);
+                        JobAssignerDTO jobAssign = new JobAssignerDTO();
+                        jobAssign.setAssignID(newAssignID);
+                        jobAssign.setAssignType(dto.getAssignType());
+                        jobAssign.setAppointmentID(dto.getAppointmentID());
+                        jobAssign.setAssigner(dto.getAssigner());
+                        jobAssign.setAcceptanceType("Allocated");
+                        jobAssign.setCareGiverID(careGiver.getCareGiverID());
+                        jobAssign.setRecurrentAppointmentID(recurrentAppointmentDTO.getRecurrentAppointmentID());
+                        JobAssigner entity = mapToEntity(jobAssign);
+                        JobAssigner savedEntity = jobAssignerRepository.save(entity);
+                    }
+
+                }
+        }else{
+            for (String careGiverID:dto.getCareGiverIDs()){
+                for (RecurrentAppointmentDTO recurrentAppointmentDTO:recurrentAppointmentDTOList){
+                    System.out.println("logging caregivers "+careGiverID);
                     String lastAssignID = jobAssignerRepository.getLastIdOfJobAssigner();
                     String newAssignID = Micro_utils.idGenerator("jobAssigner", lastAssignID);
                     JobAssignerDTO jobAssign = new JobAssignerDTO();
@@ -79,24 +102,11 @@ public class JobAssignerService {
                     jobAssign.setAppointmentID(dto.getAppointmentID());
                     jobAssign.setAssigner(dto.getAssigner());
                     jobAssign.setAcceptanceType("Allocated");
-                    jobAssign.setCareGiverID(careGiver.getCareGiverID());
+                    jobAssign.setCareGiverID(careGiverID);
+                    jobAssign.setRecurrentAppointmentID(recurrentAppointmentDTO.getRecurrentAppointmentID());
                     JobAssigner entity = mapToEntity(jobAssign);
                     JobAssigner savedEntity = jobAssignerRepository.save(entity);
                 }
-        }else{
-            for (String careGiverID:dto.getCareGiverIDs()){
-                System.out.println("logging caregivers "+careGiverID);
-                String lastAssignID = jobAssignerRepository.getLastIdOfJobAssigner();
-                String newAssignID = Micro_utils.idGenerator("jobAssigner", lastAssignID);
-                JobAssignerDTO jobAssign = new JobAssignerDTO();
-                jobAssign.setAssignID(newAssignID);
-                jobAssign.setAssignType(dto.getAssignType());
-                jobAssign.setAppointmentID(dto.getAppointmentID());
-                jobAssign.setAssigner(dto.getAssigner());
-                jobAssign.setAcceptanceType("Allocated");
-                jobAssign.setCareGiverID(careGiverID);
-                JobAssigner entity = mapToEntity(jobAssign);
-                JobAssigner savedEntity = jobAssignerRepository.save(entity);
             }
         }
     }
@@ -109,14 +119,90 @@ public class JobAssignerService {
                 .collect(Collectors.toList());
     }
 
+    public Boolean updateAssigners(UpdateAssignersDTO updateAssignersDTO){
+        List<String> newComers = updateAssignersDTO.getAdded();
+        List<String> removers = updateAssignersDTO.getDeleted();
+        System.out.println("new commer "+newComers.toString());
+        RecurrentAppointment recurrentAppointmentDTO = recurrenceService.getRecurrentAppointmentByIDWithEntity(updateAssignersDTO.getRecurrentAppointmentID());
+        if (recurrentAppointmentDTO!=null){
+            JobAssignerDTO assigner = new JobAssignerDTO();
+            assigner.setAppointmentID(recurrentAppointmentDTO.getAppointment().getAppointmentID());
+            assigner.setRecurrentAppointmentID(recurrentAppointmentDTO.getRecurrentAppointmentID());
+            assigner.setAssigner(updateAssignersDTO.getAssignerID());
+            assigner.setAssignType("");
+            assigner.setAcceptanceType("Allocated");
+            for (String newComer:newComers){
+                String lastAssignID = jobAssignerRepository.getLastIdOfJobAssigner();
+                String newAssignID = Micro_utils.idGenerator("jobAssigner", lastAssignID);
+                assigner.setAssignID(newAssignID);
+                assigner.setCareGiverID(newComer);
+                jobAssignerRepository.save(mapToEntity(assigner));
+            }
+        }
+        for(String remove:removers){
+            CareGiver careGiver = careGiverService.getCareGiverByIdWithEntity(remove);
+            JobAssigner assiner = jobAssignerRepository.findJobAssignWithRecurrentAppointmentAndCareGiver(recurrentAppointmentDTO,careGiver);
+            jobAssignerRepository.deleteById(assiner.getAssignID());
+        }
+        return true;
+    }
+
+    public JobAssignerDTO findJobAssignerByCareGiverIDAndRecurrentID(String careGiverID,String recurrentID){
+        CareGiver careGiver = careGiverService.getCareGiverByIdWithEntity(careGiverID);
+        RecurrentAppointment recurrentAppointment = recurrenceService.getRecurrentAppointmentByIDWithEntity(recurrentID);
+        JobAssigner assigner = jobAssignerRepository.findJobAssignWithRecurrentAppointmentAndCareGiver(recurrentAppointment,careGiver);
+        return mapToDTO(assigner);
+    }
+
+    public List<JobAssignShowerDTO> jobAssignerShower(String appointmentID){
+        List<RecurrentAppointmentDTO> recurrentAppointment = recurrenceService.getRecurrentAppointmentsByAppointmentID(appointmentID);
+        List<JobAssignShowerDTO> jobAssignShowerDTOList = new ArrayList<>();
+        for (RecurrentAppointmentDTO recurrentAppointmentDTO:recurrentAppointment){
+            RecurrentAppointment recurrentAppointment1 = recurrenceService.getRecurrentAppointmentByIDWithEntity(recurrentAppointmentDTO.getRecurrentAppointmentID());
+            List<JobAssigner> jobAssigns = jobAssignerRepository.findAllJobAssignersByRecurrentAppointmentID(recurrentAppointment1);
+            System.out.println("job assign length "+jobAssigns.size());
+            JobAssignShowerDTO jobAssignShowerDTO = new JobAssignShowerDTO();
+            List<CareGiverAssignedDTO> careGiverAssignedDTOS = new ArrayList<>();
+            for (JobAssigner jb:jobAssigns){
+                System.out.println("job assingers "+jb.getCareGiver().getEmployee().getFirstName());
+                CareGiverAssignedDTO careGiverAssignedDTO = new CareGiverAssignedDTO();
+                careGiverAssignedDTO.setAcceptanceState(jb.getAcceptanceType());
+                careGiverAssignedDTO.setCareGiverID(jb.getCareGiver().getCareGiverID());
+                CareGiver careGiver = careGiverService.getCareGiverByIdWithEntity(jb.getCareGiver().getCareGiverID());
+                careGiverAssignedDTO.setEmployeeID(careGiver.getEmployee().getEmployeeID());
+                careGiverAssignedDTO.setFirstName(careGiver.getEmployee().getFirstName());
+                careGiverAssignedDTO.setLastName(careGiver.getEmployee().getLastName());
+                careGiverAssignedDTO.setUserProfilePhoto(careGiver.getEmployee().getProfile_photo());
+                careGiverAssignedDTOS.add(careGiverAssignedDTO);
+
+            }
+            jobAssignShowerDTO.setAssigners(careGiverAssignedDTOS);
+            jobAssignShowerDTO.setJobState(recurrentAppointmentDTO.getStatus());
+            jobAssignShowerDTO.setStartDate(recurrentAppointmentDTO.getStartDate());
+            jobAssignShowerDTO.setEndDate(recurrentAppointmentDTO.getEndDate());
+            jobAssignShowerDTO.setStartTime(recurrentAppointmentDTO.getStartTime());
+            jobAssignShowerDTO.setEndTime(recurrentAppointmentDTO.getEndTime());
+            jobAssignShowerDTO.setRecurrentAppointmentID(recurrentAppointmentDTO.getRecurrentAppointmentID());
+            jobAssignShowerDTO.setCancelState(recurrentAppointment1.isCancelled());
+            jobAssignShowerDTO.setComment(recurrentAppointment1.getComment());
+            jobAssignShowerDTO.setHeadCount(recurrentAppointment1.getAppointment().getCaregiverCount());
+            jobAssignShowerDTO.setAppointmentID(recurrentAppointment1.getAppointment().getAppointmentID());
+            jobAssignShowerDTOList.add(jobAssignShowerDTO);
+        }
+        return jobAssignShowerDTOList;
+    }
+
     // Get a JobAssigner by ID
     public Optional<JobAssignerDTO> getJobAssignerById(String id) {
         return jobAssignerRepository.findById(id).map(this::mapToDTO);
     }
 
-    public int careGiverCountByAppointmentAcceptanceType(String appointmentID,String status){
+
+
+    public int careGiverCountByAppointmentAcceptanceType(String appointmentID,String status,String recurrnetAppointmentID){
         Appointment appointment = appointmentService.getAppointmentByIdWithEntity(appointmentID);
-        return jobAssignerRepository.findNumberOfJobAssignersBasedOnAcceptanceType(appointment,status);
+        RecurrentAppointment recurrentAppointment = recurrenceService.getRecurrentAppointmentByIDWithEntity(recurrnetAppointmentID);
+        return jobAssignerRepository.findNumberOfJobAssignersBasedOnAcceptanceType(appointment,status,recurrentAppointment);
     }
 
     // Update a JobAssigner

@@ -46,6 +46,10 @@ public class JobAssigner {
     @Column(name = "acceptanceType", nullable = false)
     private String acceptanceType;
 
+    @ManyToOne
+    @JoinColumn(name = "recurrentAppointmentID",nullable = true)
+    private RecurrentAppointment recurrentAppointment;
+
     @PrePersist
     protected void onCreate() {
         if (assignTime == null) {

@@ -14,6 +14,10 @@ public class NotesDTO  {
     private String createDate;
     private String shiftStartTime;
     private String shiftEndTime;
+    private String System_ShiftStartDate;
+    private String System_ShiftStartTime;
+    private String System_shift_endTime;
+    private String System_shift_endDate;
     private String careplanID;
     private String clientID;
     private String noteType;

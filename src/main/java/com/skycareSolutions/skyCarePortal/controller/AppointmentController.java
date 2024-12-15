@@ -2,11 +2,11 @@ package com.skycareSolutions.skyCarePortal.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.skycareSolutions.skyCarePortal.dto.AppointmentCalenderDTO;
-import com.skycareSolutions.skyCarePortal.dto.AppointmentDTO;
-import com.skycareSolutions.skyCarePortal.dto.CareGiverAppointmentDTO;
+import com.skycareSolutions.skyCarePortal.dto.*;
 import com.skycareSolutions.skyCarePortal.service.AppointmentService;
+import com.skycareSolutions.skyCarePortal.service.RecurrenceService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +20,10 @@ public class AppointmentController {
 
     @Autowired
     private AppointmentService appointmentService;
+
+    @Autowired
+    @Lazy
+    private RecurrenceService recurrenceService;
 
     private final ObjectMapper objectMapper;
 
@@ -41,9 +45,20 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getAllEventsRelatedToDateRange(startDate,endDate));
     }
 
+    @PostMapping("/recurrentAppointment")
+    public ResponseEntity updateRecurrentAppointment(
+            @RequestBody RecurrentAppointmentUpdateDTO recurrentAppointmentUpdateDTO){
+        return ResponseEntity.ok(recurrenceService.updateRecurrentAppointment(recurrentAppointmentUpdateDTO));
+    }
+
     @GetMapping("/client/{clientID}")
     public ResponseEntity<List<AppointmentDTO>> getAppointmentsByClientID(@PathVariable String clientID){
         return ResponseEntity.ok(appointmentService.getAppointmentsbyClientID(clientID));
+    }
+
+    @DeleteMapping("/cancelAppointment/{id}")
+    public ResponseEntity<Boolean> cancelAppointment(@PathVariable String id){
+        return ResponseEntity.ok(recurrenceService.cancelAppointment(id));
     }
 
     @GetMapping("/{id}")
@@ -79,8 +94,16 @@ public class AppointmentController {
 
     }
 
+    @GetMapping("/next/appointment/{id}")
+    public ResponseEntity<NextAppointmentCareGiverDTO> getNextAppointmentToCareGiver(
+            @PathVariable String id
+    )
+    {
+        return ResponseEntity.ok(appointmentService.getNextAssignedAppointmentToCareGiver(id));
+    }
+
     @GetMapping("/careGiver/{employeeID}")
-    public ResponseEntity<List<CareGiverAppointmentDTO>> getAppointmentsAssignedToCareGiver(
+    public ResponseEntity<List<CareGiverAllocatedAppointmentsDTO>> getAppointmentsAssignedToCareGiver(
             @PathVariable(name = "employeeID") String employeeID,
             @RequestParam(name = "status") String status
     ){

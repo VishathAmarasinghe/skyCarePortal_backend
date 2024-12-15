@@ -3,6 +3,10 @@ package com.skycareSolutions.skyCarePortal.utils;
 import java.security.SecureRandom;
 
 public class Micro_utils {
+
+    private static final String OTP_CHARS = "0123456789";
+    private static final SecureRandom random = new SecureRandom();
+
     public static String idGenerator(String tableName,String lastId){
         int newLanguageNumber = 0;
         if (lastId!=null && !lastId.equalsIgnoreCase("")){
@@ -72,6 +76,20 @@ public class Micro_utils {
             formatTablePrefix="IA";
         }else if (tableName.equalsIgnoreCase("recurrentAppointments")){
             formatTablePrefix="RA";
+        }else if (tableName.equalsIgnoreCase("resource")){
+            formatTablePrefix="RF";
+        }else if (tableName.equalsIgnoreCase("resourceDocuments")){
+            formatTablePrefix="RD";
+        }else if (tableName.equalsIgnoreCase("clientDocuments")){
+            formatTablePrefix="CY";
+        } else if (tableName.equalsIgnoreCase("shiftNotes")) {
+            formatTablePrefix="SN";
+        }else if (tableName.equalsIgnoreCase("shiftNotesDocuments")){
+            formatTablePrefix="SD";
+        }else if (tableName.equalsIgnoreCase("incidentDocuments")){
+            formatTablePrefix="ID";
+        }else if (tableName.equalsIgnoreCase("incidentParties")){
+            formatTablePrefix = "IP";
         }
         return String.format(formatTablePrefix+"%05d", newID);
     }
@@ -115,6 +133,17 @@ public class Micro_utils {
             characters[j] = temp;
         }
         return new String(characters);
+    }
+
+
+
+    // Method to generate OTP of the given length
+    public static String generateOtp(int length) {
+        StringBuilder otp = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            otp.append(OTP_CHARS.charAt(random.nextInt(OTP_CHARS.length())));
+        }
+        return otp.toString();
     }
 
 

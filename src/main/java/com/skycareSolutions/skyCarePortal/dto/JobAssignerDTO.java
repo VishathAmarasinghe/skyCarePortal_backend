@@ -12,4 +12,5 @@ public class JobAssignerDTO {
     private String assignType;
     private String assigner;
     private String acceptanceType;
+    private String recurrentAppointmentID;
 }

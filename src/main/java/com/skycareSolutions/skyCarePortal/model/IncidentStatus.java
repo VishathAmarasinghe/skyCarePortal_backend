@@ -28,6 +28,6 @@ public class IncidentStatus {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "activeState")
-    private String activeState;
+    @Column(name = "activeStatus")
+    private String activeStatus;
 }

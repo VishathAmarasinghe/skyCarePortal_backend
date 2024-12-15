@@ -1,8 +1,6 @@
 package com.skycareSolutions.skyCarePortal.controller;
 
-import com.skycareSolutions.skyCarePortal.dto.ApiResponse;
-import com.skycareSolutions.skyCarePortal.dto.JobAssignCreationDTO;
-import com.skycareSolutions.skyCarePortal.dto.JobAssignerDTO;
+import com.skycareSolutions.skyCarePortal.dto.*;
 import com.skycareSolutions.skyCarePortal.service.JobAssignerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +33,16 @@ public class JobAssignerController {
         return jobAssignerService.getJobAssignerById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/assignment/{appointmentID}")
+    public ResponseEntity<List<JobAssignShowerDTO>> getJobAssignmentToCareGivers(@PathVariable(name = "appointmentID") String appointmentID){
+        return ResponseEntity.ok(jobAssignerService.jobAssignerShower(appointmentID));
+    }
+
+    @PostMapping("/updateAssigners")
+    public ResponseEntity<Boolean> updateJobAssingersByRecurrentAppointmentID(@RequestBody UpdateAssignersDTO updateAssignersDTO){
+        return ResponseEntity.ok(jobAssignerService.updateAssigners(updateAssignersDTO));
     }
 
     @PutMapping("/acceptanceType/{id}")
