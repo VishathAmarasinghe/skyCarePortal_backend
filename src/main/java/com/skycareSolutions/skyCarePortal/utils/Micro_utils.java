@@ -91,7 +91,7 @@ public class Micro_utils {
         }else if (tableName.equalsIgnoreCase("incidentParties")){
             formatTablePrefix = "IP";
         }
-        return String.format(formatTablePrefix+"%05d", newID);
+        return formatTablePrefix+newID;
     }
 
     public static String generateRandomPassword(int length) {

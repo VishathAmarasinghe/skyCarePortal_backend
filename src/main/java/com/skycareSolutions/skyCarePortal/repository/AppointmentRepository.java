@@ -1,6 +1,7 @@
 package com.skycareSolutions.skyCarePortal.repository;
 
 import com.skycareSolutions.skyCarePortal.model.Appointment;
+import com.skycareSolutions.skyCarePortal.model.AppointmentType;
 import com.skycareSolutions.skyCarePortal.model.Client;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -17,6 +18,9 @@ public interface AppointmentRepository extends CrudRepository<Appointment, Strin
     // Fetch all appointments
     @Query(value = "SELECT AP FROM Appointment AP")
     List<Appointment> findAllAppointments();
+
+    @Query("SELECT COUNT(ap.appointmentID) FROM Appointment ap WHERE ap.appointmentType=:appointmentType")
+    int findAppointmentCountBasedOnAppointmentType(AppointmentType appointmentType);
 
     // Fetch appointments for a specific client
     @Query("SELECT ap FROM Appointment ap WHERE ap.client = :client")

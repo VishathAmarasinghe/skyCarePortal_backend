@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +35,10 @@ public class JobAssignerService {
     @Autowired
     @Lazy
     private RecurrenceService recurrenceService;
+
+    @Autowired
+    @Lazy
+    private EmailService emailService;
 
     // Map DTO to Entity
     private JobAssigner mapToEntity(JobAssignerDTO dto) {
@@ -87,13 +92,15 @@ public class JobAssignerService {
                         jobAssign.setRecurrentAppointmentID(recurrentAppointmentDTO.getRecurrentAppointmentID());
                         JobAssigner entity = mapToEntity(jobAssign);
                         JobAssigner savedEntity = jobAssignerRepository.save(entity);
-                    }
 
+                        CompletableFuture.runAsync(()->emailService.generateAppointmentConfirmationEmail(careGiver.getEmployee().getFirstName(),careGiver.getEmployee().getEmail(),""));
+                    }
                 }
         }else{
             for (String careGiverID:dto.getCareGiverIDs()){
                 for (RecurrentAppointmentDTO recurrentAppointmentDTO:recurrentAppointmentDTOList){
                     System.out.println("logging caregivers "+careGiverID);
+                    CareGiver careGiver = careGiverService.getCareGiverByIdWithEntity(careGiverID);
                     String lastAssignID = jobAssignerRepository.getLastIdOfJobAssigner();
                     String newAssignID = Micro_utils.idGenerator("jobAssigner", lastAssignID);
                     JobAssignerDTO jobAssign = new JobAssignerDTO();
@@ -106,6 +113,9 @@ public class JobAssignerService {
                     jobAssign.setRecurrentAppointmentID(recurrentAppointmentDTO.getRecurrentAppointmentID());
                     JobAssigner entity = mapToEntity(jobAssign);
                     JobAssigner savedEntity = jobAssignerRepository.save(entity);
+
+                    CompletableFuture.runAsync(()->emailService.generateAppointmentConfirmationEmail(careGiver.getEmployee().getFirstName(),careGiver.getEmployee().getEmail(),""));
+
                 }
             }
         }
@@ -152,6 +162,12 @@ public class JobAssignerService {
         RecurrentAppointment recurrentAppointment = recurrenceService.getRecurrentAppointmentByIDWithEntity(recurrentID);
         JobAssigner assigner = jobAssignerRepository.findJobAssignWithRecurrentAppointmentAndCareGiver(recurrentAppointment,careGiver);
         return mapToDTO(assigner);
+    }
+
+    public List<JobAssignerDTO> findJobAssignerByRecurrentID(String recurrentID){
+        RecurrentAppointment recurrentAppointment = recurrenceService.getRecurrentAppointmentByIDWithEntity(recurrentID);
+        List<JobAssigner> assigner = jobAssignerRepository.findJobAssignWithRecurrentAppointment(recurrentAppointment);
+        return assigner.stream().map(this::mapToDTO).toList();
     }
 
     public List<JobAssignShowerDTO> jobAssignerShower(String appointmentID){

@@ -43,6 +43,22 @@ public class ShiftNoteController {
         // If shift start failed, return a bad request response
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // 400 Bad Request
     }
+
+    @PostMapping("/new")
+    public ResponseEntity<Boolean> newShiftNote(
+            @RequestPart("note") String shiftNoteDTO,
+            @RequestPart(value = "files",required = false) List<MultipartFile> files
+    ) {
+        // Call the service method to start the shift
+        try {
+            ShiftNoteDTO notes = objectMapper.readValue(shiftNoteDTO,ShiftNoteDTO.class);
+            return ResponseEntity.ok(shiftNoteService.newShiftNotes(notes,files));
+        }catch (Exception e){
+            System.out.println(e);
+            return ResponseEntity.internalServerError().body(false);
+        }
+    }
+
     @GetMapping("/shift-note-state")
     public ResponseEntity<ShiftNoteStateDTO> getShiftNoteState(@RequestParam(name = "recurrentAppointmentID") String recurrentAppointmentID
     , @RequestParam(name = "employeeID") String employeeID){

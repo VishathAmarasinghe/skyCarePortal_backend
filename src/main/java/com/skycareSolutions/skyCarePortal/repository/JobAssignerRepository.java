@@ -37,4 +37,7 @@ public interface JobAssignerRepository extends CrudRepository<JobAssigner,String
     @Query("SELECT js FROM JobAssigner js WHERE recurrentAppointment=:recurrentAppointment AND careGiver=:caregiver")
     JobAssigner findJobAssignWithRecurrentAppointmentAndCareGiver(RecurrentAppointment recurrentAppointment,CareGiver caregiver);
 
+    @Query("SELECT js FROM JobAssigner js WHERE recurrentAppointment=:recurrentAppointment")
+    List<JobAssigner> findJobAssignWithRecurrentAppointment(RecurrentAppointment recurrentAppointment);
+
 }

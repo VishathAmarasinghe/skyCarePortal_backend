@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 
@@ -14,9 +15,10 @@ import java.time.LocalDateTime;
 public class IncidentsDTO {
     private String incidentID;
     private String title;
+    private String employeeID;
     private LocalDate reportDate;
     private LocalDate incidentDate;
-    private LocalDateTime incidentTime;
+    private String incidentTime;
     private String incidentTypeID;
     private String incidentStatusID;
     private AppointmentAddressDTO address;
@@ -30,4 +32,9 @@ public class IncidentsDTO {
     private String taskID;
     private String followUp;
     private String notes;
+    private List<IncidentDocumentsDTO> documents;
+    private List<IncidentActionTypeAllAnswersDTO> answers;
+    private List<IncidentInvolvedPartiesDTO> parties;
+
+
 }

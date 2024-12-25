@@ -9,5 +9,6 @@ public class AppointmentCalenderDTO {
     private String startDateAndTime;
     private String endDateAndTime;
     private String eventColor;
+    private String recurrentAppointmentID;
 
 }

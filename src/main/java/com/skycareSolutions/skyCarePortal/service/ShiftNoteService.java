@@ -44,6 +44,21 @@ public class ShiftNoteService {
     @Autowired
     JobAssignerService jobAssignerService;
 
+    public void generateReport(String startDate,String endDate,String employeeType, String employeeNo){
+        if (employeeType.equalsIgnoreCase("All")){
+
+        }else{
+            Employee employee = employeeService.findOneEmployeeWithEntity(employeeNo);
+            if (employee!=null){
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                LocalDate startLocalDate = LocalDate.parse(startDate, formatter);
+                LocalDate endLocalDate = LocalDate.parse(endDate, formatter);
+                List<ShiftNotes> shiftNoteList = shiftNoteRepository.getShiftNotesByCreatorAndDateRangeAndState(employee,startLocalDate,endLocalDate);
+
+            }
+        }
+    }
+
 
     public Boolean startShift(StartShiftNoteDTO startShiftNoteDTO){
         String lastShiftNoteID = shiftNoteRepository.getLastIdOfShiftNotes();
@@ -92,6 +107,81 @@ public class ShiftNoteService {
         }else{
             shiftNoteStateDTO.setShiftNoteAvailability("notAvailable");
             return shiftNoteStateDTO;
+        }
+    }
+
+    public Boolean newShiftNotes(ShiftNoteDTO shiftNoteDTO,List<MultipartFile> files){
+        String lastShiftNoteID = shiftNoteRepository.getLastIdOfShiftNotes();
+        String newShiftNoteID = Micro_utils.idGenerator("shiftNotes",lastShiftNoteID);
+        Employee employee = employeeService.findOneEmployeeWithEntity(shiftNoteDTO.getEmployeeID());
+        shiftNoteDTO.setNoteID(newShiftNoteID);
+
+            ShiftNotes  shiftNote  = new ShiftNotes();
+            shiftNote.setNoteID(newShiftNoteID);
+            shiftNote.setEmployee(employee);
+//            JobAssignerDTO jobAssigner = jobAssignerService.findJobAssignerByCareGiverIDAndRecurrentID(shiftNote.getCareGiver().getCareGiverID(),shiftNote.getRecurrentAppointment().getRecurrentAppointmentID());
+            shiftNote.setShiftEndTime(shiftNoteDTO.getShiftEndTime());
+            shiftNote.setShiftEndDate(shiftNoteDTO.getShiftEndDate());
+            shiftNote.setState("Completed");
+            shiftNote.setTitle(shiftNoteDTO.getTitle());
+            shiftNote.setShiftStartTime(shiftNoteDTO.getShiftStartTime());
+            shiftNote.setShiftStartDate(shiftNoteDTO.getShiftStartDate());
+            shiftNote.setNotes(shiftNoteDTO.getNotes());
+
+            LocalDateTime now = LocalDateTime.now();
+
+            // Format the current date as "YYYY-MM-DD"
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            String formattedDate = now.format(dateFormatter);
+
+            // Format the current time as "HH:mm:ss"
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+            String formattedTime = now.format(timeFormatter);
+
+            shiftNote.setSystemShiftEndDate(LocalDate.parse(formattedDate));
+            shiftNote.setSystemShiftEndTime(formattedTime);
+
+        shiftNote.setSystemShiftStartDate(LocalDate.parse(formattedDate));
+        shiftNote.setSystemShiftStartTime(formattedTime);
+
+            shiftNoteRepository.save(shiftNote);
+
+        try {
+            if (files!=null && !files.isEmpty()){
+                for (MultipartFile file:files){
+                    if (file!=null){
+                        String originalFileName = file.getOriginalFilename();
+                        String fileExtension = originalFileName;
+                        if (originalFileName != null && originalFileName.contains(".")) {
+                            fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
+                        }
+                        System.out.println("original file name "+originalFileName);
+                        File directory = new File(DIRECTORY);
+                        if(!directory.exists()){
+                            directory.mkdirs();
+                        }
+                        File destinationFile = new File(DIRECTORY, shiftNoteDTO.getNoteID() + fileExtension);
+                        if (destinationFile.exists()) {
+                            // Delete the existing file
+                            boolean deleted = destinationFile.delete();
+                            if (!deleted) {
+                                throw new RuntimeException("Failed to delete the existing file: " + destinationFile.getName());
+                            }
+                        }
+
+                        file.transferTo(destinationFile);
+                        ShiftNoteDocumentDTO docs  = new ShiftNoteDocumentDTO();
+                        docs.setDocumentName(originalFileName);
+                        docs.setShiftNoteID(shiftNoteDTO.getNoteID());
+                        docs.setDocumentLocation(destinationFile.getAbsolutePath());
+                        shiftDocumentService.saveDocument(docs);
+                    }
+                }
+            }
+            return true;
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

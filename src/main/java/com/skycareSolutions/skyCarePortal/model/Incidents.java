@@ -31,7 +31,7 @@ public class Incidents {
     private LocalDate incidentDate;
 
     @Column(name = "incidentTime")
-    private LocalDateTime incidentTime;
+    private String incidentTime;
 
     @ManyToOne
     @JoinColumn(name = "incidentTypeID")
@@ -73,6 +73,10 @@ public class Incidents {
     @ManyToOne
     @JoinColumn(name = "appointmentID")
     private Appointment appointment;
+
+    @ManyToOne
+    @JoinColumn(name = "employeeID")
+    private Employee employee;
 
     @ManyToOne
     @JoinColumn(name = "taskID")

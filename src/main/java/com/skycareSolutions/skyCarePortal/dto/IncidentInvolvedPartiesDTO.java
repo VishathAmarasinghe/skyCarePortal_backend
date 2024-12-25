@@ -15,8 +15,6 @@ public class IncidentInvolvedPartiesDTO {
 
     private String otherPhoneNo;
 
-    private AppointmentAddressDTO appointmentAddress;
-
     private String incidentID;
 
     private String type;

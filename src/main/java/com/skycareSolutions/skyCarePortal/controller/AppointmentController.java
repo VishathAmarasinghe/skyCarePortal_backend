@@ -45,6 +45,28 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getAllEventsRelatedToDateRange(startDate,endDate));
     }
 
+    @GetMapping("/pending/{id}")
+    public ResponseEntity<List<PendingAppointmentDTO>> getPendingAppointmentsRelatedToCareGiver(
+            @PathVariable String id
+    ){
+        return ResponseEntity.ok(appointmentService.getPendingAppointmentsRelatedToUser(id));
+    }
+
+    @GetMapping("/calender/user/{id}")
+    public ResponseEntity<List<AppointmentCalenderDTO>> getCalenderEventsByUser(
+            @RequestParam(value = "startDate") String startDate,
+            @RequestParam(value = "endDate") String endDate,
+            @PathVariable String id
+    ){
+
+        return ResponseEntity.ok(appointmentService.getAllEventsRelatedToDateRangeWithUser(id,startDate,endDate));
+    }
+
+    @GetMapping("/recurrentAppointment/{id}")
+    public ResponseEntity<PendingAppointmentDTO> getSelectedRecurrentAppointment(@PathVariable String id){
+        return  ResponseEntity.ok(appointmentService.getSelectedRecurrentAppointment(id));
+    }
+
     @PostMapping("/recurrentAppointment")
     public ResponseEntity updateRecurrentAppointment(
             @RequestBody RecurrentAppointmentUpdateDTO recurrentAppointmentUpdateDTO){

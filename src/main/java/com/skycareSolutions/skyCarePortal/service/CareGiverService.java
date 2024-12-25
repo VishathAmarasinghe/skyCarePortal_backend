@@ -14,6 +14,8 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +35,10 @@ public class CareGiverService {
     @Autowired
     @Lazy
     private EmployeeService employeeService;
+
+    @Autowired
+    @Lazy
+    private EmailService emailService;
 
     public List<CareGiverDTO> getAllCareGivers() {
         List<CareGiverDTO> caregivers = careGiverRepository.findAll()
@@ -85,6 +91,9 @@ public class CareGiverService {
         }
         careGiverPaymentService.addPayment(dto.getCareGiverPayments());
         careGiverDocumentService.addDocument(dto.getCareGiverDocuments(),documents);
+
+        CompletableFuture.runAsync(()->emailService.generateDocumentSubmissionAcknowledgmentEmail(dto.getEmployee().getFirstName(),dto.getEmployee().getEmail()));
+
         return ResponseEntity.ok(mapToDTO(caregiver));
     }
 
@@ -95,8 +104,29 @@ public class CareGiverService {
         }
         CareGiver caregiver = mapToEntity(dto);
         caregiver.setCareGiverID(id);
+        for (CareGiverPaymentsDTO paymentsDTO:dto.getCareGiverPayments()){
+            paymentsDTO.setCareGiverID(id);
+        }
         employeeService.updateEmployeeDetails(dto.getEmployee().getEmployeeID(),dto.getEmployee(),profilePhoto);
         List<CareGiverDocumentsDTO>  exisitingDocuments = careGiverDocumentService.getDocumentsByCareGiverId(id);
+
+        List<CareGiverPaymentsDTO> exisitingCareGiverPayments = careGiverPaymentService.getPaymentsByCareGiverId(id);
+        if (exisitingCareGiverPayments.isEmpty() && !dto.getCareGiverPayments().isEmpty()){
+            careGiverPaymentService.addPayment(dto.getCareGiverPayments());
+
+        }else{
+            for (CareGiverPaymentsDTO payment:dto.getCareGiverPayments()){
+                Optional<CareGiverPaymentsDTO> paymentValue = exisitingCareGiverPayments.stream().filter(sm->payment.getPaymentTypeID().equalsIgnoreCase(sm.getPaymentTypeID())).findFirst();
+                if (paymentValue.isPresent()){
+                    System.out.println("incomming payment value is "+payment.getAmount());
+                    careGiverPaymentService.updatePayment(id,paymentValue.get().getPaymentTypeID(),payment);
+                }else{
+                    List<CareGiverPaymentsDTO> paymentList = new ArrayList<>();
+                    paymentList.add(payment);
+                    careGiverPaymentService.addPayment(paymentList);
+                }
+            }
+        }
 
         for (CareGiverDocumentsDTO exisitDoc:exisitingDocuments){
             CareGiverDocumentsDTO inputDoc = dto.getCareGiverDocuments()
@@ -201,6 +231,8 @@ public class CareGiverService {
 
         dto.setEmployee(employeeDTO);
         dto.setStatus(entity.getStatus());
+
+        dto.setCareGiverPayments(careGiverPaymentService.getPaymentsByCareGiverId(entity.getCareGiverID()));
 
         List<CareGiverDocumentsDTO> documentsDTOList = careGiverDocumentService.getDocumentsByCareGiverId(entity.getCareGiverID());
         dto.setCareGiverDocuments(documentsDTOList);

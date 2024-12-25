@@ -39,6 +39,8 @@ public class IncidentActionTypesController {
         return ResponseEntity.ok(createdActionType);
     }
 
+
+
     // Create Incident Action Types with Sub Questions
     @PostMapping("/with-sub-questions")
     public ResponseEntity<Boolean> createActionTypeWithSubQuestions(@RequestBody List<CreateIncidentQuestionsDTO> questionsDTOList) {
@@ -51,6 +53,11 @@ public class IncidentActionTypesController {
     public ResponseEntity<IncidentActionTypesDTO> updateActionType(@PathVariable String id, @RequestBody IncidentActionTypesDTO dto) {
         IncidentActionTypesDTO updatedActionType = incidentActionTypesService.updateActionType(id, dto);
         return ResponseEntity.ok(updatedActionType);
+    }
+
+    @PutMapping("/update")
+    public ResponseEntity<IncidentActionTypesDTO> updateQuestions(@RequestBody IncidentActionTypesDTO dto){
+        return ResponseEntity.ok(incidentActionTypesService.updateSingleMainQuestionWithSubQuestions(dto));
     }
 
     // Delete an Incident Action Type

@@ -34,10 +34,6 @@ public class IncidentInvolvedParties {
     private String otherPhoneNo;
 
     @ManyToOne
-    @JoinColumn(name = "addressID")
-    private AppointmentAddress appointmentAddress;
-
-    @ManyToOne
     @JoinColumn(name = "incidentID")
     private Incidents incidents;
 

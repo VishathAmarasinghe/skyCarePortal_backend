@@ -11,6 +11,7 @@ import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -75,6 +76,76 @@ public class IncidentActionTypesService {
         existingEntity.setStatus(dto.getStatus());
         IncidentActionTypes updatedEntity = incidentActionTypesRepository.save(existingEntity);
         return convertToDTO(updatedEntity);
+    }
+
+    public IncidentActionTypesDTO updateSingleMainQuestionWithSubQuestions(IncidentActionTypesDTO dto){
+        IncidentActionTypes exisitingEntity = incidentActionTypesRepository.findById(dto.getIncidentActionID()).orElse(null);
+        if (exisitingEntity!=null){
+            exisitingEntity.setQuestion(dto.getQuestion());
+            exisitingEntity.setStatus(dto.getStatus());
+            exisitingEntity.setYesNoType(dto.isYesNoAnswer());
+            incidentActionTypesRepository.save(exisitingEntity);
+        }
+
+
+        List<IncidentSubActionTypes> existingSubTypes = incidentSubActionTypeRepository.findAllByIncidentActionID(dto.getIncidentActionID());
+        List<IncidentSubActionTypesDTO> incomingSubTypes = dto.getIncidentSubActionList();
+
+        // Step 3: Update existing sub-questions and collect new sub-questions to add
+        List<IncidentSubActionTypesDTO> updatedSubTypes = new ArrayList<>();
+        List<IncidentSubActionTypesDTO> toAdd = new ArrayList<>();
+
+        // Map existing sub-action types by their ID for easy comparison
+        List<IncidentSubActionTypesDTO> existingSubDTOs = existingSubTypes.stream()
+                .map(this::convertSubToDTO)
+                .collect(Collectors.toList());
+
+        for (IncidentSubActionTypesDTO incomingSub : incomingSubTypes) {
+            boolean subExists = false;
+
+            // Check if the sub-action already exists
+            for (IncidentSubActionTypesDTO existingSub : existingSubDTOs) {
+                if (incomingSub.getId().equals(existingSub.getId())) {
+                    // Update existing sub-action
+                    IncidentSubActionTypes existingSubEntity = incidentSubActionTypeRepository.findById(existingSub.getId())
+                            .orElseThrow(() -> new RuntimeException("Sub Action Type not found"));
+
+                    existingSubEntity.setQuestion(incomingSub.getQuestion());
+                    existingSubEntity.setState(incomingSub.getState());
+
+                    incidentSubActionTypeRepository.save(existingSubEntity); // Save the updated sub-action
+                    updatedSubTypes.add(convertSubToDTO(existingSubEntity));
+                    subExists = true;
+                    break;
+                }
+            }
+
+            // If the sub-action doesn't exist, add it
+            if (!subExists) {
+                IncidentSubActionTypesDTO newSubDTO = new IncidentSubActionTypesDTO();
+                newSubDTO.setQuestion(incomingSub.getQuestion());
+                newSubDTO.setState(incomingSub.getState());
+                newSubDTO.setIncidentActionTypesID(dto.getIncidentActionID());
+
+                // Create a new sub-action type
+                IncidentSubActionTypes newSubEntity = new IncidentSubActionTypes();
+                newSubEntity.setQuestion(newSubDTO.getQuestion());
+                newSubEntity.setState(newSubDTO.getState());
+                newSubEntity.setIncidentActionTypes(exisitingEntity); // Set the parent action type
+
+                IncidentSubActionTypes savedSubEntity = incidentSubActionTypeRepository.save(newSubEntity); // Save new sub-action
+                toAdd.add(convertSubToDTO(savedSubEntity)); // Add it to the list of newly created sub-actions
+            }
+        }
+
+        // Step 4: Return the DTO of the main action type and its updated sub-action types
+        IncidentActionTypesDTO updatedActionTypeDTO = convertToDTO(exisitingEntity);
+        updatedActionTypeDTO.setIncidentSubActionList(updatedSubTypes); // Add updated sub-actions to the main action DTO
+
+        // Optionally, you can also include newly added sub-actions
+        updatedActionTypeDTO.getIncidentSubActionList().addAll(toAdd);
+
+        return updatedActionTypeDTO;
     }
 
     public void deleteActionType(String id) {

@@ -47,7 +47,7 @@ public class ClientTypeController {
 
     // Update a ClientType
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse> updateClientType(@PathVariable Long id, @RequestBody ClientTypeDTO clientTypeDTO) {
+    public ResponseEntity<ApiResponse> updateClientType(@PathVariable String id, @RequestBody ClientTypeDTO clientTypeDTO) {
         try {
             clientTypeService.updateClientType(id, clientTypeDTO);
             return new ResponseEntity<>(new ApiResponse("Updated Client Type successfully", true), HttpStatus.OK);

@@ -74,7 +74,7 @@ public class IncidentActionTypeAllAnswersService {
     public List<IncidentActionTypeAllAnswersDTO> getAnswersByIncident(String incidentID) {
         Optional<Incidents> incidents = incidentsRepository.findById(incidentID);
         if (incidents.isPresent()){
-            return repository.findByIncidents_Id(incidents.get())
+            return repository.findByIncidentsId(incidents.get())
                     .stream()
                     .map(this::toDTO)
                     .collect(Collectors.toList());
@@ -86,6 +86,16 @@ public class IncidentActionTypeAllAnswersService {
     // Delete an answer by ID
     public void deleteAnswer(Long id) {
         repository.deleteById(id);
+    }
+
+    public void deleteAllAnswersRelatedToIncident(String incidentID){
+        Optional<Incidents> incidents = incidentsRepository.findById(incidentID);
+        if (incidents.isPresent()){
+            List<IncidentActionTypeAllAnswers> answerList = repository.findByIncidentsId(incidents.get());
+            for (IncidentActionTypeAllAnswers answer:answerList){
+                deleteAnswer(answer.getId());
+            }
+        }
     }
 
     // Convert Entity to DTO

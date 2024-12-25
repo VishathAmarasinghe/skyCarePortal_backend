@@ -36,7 +36,6 @@ public class IncidentInvolvedPartiesService {
         party.setOtherPhoneNo(dto.getOtherPhoneNo());
         party.setType(dto.getType());
         party.setIncidents(incidentService.getIncidentByIDWithEntity(dto.getIncidentID()));
-        party.setAppointmentAddress(addressService.findByIDWithEntity(dto.getAppointmentAddress().getAppointmentAddressID()));
         return party;
     }
 
@@ -50,7 +49,6 @@ public class IncidentInvolvedPartiesService {
         dto.setOtherPhoneNo(party.getOtherPhoneNo());
         dto.setType(party.getType());
         dto.setIncidentID(party.getIncidents().getIncidentID());
-        dto.setAppointmentAddress(addressService.findAppointmentAddressByID(party.getAppointmentAddress().getAppointmentAddressID()));
         return dto;
     }
 
@@ -76,13 +74,13 @@ public class IncidentInvolvedPartiesService {
         return ResponseEntity.ok(parties);
     }
 
-    public ResponseEntity<List<IncidentInvolvedPartiesDTO>> getPartiesByIncident(String incidentID) {
+    public List<IncidentInvolvedPartiesDTO> getPartiesByIncident(String incidentID) {
         Incidents incident = incidentService.getIncidentByIDWithEntity(incidentID);
         List<IncidentInvolvedParties> parties = partiesRepository.getIncidentInvolvedPartiesByIncidentID(incident);
         List<IncidentInvolvedPartiesDTO> dtos = parties.stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(dtos);
+        return dtos;
     }
 
     public IncidentInvolvedPartiesDTO updateParty(String partyID, IncidentInvolvedPartiesDTO dto) {
@@ -95,7 +93,6 @@ public class IncidentInvolvedPartiesService {
         existingParty.setWorkPhoneNo(dto.getWorkPhoneNo());
         existingParty.setOtherPhoneNo(dto.getOtherPhoneNo());
         existingParty.setType(dto.getType());
-        existingParty.setAppointmentAddress(addressService.findByIDWithEntity(dto.getAppointmentAddress().getAppointmentAddressID()));
         existingParty.setIncidents(incidentService.getIncidentByIDWithEntity(dto.getIncidentID()));
 
         IncidentInvolvedParties updatedParty = partiesRepository.save(existingParty);

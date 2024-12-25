@@ -1,13 +1,11 @@
 package com.skycareSolutions.skyCarePortal.controller;
 
+import com.skycareSolutions.skyCarePortal.dto.CareGiverDashboardDTO;
 import com.skycareSolutions.skyCarePortal.dto.DashboardDTO;
 import com.skycareSolutions.skyCarePortal.service.DashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @CrossOrigin("*")
@@ -20,6 +18,11 @@ public class DashboardController {
     @GetMapping("/admin")
     public DashboardDTO getDashboardStats() {
         return dashboardService.getAdminDashboardStats();
+    }
+
+    @GetMapping("/careGiver/{id}")
+    public CareGiverDashboardDTO getCareGiverStats(@PathVariable String id){
+        return dashboardService.getCareGiverStats(id);
     }
 
 

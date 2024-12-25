@@ -18,6 +18,6 @@ public interface IncidentActionTypeAllAnswersRepository extends JpaRepository<In
     List<IncidentActionTypeAllAnswers> findByIncidentSubActionTypes_Id(Long incidentSubActionID);
 
     // Find answers by Incidents
-    @Query("SELECT ans FROM IncidentActionTypeAllAnswers ans WHERE ans.incidents =: incidents")
-    List<IncidentActionTypeAllAnswers> findByIncidents_Id(Incidents incidents);
+    @Query("SELECT ans FROM IncidentActionTypeAllAnswers ans WHERE ans.incidents =:incidents")
+    List<IncidentActionTypeAllAnswers> findByIncidentsId(Incidents incidents);
 }

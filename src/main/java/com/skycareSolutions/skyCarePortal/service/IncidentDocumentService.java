@@ -56,10 +56,10 @@ public class IncidentDocumentService {
         return toDTO(savedDocument);
     }
 
-    public ResponseEntity<IncidentDocumentsDTO> getDocumentById(String documentId) {
+    public IncidentDocumentsDTO getDocumentById(String documentId) {
         IncidentDocuments document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Document not found"));
-        return ResponseEntity.ok(toDTO(document));
+        return toDTO(document);
     }
 
     public ResponseEntity<List<IncidentDocumentsDTO>> getAllDocuments() {

@@ -46,15 +46,12 @@ public class ClientTypeService {
     }
 
     // Update a ClientType
-    public void updateClientType(Long id, ClientTypeDTO clientTypeDTO) throws Exception {
-        ClientType existingClientType = clientTypeRepository.findById(id.toString()).orElse(null);
+    public void updateClientType(String id, ClientTypeDTO clientTypeDTO) throws Exception {
+        ClientType existingClientType = clientTypeRepository.findById(id).orElse(null);
         if (existingClientType == null) {
             throw new Exception("Client Type not found.");
         }
 
-        if (!existingClientType.getName().equals(clientTypeDTO.getName())) {
-            throw new Exception("A Client Type with this name already exists.");
-        }
         existingClientType.setName(clientTypeDTO.getName());
         existingClientType.setStatus(clientTypeDTO.getStatus());
         clientTypeRepository.save(existingClientType);

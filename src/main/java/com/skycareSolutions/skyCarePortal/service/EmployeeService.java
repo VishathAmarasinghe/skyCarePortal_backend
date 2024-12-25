@@ -205,7 +205,7 @@ public class EmployeeService {
         }
     }
 
-    public Employee  saveNewEmployee(EmployeeDTO employee, MultipartFile profilePhoto){
+    public Employee saveNewEmployee(EmployeeDTO employee, MultipartFile profilePhoto){
 
         String lastEmployeeID = employeeRepository.getLastIdOfEmployees();
         String newEmployeeID = Micro_utils.idGenerator("employee",lastEmployeeID);
@@ -232,7 +232,7 @@ public class EmployeeService {
                 throw new RuntimeException(e);
             }
         }
-        if (!employee.getAccessRole().equalsIgnoreCase("CareGiver") && !employee.getStatus().equalsIgnoreCase("Pending")){
+        if (employee.getStatus().equalsIgnoreCase("Activated")){
             String password = Micro_utils.generateRandomPassword(10);
             employee.setPassword(authenticationUtils.hashPassword(password));
 
@@ -337,6 +337,14 @@ public class EmployeeService {
             }
         }
 
+        if ((existingEmployee.getStatus().equalsIgnoreCase("Pending") && updatedEmployeeDTO.getStatus().equalsIgnoreCase("Activated")) ||
+                (existingEmployee.getStatus().equalsIgnoreCase("Deactivated") && updatedEmployeeDTO.getStatus().equalsIgnoreCase("Activated"))){
+            String password = Micro_utils.generateRandomPassword(10);
+            existingEmployee.setPassword(authenticationUtils.hashPassword(password));
+
+            CompletableFuture.runAsync(()->emailService.generateWelcomeLoginEmail(existingEmployee.getFirstName(),existingEmployee.getEmail(),password,frontendUrl));
+        }
+        existingEmployee.setStatus(updatedEmployeeDTO.getStatus());
         // Save and return the updated employee
         Employee updatedEmployee  = employeeRepository.save(existingEmployee);
         EmployeeDTO updatedEmployeeDTOData = convertToDTO(updatedEmployee);

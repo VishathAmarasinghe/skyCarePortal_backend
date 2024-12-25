@@ -5,4 +5,5 @@ import com.skycareSolutions.skyCarePortal.model.CareGiverPaymentIDs;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CareGiverPaymentsRepository extends JpaRepository<CareGiverPayments, CareGiverPaymentIDs> {
+
 }

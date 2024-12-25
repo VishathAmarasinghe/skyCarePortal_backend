@@ -51,6 +51,7 @@ public class IncidentTypeService {
                 .orElseThrow(() -> new RuntimeException("IncidentType not found"));
         existing.setTitle(dto.getTitle());
         existing.setDescription(dto.getDescription());
+        existing.setStatus(dto.getStatus());
         IncidentType updated = incidentTypeRepository.save(existing);
         return convertToDTO(updated);
     }

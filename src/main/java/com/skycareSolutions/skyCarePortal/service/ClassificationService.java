@@ -61,9 +61,13 @@ public class ClassificationService {
             throw new Exception("Classification not found");
         }
 
+        Classification classification = classificationRepository.findByClassificationName(classificationDTO.getClassificationName());
+
+        if (classification!=null){
         // Prevent duplicate classification name when updating
-        if (classificationRepository.existsByClassificationName(classificationDTO.getClassificationName())) {
+        if (!classification.getClassificationID().equalsIgnoreCase(id)) {
             throw new Exception("A classification with this name already exists.");
+        }
         }
 
         existingClassification.setClassificationName(classificationDTO.getClassificationName());

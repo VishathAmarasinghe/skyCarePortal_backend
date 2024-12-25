@@ -53,6 +53,7 @@ public class IncidentStatusService {
                 .orElseThrow(() -> new RuntimeException("Status not found"));
         status.setStatus(dto.getStatus());
         status.setDescription(dto.getDescription());
+        status.setActiveStatus(dto.getActiveStatus());
         return convertToDTO(incidentStatusRepository.save(status));
     }
 

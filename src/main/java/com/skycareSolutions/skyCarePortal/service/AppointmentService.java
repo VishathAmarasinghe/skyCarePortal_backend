@@ -16,6 +16,7 @@ import java.sql.Date;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -64,9 +65,95 @@ public class AppointmentService {
             Appointment appointment = getAppointmentByIdWithEntity(ap.getAppointmentID());
             appointment.setStartDate(Date.valueOf(ap.getStartDate()));
             appointment.setEndDate(Date.valueOf(ap.getEndDate()));
-            eventDTOs.add(toCalenderDTO(appointment));
+            appointment.setStartTime(ap.getStartTime());
+            appointment.setEndTime(ap.getEndTime());
+            AppointmentCalenderDTO calender = toCalenderDTO(appointment);
+            calender.setRecurrentAppointmentID(ap.getRecurrentAppointmentID());
+            eventDTOs.add(calender);
         }
         return eventDTOs;
+    }
+
+    public List<PendingAppointmentDTO> getPendingAppointmentsRelatedToUser(String employeeID){
+        LocalDate currentDate = LocalDate.now();
+        LocalTime currentTime = LocalTime.now();
+        LocalDate endingDate = currentDate.plusYears(1);
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String formattedDate = currentDate.format(formatter);
+        String endDateFormatter = endingDate.format(formatter);
+
+        List<RecurrentAppointmentDTO> appointments = recurrenceService.getAppointmentsWithinGivenDateRange(formattedDate,endDateFormatter);
+        CareGiverDTO careGiver = careGiverService.getCareGiverByEmployee(employeeID);
+        List<PendingAppointmentDTO> result = new ArrayList<>();
+        for (RecurrentAppointmentDTO ap:appointments){
+            PendingAppointmentDTO singleAppointment = new PendingAppointmentDTO();
+            List<JobAssignerDTO> jobAssignerDTO = jobAssignerService.findJobAssignerByRecurrentID(ap.getRecurrentAppointmentID());
+            for (JobAssignerDTO job:jobAssignerDTO){
+                if (job.getCareGiverID().equalsIgnoreCase(careGiver.getCareGiverID())){
+                    if (job.getAcceptanceType().equalsIgnoreCase("Accepted")){
+                        LocalDateTime appointmentStartDateTime = LocalDateTime.of(ap.getStartDate(), LocalTime.parse(ap.getStartTime()));
+                        LocalDateTime currentDateTime = LocalDateTime.now();
+                        // Check if the appointment's start date-time is equal to or after the current date-time
+                        if (!appointmentStartDateTime.isBefore(currentDateTime)) {
+                            Appointment appointment = getAppointmentByIdWithEntity(ap.getAppointmentID());
+                            singleAppointment.setAppointmentData(mapToDTO(appointment));
+                            singleAppointment.setRecurrentAppointmentID(ap.getRecurrentAppointmentID());
+                            singleAppointment.setCareGiverStatus(job.getAcceptanceType());
+                            singleAppointment.setStartDate(ap.getStartDate().toString());
+                            singleAppointment.setEndDate(ap.getEndDate().toString());
+                            singleAppointment.setStartTime(ap.getStartTime());
+                            singleAppointment.setEndTime(ap.getEndTime());
+                            result.add(singleAppointment);
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    public List<AppointmentCalenderDTO> getAllEventsRelatedToDateRangeWithUser(String employeeID,String startDate,String endDate){
+        List<RecurrentAppointmentDTO> appointments = recurrenceService.getAppointmentsWithinGivenDateRange(startDate,endDate);
+        List<AppointmentCalenderDTO> eventDTOs = new ArrayList<>();
+        CareGiverDTO careGiver = careGiverService.getCareGiverByEmployee(employeeID);
+        for (RecurrentAppointmentDTO ap:appointments){
+             List<JobAssignerDTO> jobAssignerDTO = jobAssignerService.findJobAssignerByRecurrentID(ap.getRecurrentAppointmentID());
+             for (JobAssignerDTO job:jobAssignerDTO){
+                 if (job.getCareGiverID().equalsIgnoreCase(careGiver.getCareGiverID())){
+                     Appointment appointment = getAppointmentByIdWithEntity(ap.getAppointmentID());
+                     appointment.setStartDate(Date.valueOf(ap.getStartDate()));
+                     appointment.setEndDate(Date.valueOf(ap.getEndDate()));
+                     appointment.setStartTime(ap.getStartTime());
+                     appointment.setEndTime(ap.getEndTime());
+                     AppointmentCalenderDTO calender = toCalenderDTO(appointment);
+                     calender.setRecurrentAppointmentID(ap.getRecurrentAppointmentID());
+                     eventDTOs.add(calender);
+                 }
+             }
+        }
+        return eventDTOs;
+    }
+
+    public PendingAppointmentDTO getSelectedRecurrentAppointment(String id){
+        RecurrentAppointmentDTO recurrentAppointmentDTO = recurrenceService.getRecurrentAppointmentByID(id);
+        PendingAppointmentDTO result = new PendingAppointmentDTO();
+        result.setRecurrentAppointmentID(id);
+        result.setStartDate(recurrentAppointmentDTO.getStartDate().toString());
+        result.setEndDate(recurrentAppointmentDTO.getEndDate().toString());
+        result.setStartTime(recurrentAppointmentDTO.getStartTime());
+        result.setEndTime(recurrentAppointmentDTO.getEndTime());
+
+        Optional<Appointment> appointment = appointmentRepository.findById(recurrentAppointmentDTO.getAppointmentID());
+        if (appointment.isPresent()){
+            result.setAppointmentData(mapToDTO(appointment.get()));
+        }
+        return result;
+    }
+
+    public int getAppointmentCountBasedOnAppointmentType(String appointmentTypeID){
+        AppointmentType appointmentType = appointmentTypeService.getAppointmentTypeByIdWithEntity(appointmentTypeID);
+        return appointmentRepository.findAppointmentCountBasedOnAppointmentType(appointmentType);
     }
 
     public List<AppointmentDTO> getAllAppointments() {

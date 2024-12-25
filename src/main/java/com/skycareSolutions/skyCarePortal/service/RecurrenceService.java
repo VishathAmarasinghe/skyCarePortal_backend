@@ -47,7 +47,7 @@ public class RecurrenceService {
 
         // Start creating recurrent appointments
         LocalDate currentStartDate = startDate;
-        LocalDate currentEndDate = endDate;
+        LocalDate currentEndDate = originalAppointment.getEndDate().toLocalDate();
 
         int occuranceTime = 1;
 
