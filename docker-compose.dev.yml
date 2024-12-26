@@ -11,7 +11,7 @@ services:
       - FRONTEND_URL=http://frontend:80
 
   backend:
-    image: backend:latest:latest
+    image: backend:latest
     depends_on:
       - mysql
     ports:
