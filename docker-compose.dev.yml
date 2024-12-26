@@ -6,6 +6,8 @@ services:
       - "80:80"  # Expose frontend on port 80
     networks:
       - app-network
+    volumes:
+      - certbot-etc:/etc/letsencrypt
     environment:
       - FRONTEND_URL=http://frontend:80
 
@@ -44,3 +46,5 @@ networks:
 
 volumes:
   mysql-data-dev:
+  certbot-etc:
+    external: true
