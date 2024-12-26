@@ -1,10 +1,10 @@
 # Step 1: Build the Spring Boot application with Maven
-FROM maven:3.8.6-openjdk-17-slim as build
+FROM maven:3.9.9-eclipse-temurin-17 as build
 
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the pom.xml and install dependencies
+# Copy the pom.xml and install dependenciesz
 COPY pom.xml .
 
 # Download dependencies (this allows us to cache dependencies to speed up builds)
