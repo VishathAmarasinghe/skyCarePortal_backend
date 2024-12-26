@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   frontend:
     image: frontend:latest
@@ -34,4 +32,4 @@ networks:
     driver: bridge
 
 volumes:
-  mysql-data:
+  mysql-data-dev:
