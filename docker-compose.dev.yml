@@ -6,6 +6,7 @@ services:
       - app-network
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
+    restart: always
     environment:
       - FRONTEND_URL=http://frontend:80
       - VITE_BACKEND_BASE_URL=https://stg.skycare.au/api
@@ -23,6 +24,7 @@ services:
       - "5000:5000"
     networks:
       - app-network
+    restart: always
     environment:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL:-jdbc:mysql://mysql:3306/skycareportal_dev}
@@ -44,6 +46,7 @@ services:
       - mysql-data-dev:/var/lib/mysql
     networks:
       - app-network
+    restart: always
 
   reverse-proxy:
     container_name: reverse-proxy
@@ -56,6 +59,7 @@ services:
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /etc/ssl/certs/dhparam.pem:/etc/ssl/certs/dhparam.pem:ro
+    restart: always
 
 networks:
   app-network:
