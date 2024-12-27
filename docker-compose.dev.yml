@@ -2,9 +2,6 @@ services:
   frontend-staging:
     container_name: frontend-staging
     image: frontend:latest
-    ports:
-      - "80:80"
-      - "443:443"  # Expose frontend on port 80
     networks:
       - app-network
     volumes:
@@ -17,8 +14,6 @@ services:
     image: backend:latest
     depends_on:
       - mysql
-    ports:
-      - "5000:5000"  # Expose backend on port 5000
     networks:
       - app-network
     environment:
