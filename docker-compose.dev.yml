@@ -3,7 +3,8 @@ services:
     container_name: frontend-staging
     image: frontend:latest
     ports:
-      - "80:80"  # Expose frontend on port 80
+      - "80:80"
+      - "443:443"  # Expose frontend on port 80
     networks:
       - app-network
     volumes:
