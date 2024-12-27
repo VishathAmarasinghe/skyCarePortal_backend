@@ -28,6 +28,8 @@ services:
   mysql:
     container_name: database-staging
     image: mysql:5.7
+    ports:
+      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: "root"
       MYSQL_DATABASE: "skycareportal_dev"
@@ -35,6 +37,17 @@ services:
       - mysql-data-dev:/var/lib/mysql
     networks:
       - app-network
+      
+  reverse-proxy:
+    container_name: reverse-proxy
+    image: proxy:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - app-network
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
 
 networks:
   app-network:
