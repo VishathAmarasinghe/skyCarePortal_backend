@@ -8,7 +8,7 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
     environment:
       - FRONTEND_URL=http://frontend:80
-      - VITE_BACKEND_BASE_URL=http://backend-staging:5000
+      - VITE_BACKEND_BASE_URL=https://stg.skycare.au/api
       - VITE_APPLICATION_ADMIN=admin.skyCarePortal
       - VITE_APPLICATION_SUPER_ADMIN=superadmin.skyCarePortal
       - VITE_APPLICATION_CARE_GIVER=caregiver.skyCarePortal
