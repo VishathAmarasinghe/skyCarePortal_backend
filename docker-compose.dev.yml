@@ -7,7 +7,7 @@ services:
     networks:
       - app-network
     volumes:
-      - /etc/letsencrypt/live:/etc/letsencrypt/live
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     environment:
       - FRONTEND_URL=http://frontend:80
 
