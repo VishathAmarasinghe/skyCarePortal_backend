@@ -37,7 +37,7 @@ services:
       - mysql-data-dev:/var/lib/mysql
     networks:
       - app-network
-      
+
   reverse-proxy:
     container_name: reverse-proxy
     image: proxy:latest
@@ -48,6 +48,7 @@ services:
       - app-network
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /etc/ssl/certs/dhparam.pem:/etc/ssl/certs/dhparam.pem:ro
 
 networks:
   app-network:
