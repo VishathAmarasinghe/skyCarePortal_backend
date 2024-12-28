@@ -17,6 +17,6 @@ public interface EmployeeRepository extends CrudRepository<Employee,String> {
     @Query("SELECT e FROM Employee e where accessRole=:role ORDER BY e.joinDate DESC")
     List<Employee> getEmployeesByRole(String role);
 
-    @Query(value = "SELECT e.employeeID FROM Employee e ORDER BY CAST(SUBSTRING(e.employeeID, 3) AS UNSIGNED) DESC LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT e.employeeID FROM employee e ORDER BY CAST(SUBSTRING(e.employeeID, 3) AS UNSIGNED) DESC LIMIT 1", nativeQuery = true)
     String getLastIdOfEmployees();
 }

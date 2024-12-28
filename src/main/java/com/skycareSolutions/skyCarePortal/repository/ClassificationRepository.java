@@ -22,6 +22,6 @@ public interface ClassificationRepository extends CrudRepository<Classification,
     List<Classification> findAll();
 
     // Get the last classification ID
-    @Query(value = "SELECT c.classificationID FROM Classification c ORDER BY CAST(SUBSTRING(c.classificationID, 3) AS UNSIGNED) DESC LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT c.classificationID FROM classification c ORDER BY CAST(SUBSTRING(c.classificationID, 3) AS UNSIGNED) DESC LIMIT 1", nativeQuery = true)
     String getLastIdOfClassification();
 }

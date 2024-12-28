@@ -14,6 +14,6 @@ public interface NotesRepository extends CrudRepository<Notes, String> {
     @Query("SELECT n FROM Notes n WHERE n.clientID.clientID = :clientID ORDER BY n.createDate DESC")
     List<Notes> findByClientID(String clientID);
 
-    @Query(value = "SELECT n.noteid FROM Notes n ORDER BY CAST(SUBSTRING(n.noteid, 3) AS UNSIGNED) DESC LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT n.noteid FROM notes n ORDER BY CAST(SUBSTRING(n.noteid, 3) AS UNSIGNED) DESC LIMIT 1", nativeQuery = true)
     String getLastIdOfNotes();
 }
