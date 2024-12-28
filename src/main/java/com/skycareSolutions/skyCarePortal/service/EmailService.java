@@ -21,17 +21,22 @@ public class EmailService {
 
     // Send individual email
     private void sendEmail(String recipient, String template,String title) throws MessagingException {
+        String htmlTemplate = template;
+        if (htmlTemplate.startsWith("'") && htmlTemplate.endsWith("'")) {
+            htmlTemplate = htmlTemplate.substring(1, htmlTemplate.length() - 1);
+        }
 
         // Create a MIME message (supports HTML content)
         try{
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
-
+            helper.setFrom("no-reply@skycaresolutions.com.au");
             helper.setTo(recipient);
             helper.setSubject(title);
-            helper.setText(template, true);  // true means HTML content
+            helper.setText(htmlTemplate, true);  // true means HTML content
 
             javaMailSender.send(message);
+            System.out.println("email sent");
         }catch (Exception e){
             throw new MessagingException();
         }
