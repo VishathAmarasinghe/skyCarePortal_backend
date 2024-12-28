@@ -16,6 +16,6 @@ public interface ClientRepository extends CrudRepository<Client,String> {
     @Query("SELECT c FROM Client c ORDER BY c.joinDate DESC")
     List<Client> getAllClients();
 
-    @Query(value = "SELECT c.clientID FROM Client c ORDER BY CAST(SUBSTRING(c.clientID, 3) AS UNSIGNED) DESC LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT c.clientID FROM client c ORDER BY CAST(SUBSTRING(c.clientID, 3) AS UNSIGNED) DESC LIMIT 1", nativeQuery = true)
     String getLastIdOfClient();
 }

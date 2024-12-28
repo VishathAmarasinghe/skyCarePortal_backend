@@ -31,6 +31,8 @@ services:
       - SPRING_MAIL_USERNAME=projectvishath@gmail.com
       - SPRING_MAIL_PASSWORD=ovdi uiox jqvd avai
       - SERVER_PORT=5000
+    volumes:
+      - /var/lib/skycareuploads:/root/skyCareUploads
 
   reverse-proxy:
     container_name: reverse-proxy
