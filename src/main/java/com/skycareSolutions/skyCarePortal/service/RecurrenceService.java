@@ -82,9 +82,15 @@ public class RecurrenceService {
             } else if (recurrenceType.equals("Weekly")) {
                 currentStartDate = currentStartDate.plusWeeks(frequencyCount); // Increment by weeks
                 currentEndDate = currentEndDate.plusWeeks(frequencyCount);
+            }else if(recurrenceType.equals("Biweekly")){
+                currentStartDate = currentStartDate.plusWeeks(2); // Increment by weeks
+                currentEndDate = currentEndDate.plusWeeks(2);
             } else if (recurrenceType.equals("Monthly")) {
                 currentStartDate = currentStartDate.plusMonths(frequencyCount); // Increment by months
                 currentEndDate = currentEndDate.plusMonths(frequencyCount);
+            }else if (recurrenceType.equals("Bimonthly")){
+                currentStartDate = currentStartDate.plusMonths(2); // Increment by months
+                currentEndDate = currentEndDate.plusMonths(2);
             }
 
             occurrenceNumber++; // Increment the occurrence number
