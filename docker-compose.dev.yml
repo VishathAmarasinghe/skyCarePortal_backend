@@ -28,8 +28,8 @@ services:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL:-jdbc:mysql://139.99.236.174:3306/skycareportal_dev}
       - SPRING_DATASOURCE_USERNAME=devuser
       - SPRING_DATASOURCE_PASSWORD=skycaredev
-      - SPRING_MAIL_USERNAME=projectvishath@gmail.com
-      - SPRING_MAIL_PASSWORD=ovdi uiox jqvd avai
+      - SPRING_MAIL_USERNAME=no-reply@skycaresolutions.com.au
+      - SPRING_MAIL_PASSWORD=Skycare@3977
       - SERVER_PORT=5000
     volumes:
       - /var/lib/skycareuploads:/root/skyCareUploads
