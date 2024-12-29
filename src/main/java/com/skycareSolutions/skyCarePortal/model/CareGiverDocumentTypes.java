@@ -25,4 +25,10 @@ public class CareGiverDocumentTypes {
     @Column(name = "expDateNeeded")
     private boolean expDateNeeded;
 
+    @Column(name = "required", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean required;
+
+    @Column(name = "status")
+    private String status;
+
 }

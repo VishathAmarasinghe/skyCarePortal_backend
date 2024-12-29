@@ -54,6 +54,8 @@ public class CareGiverDocumentTypesService {
         dto.setDocumentTypeID(entity.getDocumentTypeID());
         dto.setDocumentName(entity.getDocumentName());
         dto.setExpDateNeeded(entity.isExpDateNeeded());
+        dto.setStatus(entity.getStatus());
+        dto.setRequired(entity.isRequired());
         return dto;
     }
 
@@ -62,6 +64,8 @@ public class CareGiverDocumentTypesService {
         entity.setDocumentTypeID(dto.getDocumentTypeID());
         entity.setDocumentName(dto.getDocumentName());
         entity.setExpDateNeeded(dto.getExpDateNeeded());
+        entity.setRequired(dto.getRequired());
+        entity.setStatus(dto.getStatus());
         return entity;
     }
 }
