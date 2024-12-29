@@ -69,7 +69,9 @@ public class AppointmentService {
             appointment.setEndTime(ap.getEndTime());
             AppointmentCalenderDTO calender = toCalenderDTO(appointment);
             calender.setRecurrentAppointmentID(ap.getRecurrentAppointmentID());
-            eventDTOs.add(calender);
+            if (!ap.isCancelled()){
+                eventDTOs.add(calender);
+            }
         }
         return eventDTOs;
     }
@@ -128,7 +130,9 @@ public class AppointmentService {
                      appointment.setEndTime(ap.getEndTime());
                      AppointmentCalenderDTO calender = toCalenderDTO(appointment);
                      calender.setRecurrentAppointmentID(ap.getRecurrentAppointmentID());
-                     eventDTOs.add(calender);
+                     if (!ap.isCancelled()){
+                         eventDTOs.add(calender);
+                     }
                  }
              }
         }
