@@ -134,6 +134,17 @@ public class EmployeeController {
 
     }
 
+    @PostMapping("/update-password")
+    public ResponseEntity<String> updatePassword(
+            @RequestBody PasswordChangeDTO passwordChangeDTO
+    ){
+        try {
+            return ResponseEntity.ok(employeeService.updatePasswords(passwordChangeDTO));
+        }catch (Exception e){
+            throw new RuntimeException(e);
+        }
+    }
+
 
 
 
