@@ -241,6 +241,24 @@ public class EmployeeService {
         return employeeRepository.save(mapEmployeeFromDTO(employee));
     }
 
+    public String updatePasswords(PasswordChangeDTO passwordChangeDTO){
+        Optional<Employee> employeeDTO = employeeRepository.findById(passwordChangeDTO.getEmployeeID());
+        if (employeeDTO.isPresent()){
+            Employee exisitingEmployee = employeeDTO.get();
+            if (passwordChangeDTO.getCurrentPassword()!=null && passwordChangeDTO.getCurrentPassword()!="") {
+                if (!passwordUtil.matchPassword(passwordChangeDTO.getCurrentPassword(), exisitingEmployee.getPassword())) {
+                    throw new RuntimeException("Old Password is incorrect");
+                }
+
+                String newPassword = passwordUtil.hashPassword(passwordChangeDTO.getNewPassword());
+                exisitingEmployee.setPassword(newPassword);
+                employeeRepository.save(exisitingEmployee);
+            }
+        }
+
+        return "Password Changed Successfully";
+    }
+
     public String updateEmployeeBasicInfoWithPanel(EmployeeBasicInfoUpdaterDTO employeeBasicInfoUpdaterDTO,MultipartFile profilePhoto){
         EmployeeDTO employeeDTO = getSingleEmployee(employeeBasicInfoUpdaterDTO.getEmployeeID());
         if (!employeeDTO.getEmail().equalsIgnoreCase(employeeBasicInfoUpdaterDTO.getEmail())){
@@ -253,14 +271,6 @@ public class EmployeeService {
         employeeDTO.setLastName(employeeBasicInfoUpdaterDTO.getLastName());
         employeeDTO.setEmail(employeeBasicInfoUpdaterDTO.getEmail());
 
-        if (employeeBasicInfoUpdaterDTO.getCurrentPassword()!=null && employeeBasicInfoUpdaterDTO.getCurrentPassword()!="") {
-            if (!passwordUtil.matchPassword(employeeBasicInfoUpdaterDTO.getCurrentPassword(), employeeDTO.getPassword())) {
-                return "Old Password is incorrect";
-            }
-
-            String newPassword = passwordUtil.hashPassword(employeeBasicInfoUpdaterDTO.getNewPassword());
-            employeeDTO.setPassword(newPassword);
-        }
 
         updateEmployeeDetails(employeeDTO.getEmployeeID(),employeeDTO,profilePhoto);
         return "Account Updated Successfully";
