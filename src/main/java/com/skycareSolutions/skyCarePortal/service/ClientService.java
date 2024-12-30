@@ -156,9 +156,16 @@ public class ClientService {
                         })
                         .toList()
         );
-        System.out.println("phone no "+clientDTO.getPhoneNumbers().toString());
 
-        clientEntity.setPhoneNumbers(clientDTO.getPhoneNumbers().stream().map(phoneNumber -> new ClientPhoneNo(new ClientPhoneNoId(clientEntity.getClientID(),phoneNumber), clientEntity)).toList());
+        clientEntity.setPhoneNumbers(
+                clientDTO.getPhoneNumbers().stream()
+                        .distinct() // Remove duplicate phone numbers
+                        .map(phoneNumber -> new ClientPhoneNo(
+                                new ClientPhoneNoId(clientEntity.getClientID(), phoneNumber),
+                                clientEntity))
+                        .toList()
+        );
+
 
         System.out.println("phone no "+clientDTO.getClientType().toString());
         Optional<ClientType> clientType = clientTypeRepository.findById(clientDTO.getClientType());
