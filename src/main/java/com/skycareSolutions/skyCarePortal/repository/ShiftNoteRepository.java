@@ -22,6 +22,12 @@ public interface ShiftNoteRepository extends JpaRepository<ShiftNotes,String> {
     @Query("SELECT r from ShiftNotes r ORDER BY shiftEndDate DESC")
     List<ShiftNotes> getAllShiftNotes();
 
+    @Query("SELECT r from ShiftNotes r WHERE r.recurrentAppointment=:recurrentAppointment AND r.employee=:employee")
+    ShiftNotes getShiftNotesByRecurrentAppointmentAndEmployee(RecurrentAppointment recurrentAppointment,Employee employee);
+
+    @Query("SELECT r from ShiftNotes r WHERE r.employee=:employee ORDER BY shiftEndDate DESC")
+    List<ShiftNotes> getAllShiftNotesByEmployee(Employee employee);
+
     @Query("SELECT r from ShiftNotes r WHERE r.careGiver=:careGiver ORDER BY shiftEndDate DESC")
     List<ShiftNotes> getAllShiftNotesByCareGiver(CareGiver careGiver);
 

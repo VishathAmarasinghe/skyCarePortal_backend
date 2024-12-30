@@ -128,6 +128,15 @@ public class ShiftNoteService {
             shiftNote.setShiftStartDate(shiftNoteDTO.getShiftStartDate());
             shiftNote.setNotes(shiftNoteDTO.getNotes());
 
+            if (!shiftNoteDTO.getRecurrentAppointmentID().isEmpty()){
+                RecurrentAppointment recurrentAppointment = recurrenceService.getRecurrentAppointmentByIDWithEntity(shiftNoteDTO.getRecurrentAppointmentID());
+                shiftNote.setRecurrentAppointment(recurrentAppointment);
+            }
+            if (!shiftNoteDTO.getCareGiverID().isEmpty()){
+                CareGiver careGiver = careGiverService.getCareGiverByIdWithEntity(shiftNoteDTO.getCareGiverID());
+                shiftNote.setCareGiver(careGiver);
+            }
+
             LocalDateTime now = LocalDateTime.now();
 
             // Format the current date as "YYYY-MM-DD"
@@ -265,9 +274,8 @@ public class ShiftNoteService {
     }
 
     public List<ShiftNoteDTO> getAllShiftNotesRelatedToCareGiver(String employeeID){
-        CareGiverDTO careGiver = careGiverService.getCareGiverByEmployee(employeeID);
-        CareGiver careGiverEntitiy = careGiverService.getCareGiverByIdWithEntity(careGiver.getCareGiverID());
-        return shiftNoteRepository.getAllShiftNotesByCareGiver(careGiverEntitiy).stream().map(this::toDTO).toList();
+        Employee employee = employeeService.findOneEmployeeWithEntity(employeeID);
+        return shiftNoteRepository.getAllShiftNotesByEmployee(employee).stream().map(this::toDTO).toList();
 
     }
 
