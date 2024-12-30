@@ -23,6 +23,9 @@ public interface JobAssignerRepository extends CrudRepository<JobAssigner,String
     @Query("SELECT js from JobAssigner js WHERE careGiver=:careGiver AND acceptanceType=:status")
     List<JobAssigner> findJobsAssignedToCareGiverBasedOnStatus(CareGiver careGiver,String status);
 
+    @Query("SELECT js from JobAssigner js WHERE careGiver=:careGiver")
+    List<JobAssigner> findJobsAssignedToCareGiver(CareGiver careGiver);
+
     @Query("SELECT COUNT(js.careGiver) AS seatCount from JobAssigner js WHERE appointment=:appointment AND recurrentAppointment=:recurrentAppointment AND acceptanceType=:status")
     int findNumberOfJobAssignersBasedOnAcceptanceType(Appointment appointment, String status, RecurrentAppointment recurrentAppointment);
 

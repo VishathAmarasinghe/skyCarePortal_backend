@@ -3,6 +3,7 @@ package com.skycareSolutions.skyCarePortal.service;
 import com.skycareSolutions.skyCarePortal.dto.*;
 import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.JobAssignerRepository;
+import com.skycareSolutions.skyCarePortal.repository.ShiftNoteRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -39,6 +40,10 @@ public class JobAssignerService {
     @Autowired
     @Lazy
     private EmailService emailService;
+
+    @Autowired
+    @Lazy
+    private ShiftNoteRepository shiftNoteRepository;
 
     // Map DTO to Entity
     private JobAssigner mapToEntity(JobAssignerDTO dto) {
@@ -127,6 +132,29 @@ public class JobAssignerService {
                 .stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+    }
+
+    public List<JobAssignCareGiverViewerDTO> jobAssignTOCareGivers(String id){
+        CareGiverDTO careGiverDTO = careGiverService.getCareGiverByEmployee(id);
+        Employee employee = employeeService.findOneEmployeeWithEntity(id);
+        CareGiver careGiver = careGiverService.getCareGiverByIdWithEntity(careGiverDTO.getCareGiverID());
+        List<JobAssigner> jobs = jobAssignerRepository.findJobsAssignedToCareGiver(careGiver);
+        List<JobAssignCareGiverViewerDTO> assignViewer = new ArrayList<>();
+        for (JobAssigner job:jobs){
+
+            ShiftNotes shiftNote = shiftNoteRepository.getShiftNotesByRecurrentAppointmentAndEmployee(job.getRecurrentAppointment(),employee);
+            if (shiftNote==null && !job.getAcceptanceType().equalsIgnoreCase("Rejected")){
+                JobAssignCareGiverViewerDTO singleView = new JobAssignCareGiverViewerDTO();
+                singleView.setAssignJob(mapToDTO(job));
+                AppointmentDTO appointment = appointmentService.getAppointmentById(job.getAppointment().getAppointmentID());
+                singleView.setAppointment(appointment);
+                RecurrentAppointmentDTO recurrentAppointment = recurrenceService.getRecurrentAppointmentByID(job.getRecurrentAppointment().getRecurrentAppointmentID());
+                singleView.setRecurrentAppointment(recurrentAppointment);
+                assignViewer.add(singleView);
+            }
+
+        }
+        return assignViewer;
     }
 
     public Boolean updateAssigners(UpdateAssignersDTO updateAssignersDTO){
