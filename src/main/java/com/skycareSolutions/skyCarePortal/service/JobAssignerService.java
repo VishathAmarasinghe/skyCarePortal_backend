@@ -9,9 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -132,6 +130,18 @@ public class JobAssignerService {
                 .stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+    }
+
+    public List<String> getAllClientIDListCareGiverAssociated(String employeeID){
+
+        CareGiverDTO careGiver = careGiverService.getCareGiverByEmployee(employeeID);
+        CareGiver careGiverInfo = careGiverService.getCareGiverByIdWithEntity(careGiver.getCareGiverID());
+        List<JobAssigner> jobList = jobAssignerRepository.findJobsAssignedToCareGiver(careGiverInfo);
+        Set<String> clientList = new HashSet<>();
+        for (JobAssigner job:jobList){
+            clientList.add(job.getRecurrentAppointment().getAppointment().getClient().getClientID());
+        }
+        return clientList.stream().toList();
     }
 
     public List<JobAssignCareGiverViewerDTO> jobAssignTOCareGivers(String id){

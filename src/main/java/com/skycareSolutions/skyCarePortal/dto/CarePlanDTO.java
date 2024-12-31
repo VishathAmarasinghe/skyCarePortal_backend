@@ -14,4 +14,5 @@ public class CarePlanDTO {
     private String clientID;
     private List<CarePlanLongTermGoalDTO> carePlanLongTermGoals;
     private List<CarePlanBilablesDTO> carePlanBillables;
+    private String status;
 }

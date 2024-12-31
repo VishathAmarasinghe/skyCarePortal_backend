@@ -67,6 +67,10 @@ public class Incidents {
     private LocalDate dischargeDate;
 
     @ManyToOne
+    @JoinColumn(name = "clientID")
+    private Client client;
+
+    @ManyToOne
     @JoinColumn(name = "carePlanID")
     private CarePlan carePlan;
 

@@ -54,6 +54,7 @@ public class CarePlanService {
         carePlan.setCareplanID(carePlanDTO.getCareplanID());
         carePlan.setStartDate(carePlanDTO.getStartDate());
         carePlan.setEndDate(carePlanDTO.getEndDate());
+        carePlan.setStatus(carePlanDTO.getStatus());
         return carePlan;
     }
 
@@ -66,6 +67,7 @@ public class CarePlanService {
         carePlanDTO.setEndDate(carePlan.getEndDate());
         carePlanDTO.setClientID(carePlan.getClientID().getClientID());
         carePlanDTO.setCarePlanStatusID(carePlan.getCarePlanStatus().getStatus());
+        carePlanDTO.setStatus(carePlanDTO.getStatus());
 
 
         List<CarePlanBilablesDTO> carePlanBilllist = carePlanBillablesService.getBillsByCarePlanID(carePlan);
@@ -82,12 +84,14 @@ public class CarePlanService {
 
     // Get CarePlans by clientID
     public List<CarePlanDTO> getCarePlansByClientID(String clientID) {
-        System.out.println("client id " + clientID);
         Client client = clientRepository.findById(clientID)
                 .orElseThrow(() -> new RuntimeException("Client not found with ID: " + clientID));
 
-        // Now, passing the full Client object instead of just the clientID
-        return carePlanRepository.findByClient(client).stream()
+        List<CarePlan> carePlanList = carePlanRepository.findByClient(client).stream()
+                .filter(carePlan -> carePlan.getStatus().equalsIgnoreCase("Active"))
+                .toList();
+
+        return carePlanList.stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
@@ -101,9 +105,8 @@ public class CarePlanService {
 
     // Get all CarePlans
     public List<CarePlanDTO> getAllCarePlans() {
-        return carePlanRepository.findAll().stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
+        List<CarePlan> carePlanList = carePlanRepository.findAll().stream().filter(carePlan -> carePlan.getStatus().equalsIgnoreCase("Active")).toList();
+        return carePlanList.stream().map(this::toDTO).toList();
     }
 
     // Create a new CarePlan
@@ -120,6 +123,7 @@ public class CarePlanService {
         CarePlanStatus carePlanStatusValue = carePlanStatusRepository.findById(carePlanDTO.getCarePlanStatusID())
                 .orElseThrow(() -> new RuntimeException("Care Plan Status not found with ID: " + carePlanDTO.getCarePlanStatusID()));
         carePlan.setCarePlanStatus(carePlanStatusValue);
+        carePlan.setStatus("Active");
 
         carePlanRepository.save(carePlan);
         List<CarePlanLongTermGoalDTO>  longTermPlans = carePlanDTO.getCarePlanLongTermGoals();
@@ -243,6 +247,15 @@ public class CarePlanService {
 
         // Return updated CarePlan as DTO
         return toDTO(carePlan);
+    }
+
+    public void deactivateCarePlan(String carePlanID){
+        Optional<CarePlan> carePlan= carePlanRepository.findById(carePlanID);
+        if (carePlan.isPresent()){
+            CarePlan existingCarePlan = carePlan.get();
+            existingCarePlan.setStatus("Inactive");
+            carePlanRepository.save(existingCarePlan);
+        }
     }
 
 

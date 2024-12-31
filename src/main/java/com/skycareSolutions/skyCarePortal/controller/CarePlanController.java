@@ -25,6 +25,12 @@ public class CarePlanController {
         return ResponseEntity.ok(carePlans); // 200 OK
     }
 
+    @GetMapping("/deactivate/{id}")
+    public ResponseEntity<String> deactivateCarePlan(@PathVariable String id) {
+        carePlanService.deactivateCarePlan(id);
+        return ResponseEntity.ok("Deleted"); // 200 OK
+    }
+
     @GetMapping("/{carePlanID}")
     public ResponseEntity<CarePlanDTO> getCarePlansByPlanID(@PathVariable String carePlanID) {
         CarePlanDTO carePlan = carePlanService.getCarePlansByCarePlanID(carePlanID);

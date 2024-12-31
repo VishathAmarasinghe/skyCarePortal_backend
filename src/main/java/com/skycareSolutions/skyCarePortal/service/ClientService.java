@@ -38,6 +38,8 @@ public class ClientService {
     @Autowired
     private ClientStatusRepository clientStatusRepository;
 
+
+
     // Convert Client entity to ClientDTO
     private ClientDTO fromEntity(Client clientEntity,String type) {
         ClientDTO clientDTO = new ClientDTO();
@@ -197,10 +199,6 @@ public class ClientService {
                         })
                         .toList()
         );
-
-        System.out.println(clientEntity.getClientID());
-        System.out.println(clientEntity.getClientType());
-        System.out.println(clientEntity.getClientClassifications());
         return clientEntity;
     }
 
@@ -262,6 +260,10 @@ public class ClientService {
     public ClientDTO updateClient(String clientID, ClientDTO clientDTO) {
         Optional<Client> existingClient = clientRepository.findById(clientID);
         if (existingClient.isPresent()) {
+            Client pastClient= existingClient.get();
+            pastClient.getPhoneNumbers().clear();
+            clientRepository.save(pastClient);
+
             Client updatedClient = toEntity(clientDTO);
             updatedClient.setClientID(clientID);
             clientRepository.save(updatedClient);

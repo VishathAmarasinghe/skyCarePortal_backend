@@ -54,8 +54,7 @@ public class Client {
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL)
     private List<ClientLanguage> clientLanguages;
 
-
-    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ClientPhoneNo> phoneNumbers;
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL)

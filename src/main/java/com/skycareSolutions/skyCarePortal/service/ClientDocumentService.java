@@ -2,6 +2,7 @@ package com.skycareSolutions.skyCarePortal.service;
 
 import com.skycareSolutions.skyCarePortal.dto.ClientDocumentDTO;
 import com.skycareSolutions.skyCarePortal.dto.ResourceDocumentDTO;
+import com.skycareSolutions.skyCarePortal.model.Client;
 import com.skycareSolutions.skyCarePortal.model.ClientDocuments;
 import com.skycareSolutions.skyCarePortal.repository.ClientDocumentRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
@@ -48,6 +49,9 @@ public class ClientDocumentService {
         clientDocuments.setDocumentName(clientDocumentDTO.getDocumentName());
         clientDocuments.setShareType(clientDocumentDTO.getShareType());
         clientDocuments.setDocumentLocation(clientDocumentDTO.getDocumentLocation());
+
+        Client client =clientService.getClientByIdWithEntitiy(clientDocumentDTO.getClientId());
+        clientDocuments.setClientid(client);
         return clientDocuments;
     }
 
@@ -78,7 +82,7 @@ public class ClientDocumentService {
                             directory.mkdirs();
                         }
 
-                        File destinationFile = new File(DIRECTORY, newClientDocumentID+"_"+originalFileName+new Date()+ fileExtension);
+                        File destinationFile = new File(DIRECTORY, newClientDocumentID+"_"+originalFileName+ fileExtension);
                         if (destinationFile.exists()) {
                             // Delete the existing file
                             boolean deleted = destinationFile.delete();
@@ -89,7 +93,7 @@ public class ClientDocumentService {
 
                         file.transferTo(destinationFile);
                         matchingDocument.setDocumentLocation(destinationFile.getAbsolutePath());
-                        matchingDocument.setDocumentName(newClientDocumentID+"_"+originalFileName+new Date()+ fileExtension);
+                        matchingDocument.setDocumentName(newClientDocumentID+"_"+originalFileName+ fileExtension);
 
                         clientDocumentRepository.save(toEntity(matchingDocument));
                     }
