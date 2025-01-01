@@ -10,9 +10,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
+@CrossOrigin("*")
 @RequestMapping("/client-documents")
 public class ClientDocumentController {
 
@@ -31,7 +33,9 @@ public class ClientDocumentController {
                                                              @RequestParam("documentDTOs") String documentDTOs) {
         try {
             // Deserialize the list of ClientDocumentDTOs
-            List<ClientDocumentDTO> documentList = objectMapper.readValue(documentDTOs, objectMapper.getTypeFactory().constructCollectionType(List.class, ClientDocumentDTO.class));
+            ClientDocumentDTO document = objectMapper.readValue(documentDTOs, ClientDocumentDTO.class);
+            List<ClientDocumentDTO> documentList = new ArrayList<>();
+            documentList.add(document);
 
             // Save all the documents and get the list of saved documents
             clientDocumentService.saveClientDocuments(documentList, files);

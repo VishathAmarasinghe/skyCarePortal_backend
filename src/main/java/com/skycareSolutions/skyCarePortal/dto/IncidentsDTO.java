@@ -32,9 +32,11 @@ public class IncidentsDTO {
     private String taskID;
     private String followUp;
     private String notes;
+    private String clientID;
     private List<IncidentDocumentsDTO> documents;
     private List<IncidentActionTypeAllAnswersDTO> answers;
     private List<IncidentInvolvedPartiesDTO> parties;
+
 
 
 }

@@ -45,34 +45,37 @@ public class CareGiverDocumentService {
 
     public void addDocument(List<CareGiverDocumentsDTO> documentList, List<MultipartFile> files) {
         for (CareGiverDocumentsDTO doc : documentList) {
-            // Find the file that matches the document by its filename
-            MultipartFile selectedFile = files.stream()
-                    .filter(file -> file.getOriginalFilename() != null && file.getOriginalFilename().equalsIgnoreCase(doc.getDocument()))
-                    .findFirst()
-                    .orElse(null); // Return null if no match is found
+            if (files!=null && files.size()>0){
+                // Find the file that matches the document by its filename
+                MultipartFile selectedFile = files.stream()
+                        .filter(file -> file.getOriginalFilename() != null && file.getOriginalFilename().equalsIgnoreCase(doc.getDocument()))
+                        .findFirst()
+                        .orElse(null); // Return null if no match is found
 
-            if (selectedFile != null) {
-                try {
+                if (selectedFile != null) {
+                    try {
 
-                    String originalFileName = selectedFile.getOriginalFilename();
-                    String fileExtension = originalFileName;
-                    if (originalFileName != null && originalFileName.contains(".")) {
-                        fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
+                        String originalFileName = selectedFile.getOriginalFilename();
+                        String fileExtension = originalFileName;
+                        if (originalFileName != null && originalFileName.contains(".")) {
+                            fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
+                        }
+                        System.out.println("original file name " + originalFileName);
+                        File directory = new File(DIRECTORY);
+                        if (!directory.exists()) {
+                            directory.mkdirs();
+                        }
+                        File destinationFile = new File(DIRECTORY, doc.getCareGiverID()+"_"+doc.getDocumentTypeID()+"_"+doc.getDocument()+"_" + fileExtension);
+                        selectedFile.transferTo(destinationFile);
+                        doc.setDocument(destinationFile.getAbsolutePath());
+
+                    } catch (Exception e) {
+                        doc.setDocument(null);
+                        throw new RuntimeException(e);
                     }
-                    System.out.println("original file name " + originalFileName);
-                    File directory = new File(DIRECTORY);
-                    if (!directory.exists()) {
-                        directory.mkdirs();
-                    }
-                    File destinationFile = new File(DIRECTORY, doc.getCareGiverID()+"_"+doc.getDocumentTypeID()+"_"+doc.getDocument()+"_" + fileExtension);
-                    selectedFile.transferTo(destinationFile);
-                    doc.setDocument(destinationFile.getAbsolutePath());
-
-                } catch (Exception e) {
-                    doc.setDocument(null);
-                    throw new RuntimeException(e);
                 }
             }
+
             CareGiverDocuments document = mapToEntity(doc);
             careGiverDocumentsRepository.save(document);
         }

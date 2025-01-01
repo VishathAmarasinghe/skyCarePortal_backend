@@ -25,8 +25,13 @@ public class AuthController {
     public ResponseEntity<String> login(@RequestBody LoginRequestDTO loginRequestDTO) {
         try {
             EmployeeDTO user = employeeService.loginUser(loginRequestDTO.getEmail(),loginRequestDTO.getPassword());
-            String token = authConfis.generateToken(user);
-            return ResponseEntity.ok(token); // Return JWT token
+            if (user.getStatus().equalsIgnoreCase("Activated")){
+                String token = authConfis.generateToken(user);
+                return ResponseEntity.ok(token); // Return JWT token
+            }else{
+                return ResponseEntity.status(401).body("Deactivated User. Please contact Admin");
+            }
+
         } catch (RuntimeException e) {
             System.out.println(e);
             return ResponseEntity.status(401).body("Invalid email or password");

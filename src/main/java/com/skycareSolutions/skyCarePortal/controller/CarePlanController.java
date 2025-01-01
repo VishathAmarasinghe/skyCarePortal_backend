@@ -1,6 +1,7 @@
 package com.skycareSolutions.skyCarePortal.controller;
 
 import com.skycareSolutions.skyCarePortal.dto.ApiResponse;
+import com.skycareSolutions.skyCarePortal.dto.CarePlanBillableWithCarePlanDTO;
 import com.skycareSolutions.skyCarePortal.dto.CarePlanDTO;
 import com.skycareSolutions.skyCarePortal.service.CarePlanService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,11 +19,19 @@ public class CarePlanController {
     @Autowired
     private CarePlanService carePlanService;
 
+
+
     // Get CarePlans by clientID
     @GetMapping("/client/{clientID}")
     public ResponseEntity<List<CarePlanDTO>> getCarePlansByClientID(@PathVariable String clientID) {
         List<CarePlanDTO> carePlans = carePlanService.getCarePlansByClientID(clientID);
         return ResponseEntity.ok(carePlans); // 200 OK
+    }
+
+    @GetMapping("/deactivate/{id}")
+    public ResponseEntity<String> deactivateCarePlan(@PathVariable String id) {
+        carePlanService.deactivateCarePlan(id);
+        return ResponseEntity.ok("Deleted"); // 200 OK
     }
 
     @GetMapping("/{carePlanID}")

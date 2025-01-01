@@ -36,4 +36,7 @@ public class CarePlan {
     @ManyToOne
     @JoinColumn(name = "clientID", nullable = false )
     private Client clientID;
+
+    @Column(name = "status")
+    private String status;
 }

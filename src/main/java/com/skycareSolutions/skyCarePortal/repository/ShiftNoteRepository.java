@@ -42,6 +42,12 @@ public interface ShiftNoteRepository extends JpaRepository<ShiftNotes,String> {
              LocalDate endDate
     );
 
+    @Query("SELECT s FROM ShiftNotes s " +
+            "WHERE s.shiftStartDate >= :startDate AND s.shiftEndDate <= :endDate")
+    List<ShiftNotes> findShiftNotesBetweenDates(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 
     @Query("SELECT DISTINCT r.employee.employeeID " +
             "FROM ShiftNotes r " +

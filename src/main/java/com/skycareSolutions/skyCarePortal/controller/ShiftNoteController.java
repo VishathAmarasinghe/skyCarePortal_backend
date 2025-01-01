@@ -87,6 +87,11 @@ public class ShiftNoteController {
         return ResponseEntity.ok(shiftNoteService.getAllShiftNotes());
     }
 
+    @GetMapping("/time-sheets")
+    public ResponseEntity<List<TimeSheetDTO>> getTimeSheetsWithinDateRange(@RequestParam String startDate,@RequestParam String endDate,@RequestParam String careGiverID){
+        return ResponseEntity.ok(shiftNoteService.getTimeSheetsForGivenDateRange(startDate,endDate,careGiverID));
+    }
+
     @GetMapping("/careGiver/{id}")
     public ResponseEntity<List<ShiftNoteDTO>> getAllShiftNotesRelatedToEmployee(@PathVariable String id){
         return ResponseEntity.ok(shiftNoteService.getAllShiftNotesRelatedToCareGiver(id));

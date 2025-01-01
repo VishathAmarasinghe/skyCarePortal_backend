@@ -11,9 +11,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +46,12 @@ public class ShiftNoteService {
 
     @Autowired
     JobAssignerService jobAssignerService;
+
+    @Autowired
+    AppointmentService appointmentService;
+
+    @Autowired
+    ClientService clientService;
 
     public void generateReport(String startDate,String endDate,String employeeType, String employeeNo){
         if (employeeType.equalsIgnoreCase("All")){
@@ -128,11 +137,17 @@ public class ShiftNoteService {
             shiftNote.setShiftStartDate(shiftNoteDTO.getShiftStartDate());
             shiftNote.setNotes(shiftNoteDTO.getNotes());
 
-            if (!shiftNoteDTO.getRecurrentAppointmentID().isEmpty()){
+            if (shiftNoteDTO.getClientID()!=null && !shiftNoteDTO.getClientID().isEmpty()){
+                Client client = clientService.getClientByIdWithEntitiy(shiftNoteDTO.getClientID());
+                shiftNote.setClient(client);
+            }
+
+            if (shiftNoteDTO.getRecurrentAppointmentID()!=null && !shiftNoteDTO.getRecurrentAppointmentID().isEmpty()){
                 RecurrentAppointment recurrentAppointment = recurrenceService.getRecurrentAppointmentByIDWithEntity(shiftNoteDTO.getRecurrentAppointmentID());
                 shiftNote.setRecurrentAppointment(recurrentAppointment);
+                shiftNote.setClient(recurrentAppointment.getAppointment().getClient());
             }
-            if (!shiftNoteDTO.getCareGiverID().isEmpty()){
+            if (shiftNoteDTO.getCareGiverID()!=null && !shiftNoteDTO.getCareGiverID().isEmpty()){
                 CareGiver careGiver = careGiverService.getCareGiverByIdWithEntity(shiftNoteDTO.getCareGiverID());
                 shiftNote.setCareGiver(careGiver);
             }
@@ -271,6 +286,52 @@ public class ShiftNoteService {
 
     public List<ShiftNoteDTO> getAllShiftNotes(){
         return shiftNoteRepository.getAllShiftNotes().stream().map(this::toDTO).toList();
+    }
+
+    public List<TimeSheetDTO> getTimeSheetsForGivenDateRange(String startDate,String endDate,String careGiverID){
+        LocalDate start = LocalDate.parse(startDate);
+        LocalDate end = LocalDate.parse(endDate);
+        List<ShiftNotes> shiftNoteList = shiftNoteRepository.findShiftNotesBetweenDates(start,end);
+        List<TimeSheetDTO> timeSheetList = new ArrayList<>();
+        for (ShiftNotes shiftNote:shiftNoteList){
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+            TimeSheetDTO timeSheet = new TimeSheetDTO();
+
+            LocalDateTime startDateTime = LocalDateTime.of(
+                    shiftNote.getShiftStartDate(),
+                    LocalTime.parse(shiftNote.getShiftStartTime(), timeFormatter)
+            );
+            LocalDateTime endDateTime = LocalDateTime.of(
+                    shiftNote.getShiftEndDate(),
+                    LocalTime.parse(shiftNote.getShiftEndTime(), timeFormatter)
+            );
+            long durationInMinutes = Duration.between(startDateTime, endDateTime).toMinutes();
+            long hours = durationInMinutes/60;
+            long minutes = durationInMinutes%60;
+
+            timeSheet.setTotalHours(String.format("%d hours, %d minutes", hours, minutes));
+            timeSheet.setShiftNoteDTO(toDTO(shiftNote));
+            if (shiftNote.getEmployee()!=null){
+                EmployeeDTO employee  = employeeService.findOneEmployee(shiftNote.getEmployee().getEmployeeID());
+                timeSheet.setEmployeeDTO(employee);
+            }
+            if (shiftNote.getRecurrentAppointment()!=null){
+                RecurrentAppointmentDTO recurrentAppointmentDTO = recurrenceService.getRecurrentAppointmentByID(shiftNote.getRecurrentAppointment().getRecurrentAppointmentID());
+                timeSheet.setRecurrentAppointment(recurrentAppointmentDTO);
+                AppointmentDTO appointmentDTO = appointmentService.getAppointmentById(recurrentAppointmentDTO.getAppointmentID());
+                timeSheet.setAppointment(appointmentDTO);
+
+                ClientDTO clientDTO = clientService.getClientById(appointmentDTO.getClientID());
+                timeSheet.setClient(clientDTO);
+            }
+            timeSheetList.add(timeSheet);
+        }
+        if (careGiverID.equalsIgnoreCase("all")){
+            return timeSheetList;
+        }else{
+            return timeSheetList.stream().filter(timeSheetDTO -> timeSheetDTO.getEmployeeDTO().getEmployeeID().equalsIgnoreCase(careGiverID)).toList();
+        }
+
     }
 
     public List<ShiftNoteDTO> getAllShiftNotesRelatedToCareGiver(String employeeID){

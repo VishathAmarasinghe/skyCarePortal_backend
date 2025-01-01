@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -24,7 +25,7 @@ public class ClientDocuments {
     @Column(name = "docLocation")
     private String documentLocation;
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdDate = LocalDateTime.now();
+    private LocalDate createdDate = LocalDate.now();
     @ManyToOne
     private Client clientid;
     @Column(name = "shareType")

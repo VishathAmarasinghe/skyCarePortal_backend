@@ -144,35 +144,38 @@ public class CareGiverService {
                             existingFile.delete();
                         }
                         // Add new file
-                        MultipartFile newFile = documents.stream()
-                                .filter(file -> file.getOriginalFilename() != null &&
-                                        file.getOriginalFilename().equalsIgnoreCase(inputDoc.getDocument()))
-                                .findFirst()
-                                .orElse(null);
+                        if (documents!=null && documents.size()>0){
+                            MultipartFile newFile = documents.stream()
+                                    .filter(file -> file.getOriginalFilename() != null &&
+                                            file.getOriginalFilename().equalsIgnoreCase(inputDoc.getDocument()))
+                                    .findFirst()
+                                    .orElse(null);
 
-                        if (newFile != null) {
-                            try {
-                                String originalFileName = newFile.getOriginalFilename();
-                                String fileExtension = originalFileName != null && originalFileName.contains(".")
-                                        ? originalFileName.substring(originalFileName.lastIndexOf("."))
-                                        : "";
+                            if (newFile != null) {
+                                try {
+                                    String originalFileName = newFile.getOriginalFilename();
+                                    String fileExtension = originalFileName != null && originalFileName.contains(".")
+                                            ? originalFileName.substring(originalFileName.lastIndexOf("."))
+                                            : "";
 
-                                File directory = new File(DIRECTORY);
-                                if (!directory.exists()) {
-                                    directory.mkdirs();
+                                    File directory = new File(DIRECTORY);
+                                    if (!directory.exists()) {
+                                        directory.mkdirs();
+                                    }
+
+                                    File newFilePath = new File(directory,
+                                            inputDoc.getCareGiverID() + "_" +
+                                                    inputDoc.getDocumentTypeID() + "_" +
+                                                    originalFileName + fileExtension);
+                                    newFile.transferTo(newFilePath);
+                                    inputDoc.setDocument(newFilePath.getAbsolutePath());
+                                    careGiverDocumentService.updateDocument(id,inputDoc.getDocumentTypeID(),inputDoc);
+                                } catch (Exception e) {
+                                    throw new RuntimeException("Error uploading new document", e);
                                 }
-
-                                File newFilePath = new File(directory,
-                                        inputDoc.getCareGiverID() + "_" +
-                                                inputDoc.getDocumentTypeID() + "_" +
-                                                originalFileName + fileExtension);
-                                newFile.transferTo(newFilePath);
-                                inputDoc.setDocument(newFilePath.getAbsolutePath());
-                                careGiverDocumentService.updateDocument(id,inputDoc.getDocumentTypeID(),inputDoc);
-                            } catch (Exception e) {
-                                throw new RuntimeException("Error uploading new document", e);
                             }
                         }
+
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }

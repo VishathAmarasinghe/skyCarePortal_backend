@@ -43,6 +43,9 @@ public class Client {
     @Column(name = "profilePhoto")
     private String profilePhoto;
 
+    @Column(name = "referenceNo")
+    private String referenceNo;
+
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "physicalAddressID")
     private ClientPhysicalAddress physicalAddress;
@@ -54,8 +57,7 @@ public class Client {
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL)
     private List<ClientLanguage> clientLanguages;
 
-
-    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ClientPhoneNo> phoneNumbers;
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL)

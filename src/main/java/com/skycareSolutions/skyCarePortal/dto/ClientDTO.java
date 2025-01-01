@@ -29,6 +29,7 @@ public class ClientDTO {
     private String interests;
     private String dislikes;
     private String profilePhoto;
+    private String referenceNo;
     private ClientPhysicalAddressDTO physicalAddress;
     private ClientPostalAddressDTO postalAddress;
     private List<String> clientLanguages;

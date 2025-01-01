@@ -51,6 +51,10 @@ public class ShiftNotes {
     @JoinColumn(name = "recurrentAppointmentID",nullable = true)
     private RecurrentAppointment recurrentAppointment;
 
+    @ManyToOne
+    @JoinColumn(name = "clientID",nullable = true)
+    private Client client;
+
     @Column(name = "notes", columnDefinition = "TEXT",nullable = true)
     private String notes;
 

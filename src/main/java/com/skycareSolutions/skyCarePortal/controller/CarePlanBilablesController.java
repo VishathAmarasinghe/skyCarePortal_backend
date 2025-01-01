@@ -1,6 +1,7 @@
 package com.skycareSolutions.skyCarePortal.controller;
 
 import com.skycareSolutions.skyCarePortal.dto.CarePlanBilablesDTO;
+import com.skycareSolutions.skyCarePortal.dto.CarePlanBillableWithCarePlanDTO;
 import com.skycareSolutions.skyCarePortal.model.CarePlan;
 import com.skycareSolutions.skyCarePortal.repository.CarePlanRepository;
 import com.skycareSolutions.skyCarePortal.service.CarePlanBillablesService;
@@ -27,6 +28,11 @@ public class CarePlanBilablesController {
     @GetMapping("/{id}")
     public ResponseEntity<CarePlanBilablesDTO> getBillById(@PathVariable String id) {
         return ResponseEntity.ok(carePlanBillablesService.getBillById(id));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<CarePlanBillableWithCarePlanDTO>> getAllCarePlanBillablesWithCarePlan(){
+        return ResponseEntity.ok(carePlanBillablesService.getAllCarePlanBills());
     }
 
     @GetMapping("/by-careplan/{carePlanID}")

@@ -2,6 +2,7 @@ package com.skycareSolutions.skyCarePortal.service;
 
 import com.skycareSolutions.skyCarePortal.dto.*;
 import com.skycareSolutions.skyCarePortal.model.AppointmentAddress;
+import com.skycareSolutions.skyCarePortal.model.Client;
 import com.skycareSolutions.skyCarePortal.model.Employee;
 import com.skycareSolutions.skyCarePortal.model.Incidents;
 import com.skycareSolutions.skyCarePortal.repository.IncidentRepository;
@@ -66,6 +67,10 @@ public class IncidentService {
     @Autowired
     @Lazy
     private EmployeeService employeeService;
+
+    @Autowired
+    @Lazy
+    private ClientService clientService;
 
     // Get all incidents
     public List<IncidentsDTO> getAllIncidents() {
@@ -282,6 +287,10 @@ public class IncidentService {
         incidentsDTO.setNotes(incident.getNotes());
         incidentsDTO.setIssue(incident.getIssue());
 
+        if (incident.getClient()!=null){
+            incidentsDTO.setClientID(incident.getClient().getClientID());
+        }
+
         AppointmentAddressDTO appointmentAddressDTO = new AppointmentAddressDTO();
         AppointmentAddress appointmentAddress = incident.getAppointmentAddress();
         appointmentAddressDTO.setAddress(appointmentAddress.getAddress());
@@ -307,6 +316,10 @@ public class IncidentService {
         incident.setFollowUp(dto.getFollowUp());
         incident.setAdmitDate(dto.getAdmitDate());
         incident.setDischargeDate(dto.getDischargeDate());
+        if (dto.getClientID()!=null){
+            Client client = clientService.getClientByIdWithEntitiy(dto.getClientID());
+            incident.setClient(client);
+        }
         incident.setEmployee(employeeService.findOneEmployeeWithEntity(dto.getEmployeeID()));
 
         if (dto.getCarePlanID()!=null && !dto.getCarePlanID().isEmpty()){

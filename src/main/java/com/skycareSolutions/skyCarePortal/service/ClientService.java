@@ -38,6 +38,8 @@ public class ClientService {
     @Autowired
     private ClientStatusRepository clientStatusRepository;
 
+
+
     // Convert Client entity to ClientDTO
     private ClientDTO fromEntity(Client clientEntity,String type) {
         ClientDTO clientDTO = new ClientDTO();
@@ -53,6 +55,7 @@ public class ClientService {
         clientDTO.setInterests(clientEntity.getInterests());
         clientDTO.setDislikes(clientEntity.getDislikes());
         clientDTO.setProfilePhoto(clientEntity.getProfilePhoto());
+        clientDTO.setReferenceNo(clientEntity.getReferenceNo());
 
         // Map physicalAddress and postalAddress
         if (clientEntity.getPhysicalAddress() != null) {
@@ -116,6 +119,7 @@ public class ClientService {
         clientEntity.setInterests(clientDTO.getInterests());
         clientEntity.setDislikes(clientDTO.getDislikes());
         clientEntity.setProfilePhoto(clientDTO.getProfilePhoto());
+        clientEntity.setReferenceNo(clientDTO.getReferenceNo());
 
         // Map physicalAddress and postalAddress
         if (clientDTO.getPhysicalAddress() != null) {
@@ -197,10 +201,6 @@ public class ClientService {
                         })
                         .toList()
         );
-
-        System.out.println(clientEntity.getClientID());
-        System.out.println(clientEntity.getClientType());
-        System.out.println(clientEntity.getClientClassifications());
         return clientEntity;
     }
 
@@ -262,6 +262,10 @@ public class ClientService {
     public ClientDTO updateClient(String clientID, ClientDTO clientDTO) {
         Optional<Client> existingClient = clientRepository.findById(clientID);
         if (existingClient.isPresent()) {
+            Client pastClient= existingClient.get();
+            pastClient.getPhoneNumbers().clear();
+            clientRepository.save(pastClient);
+
             Client updatedClient = toEntity(clientDTO);
             updatedClient.setClientID(clientID);
             clientRepository.save(updatedClient);
