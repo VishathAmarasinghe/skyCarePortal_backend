@@ -37,13 +37,13 @@ public class Appointment {
     private int caregiverCount;
 
     @Column(name = "startDate", nullable = false)
-    private Date startDate;
+    private LocalDate startDate;
 
     @Column(name = "startTime")
     private String startTime;
 
     @Column(name = "endDate", nullable = false)
-    private Date endDate;
+    private LocalDate endDate;
 
     @Column(name = "endTime")
     private String endTime;

@@ -63,8 +63,8 @@ public class AppointmentService {
         List<AppointmentCalenderDTO> eventDTOs = new ArrayList<>();
         for (RecurrentAppointmentDTO ap:appointments){
             Appointment appointment = getAppointmentByIdWithEntity(ap.getAppointmentID());
-            appointment.setStartDate(Date.valueOf(ap.getStartDate()));
-            appointment.setEndDate(Date.valueOf(ap.getEndDate()));
+            appointment.setStartDate(ap.getStartDate());
+            appointment.setEndDate(ap.getEndDate());
             appointment.setStartTime(ap.getStartTime());
             appointment.setEndTime(ap.getEndTime());
             AppointmentCalenderDTO calender = toCalenderDTO(appointment);
@@ -124,8 +124,8 @@ public class AppointmentService {
              for (JobAssignerDTO job:jobAssignerDTO){
                  if (job.getCareGiverID().equalsIgnoreCase(careGiver.getCareGiverID())){
                      Appointment appointment = getAppointmentByIdWithEntity(ap.getAppointmentID());
-                     appointment.setStartDate(Date.valueOf(ap.getStartDate()));
-                     appointment.setEndDate(Date.valueOf(ap.getEndDate()));
+                     appointment.setStartDate(ap.getStartDate());
+                     appointment.setEndDate(ap.getEndDate());
                      appointment.setStartTime(ap.getStartTime());
                      appointment.setEndTime(ap.getEndTime());
                      AppointmentCalenderDTO calender = toCalenderDTO(appointment);
@@ -301,12 +301,14 @@ public class AppointmentService {
         }else{
             RecurrentWorkDTO recurrentWorkDTO  = new RecurrentWorkDTO();
             recurrentWorkDTO.setAppointmentID(appointment.getAppointmentID());
-            recurrentWorkDTO.setStartDate(appointment.getStartDate().toLocalDate());
-            recurrentWorkDTO.setEndDate(appointment.getEndDate().toLocalDate());
+            recurrentWorkDTO.setStartDate(appointment.getStartDate());
+            recurrentWorkDTO.setEndDate(appointment.getEndDate());
             recurrentWorkDTO.setRecurrenceType("Once");
             recurrentWorkDTO.setOccurrenceLimit(1);
 
-            LocalDate date  = LocalDate.of(appointment.getStartDate().getYear(),appointment.getStartDate().getMonth(),appointment.getStartDate().getDay());
+            System.out.println("year "+appointment.getStartDate().getYear()+" Month "+appointment.getStartDate().getMonth());
+
+            LocalDate date  = LocalDate.of(appointment.getStartDate().getYear(),appointment.getStartDate().getMonthValue(),appointment.getStartDate().getDayOfMonth());
             DayOfWeek dayOfWeek  = date.getDayOfWeek();
             String formattedDay = dayOfWeek.toString().toLowerCase(); // Convert to lowercase
             formattedDay = formattedDay.substring(0, 1).toUpperCase() + formattedDay.substring(1); // Capitalize first letter
@@ -339,9 +341,9 @@ public class AppointmentService {
         appointment.setBroadcastType(appointmentDTO.getBroadcastType());
         appointment.setComment(appointmentDTO.getComment());
         appointment.setDuration(appointmentDTO.getDuration());
-        appointment.setStartDate(Date.valueOf(appointmentDTO.getStartDate()));
+        appointment.setStartDate(LocalDate.parse(appointmentDTO.getStartDate()));
         appointment.setStartTime(appointmentDTO.getStartTime());
-        appointment.setEndDate(Date.valueOf(appointmentDTO.getEndDate()));
+        appointment.setEndDate(LocalDate.parse(appointmentDTO.getEndDate()));
         appointment.setEndTime(appointmentDTO.getEndTime());
         appointment.setCaregiverCount(appointmentDTO.getCaregiverCount());
 
@@ -560,9 +562,9 @@ public class AppointmentService {
         appointment.setBroadcastType(dto.getBroadcastType());
         appointment.setComment(dto.getComment());
         appointment.setDuration(dto.getDuration());
-        appointment.setStartDate(Date.valueOf(dto.getStartDate()));
+        appointment.setStartDate(LocalDate.parse(dto.getStartDate()));
         appointment.setStartTime(dto.getStartTime());
-        appointment.setEndDate(Date.valueOf(dto.getEndDate()));
+        appointment.setEndDate(LocalDate.parse(dto.getEndDate()));
         appointment.setEndTime(dto.getEndTime());
         appointment.setCaregiverCount(dto.getCaregiverCount());
         appointment.setRecurrentState(dto.getRecurrenceState());
@@ -600,14 +602,14 @@ public class AppointmentService {
         calenderDTO.setTitle(appointment.getTitle());
 
         // Assuming startDate and endDate are Date objects and startTime/endTime are Strings
-        LocalDateTime startDateTime = appointment.getStartDate().toLocalDate().atStartOfDay(); // Defaulting to start of day if no time is provided
+        LocalDateTime startDateTime = appointment.getStartDate().atStartOfDay(); // Defaulting to start of day if no time is provided
         if (appointment.getStartTime() != null) {
             // Adding the time component if available
             String[] timeParts = appointment.getStartTime().split(":");
             startDateTime = startDateTime.withHour(Integer.parseInt(timeParts[0])).withMinute(Integer.parseInt(timeParts[1]));
         }
 
-        LocalDateTime endDateTime = appointment.getEndDate().toLocalDate().atStartOfDay(); // Defaulting to start of day if no time is provided
+        LocalDateTime endDateTime = appointment.getEndDate().atStartOfDay(); // Defaulting to start of day if no time is provided
         if (appointment.getEndTime() != null) {
             // Adding the time component if available
             String[] timeParts = appointment.getEndTime().split(":");
