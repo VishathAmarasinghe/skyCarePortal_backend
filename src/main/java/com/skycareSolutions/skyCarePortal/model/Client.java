@@ -43,6 +43,9 @@ public class Client {
     @Column(name = "profilePhoto")
     private String profilePhoto;
 
+    @Column(name = "referenceNo")
+    private String referenceNo;
+
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "physicalAddressID")
     private ClientPhysicalAddress physicalAddress;

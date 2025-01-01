@@ -55,6 +55,7 @@ public class ClientService {
         clientDTO.setInterests(clientEntity.getInterests());
         clientDTO.setDislikes(clientEntity.getDislikes());
         clientDTO.setProfilePhoto(clientEntity.getProfilePhoto());
+        clientDTO.setReferenceNo(clientEntity.getReferenceNo());
 
         // Map physicalAddress and postalAddress
         if (clientEntity.getPhysicalAddress() != null) {
@@ -118,6 +119,7 @@ public class ClientService {
         clientEntity.setInterests(clientDTO.getInterests());
         clientEntity.setDislikes(clientDTO.getDislikes());
         clientEntity.setProfilePhoto(clientDTO.getProfilePhoto());
+        clientEntity.setReferenceNo(clientDTO.getReferenceNo());
 
         // Map physicalAddress and postalAddress
         if (clientDTO.getPhysicalAddress() != null) {

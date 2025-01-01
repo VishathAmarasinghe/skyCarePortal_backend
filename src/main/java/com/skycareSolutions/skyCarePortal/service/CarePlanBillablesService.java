@@ -1,6 +1,8 @@
 package com.skycareSolutions.skyCarePortal.service;
 
 import com.skycareSolutions.skyCarePortal.dto.CarePlanBilablesDTO;
+import com.skycareSolutions.skyCarePortal.dto.CarePlanBillableWithCarePlanDTO;
+import com.skycareSolutions.skyCarePortal.dto.CarePlanDTO;
 import com.skycareSolutions.skyCarePortal.model.CarePlan;
 import com.skycareSolutions.skyCarePortal.model.CarePlanBilables;
 import com.skycareSolutions.skyCarePortal.model.GoalOutcome;
@@ -8,9 +10,11 @@ import com.skycareSolutions.skyCarePortal.repository.CarePlanBillableRepository;
 import com.skycareSolutions.skyCarePortal.repository.CarePlanRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,12 +27,29 @@ public class CarePlanBillablesService {
     @Autowired
     private CarePlanRepository carePlanRepository;
 
+    @Autowired
+    @Lazy
+    private CarePlanService carePlanService;
+
 
     public List<CarePlanBilablesDTO> getBillsByCarePlanID(CarePlan carePlan) {
         return carePlanBillableRepository.findAllBillablesByCarePlanID(carePlan)
                 .stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+    }
+
+    public List<CarePlanBillableWithCarePlanDTO> getAllCarePlanBills() {
+        List<CarePlanBilablesDTO> bilList =  carePlanBillableRepository.findAllCarePlanBillables().stream().map(this::mapToDTO).collect(Collectors.toList());
+        List<CarePlanBillableWithCarePlanDTO> resultList = new ArrayList<>();
+        for (CarePlanBilablesDTO bill:bilList){
+            CarePlanBillableWithCarePlanDTO carePlanSingleBill = new CarePlanBillableWithCarePlanDTO();
+            CarePlanDTO carePlan = carePlanService.getCarePlansByCarePlanID(bill.getCareplanID());
+            carePlanSingleBill.setCarePlan(carePlan);
+            carePlanSingleBill.setCarePlanBilables(bill);
+            resultList.add(carePlanSingleBill);
+        }
+        return resultList;
     }
 
     public CarePlanBilablesDTO getBillById(String id) {

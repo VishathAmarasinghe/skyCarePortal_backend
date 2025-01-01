@@ -37,7 +37,7 @@ public class AppointmentTypeService {
 
     public AppointmentTypeDTO createAppointmentType(AppointmentTypeDTO appointmentTypeDTO) {
         String lastAppointmentTypeID = appointmentTypesRepository.getLastIdOfAppointmentType();
-        String newAppointmentTypeID = Micro_utils.idGenerator("appointment",lastAppointmentTypeID);
+        String newAppointmentTypeID = Micro_utils.idGenerator("appointment-type",lastAppointmentTypeID);
         appointmentTypeDTO.setAppointmentTypeID(newAppointmentTypeID);
         AppointmentType appointmentType = mapToEntity(appointmentTypeDTO);
         appointmentType = appointmentTypesRepository.save(appointmentType);

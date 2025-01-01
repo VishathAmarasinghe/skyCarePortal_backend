@@ -46,7 +46,7 @@ public class CareGiverController {
     public ResponseEntity<CareGiverDTO> addCareGiver(
             @RequestPart("careGiver") String careGiverData,
             @RequestParam(value = "profile_photo",required = false) MultipartFile profilePhoto,
-            @RequestParam("documents") List<MultipartFile> documents) {
+            @RequestParam(value = "documents",required = false) List<MultipartFile> documents) {
         try {
             CareGiverDTO careGiverDTO = objectMapper.readValue(careGiverData, CareGiverDTO.class);
             return careGiverService.addCareGiver(careGiverDTO,profilePhoto,documents);

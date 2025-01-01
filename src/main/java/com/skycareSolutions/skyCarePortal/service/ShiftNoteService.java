@@ -137,11 +137,17 @@ public class ShiftNoteService {
             shiftNote.setShiftStartDate(shiftNoteDTO.getShiftStartDate());
             shiftNote.setNotes(shiftNoteDTO.getNotes());
 
-            if (!shiftNoteDTO.getRecurrentAppointmentID().isEmpty()){
+            if (shiftNoteDTO.getClientID()!=null && !shiftNoteDTO.getClientID().isEmpty()){
+                Client client = clientService.getClientByIdWithEntitiy(shiftNoteDTO.getClientID());
+                shiftNote.setClient(client);
+            }
+
+            if (shiftNoteDTO.getRecurrentAppointmentID()!=null && !shiftNoteDTO.getRecurrentAppointmentID().isEmpty()){
                 RecurrentAppointment recurrentAppointment = recurrenceService.getRecurrentAppointmentByIDWithEntity(shiftNoteDTO.getRecurrentAppointmentID());
                 shiftNote.setRecurrentAppointment(recurrentAppointment);
+                shiftNote.setClient(recurrentAppointment.getAppointment().getClient());
             }
-            if (!shiftNoteDTO.getCareGiverID().isEmpty()){
+            if (shiftNoteDTO.getCareGiverID()!=null && !shiftNoteDTO.getCareGiverID().isEmpty()){
                 CareGiver careGiver = careGiverService.getCareGiverByIdWithEntity(shiftNoteDTO.getCareGiverID());
                 shiftNote.setCareGiver(careGiver);
             }

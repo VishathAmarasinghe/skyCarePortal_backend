@@ -23,5 +23,6 @@ public class ShiftNoteDTO {
     private String employeeID;
     private String careGiverID;
     private String state;
+    private String clientID;
     private List<ShiftNoteDocumentDTO> documents;
 }
