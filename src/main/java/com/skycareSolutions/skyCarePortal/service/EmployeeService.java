@@ -263,14 +263,13 @@ public class EmployeeService {
         EmployeeDTO employeeDTO = getSingleEmployee(employeeBasicInfoUpdaterDTO.getEmployeeID());
         if (!employeeDTO.getEmail().equalsIgnoreCase(employeeBasicInfoUpdaterDTO.getEmail())){
             EmployeeDTO checkEmployee = findEmployeeByEmail(employeeBasicInfoUpdaterDTO.getEmail());
-            if (employeeDTO!=null){
+            if (checkEmployee!=null){
                 return "User exist with new email";
             }
         }
         employeeDTO.setFirstName(employeeBasicInfoUpdaterDTO.getFirstName());
         employeeDTO.setLastName(employeeBasicInfoUpdaterDTO.getLastName());
         employeeDTO.setEmail(employeeBasicInfoUpdaterDTO.getEmail());
-
 
         updateEmployeeDetails(employeeDTO.getEmployeeID(),employeeDTO,profilePhoto);
         return "Account Updated Successfully";
