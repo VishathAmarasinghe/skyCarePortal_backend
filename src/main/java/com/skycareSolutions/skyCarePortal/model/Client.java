@@ -54,13 +54,13 @@ public class Client {
     @JoinColumn(name = "postalAddressID")
     private ClientPostalAddress postalAddress;
 
-    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL,orphanRemoval = true)
     private List<ClientLanguage> clientLanguages;
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ClientPhoneNo> phoneNumbers;
 
-    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ClientClassification> clientClassifications;
 
     @ManyToOne

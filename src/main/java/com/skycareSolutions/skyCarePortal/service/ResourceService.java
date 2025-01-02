@@ -141,6 +141,7 @@ public class ResourceService {
             Resource exisitingResource = getResourceByIdWithEntity(resourceId);
             exisitingResource.setCreator(employeeService.findOneEmployeeWithEntity(dto.getCreatorId()));
             exisitingResource.setNotes(dto.getNotes());
+            exisitingResource.setResourceName(dto.getResourceName());
             exisitingResource.setShareType(dto.getShareType());
             exisitingResource.setValidTo(dto.getValidTo());
             exisitingResource.setValidFrom(dto.getValidFrom());
