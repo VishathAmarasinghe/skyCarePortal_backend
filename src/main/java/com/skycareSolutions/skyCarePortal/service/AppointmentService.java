@@ -397,7 +397,7 @@ public class AppointmentService {
 
                 recurrentWorkService.updateRecurrentWork(recurrentWorkDTO.getRecurrentWorkID(),recurrentWorkDTO);
             }else{
-                recurrentWorkService.deleteRecurrentWork(recurrentWorkDTO.getRecurrentWorkID());
+//                recurrentWorkService.deleteRecurrentWork(recurrentWorkDTO.getRecurrentWorkID());
             }
         }else{
             if (appointmentDTO.getRecurrenceState()){
