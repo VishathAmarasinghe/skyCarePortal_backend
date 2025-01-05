@@ -28,6 +28,8 @@ public class ClientDocuments {
     private LocalDate createdDate = LocalDate.now();
     @ManyToOne
     private Client clientid;
+    @Column(name = "urlLink",nullable = true)
+    private String url;
     @Column(name = "shareType")
     private String shareType;
 }

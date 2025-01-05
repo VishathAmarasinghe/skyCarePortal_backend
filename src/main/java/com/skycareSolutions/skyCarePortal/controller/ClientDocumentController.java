@@ -29,7 +29,7 @@ public class ClientDocumentController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse> uploadClientDocuments(@RequestParam("files") List<MultipartFile> files,
+    public ResponseEntity<ApiResponse> uploadClientDocuments(@RequestParam(value = "files",required = false) List<MultipartFile> files,
                                                              @RequestParam("documentDTOs") String documentDTOs) {
         try {
             // Deserialize the list of ClientDocumentDTOs

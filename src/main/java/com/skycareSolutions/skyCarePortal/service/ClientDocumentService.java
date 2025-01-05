@@ -40,6 +40,7 @@ public class ClientDocumentService {
         clientDocumentDTO.setShareType(clientDocuments.getShareType());
         clientDocumentDTO.setCreatedDate(clientDocuments.getCreatedDate());
         clientDocumentDTO.setClientId(clientDocuments.getClientid().getClientID());
+        clientDocumentDTO.setUrlLink(clientDocuments.getUrl());
         return clientDocumentDTO;
     }
 
@@ -49,6 +50,7 @@ public class ClientDocumentService {
         clientDocuments.setDocumentName(clientDocumentDTO.getDocumentName());
         clientDocuments.setShareType(clientDocumentDTO.getShareType());
         clientDocuments.setDocumentLocation(clientDocumentDTO.getDocumentLocation());
+        clientDocuments.setUrl(clientDocumentDTO.getUrlLink());
 
         Client client =clientService.getClientByIdWithEntitiy(clientDocumentDTO.getClientId());
         clientDocuments.setClientid(client);
@@ -58,51 +60,61 @@ public class ClientDocumentService {
     // Save multiple ClientDocumentDTOs
     public void saveClientDocuments(List<ClientDocumentDTO> documents, List<MultipartFile> files) {
 
-        for(MultipartFile file:files){
-            ClientDocumentDTO matchingDocument = documents.stream()
-                    .filter(doc -> doc.getDocumentName().equalsIgnoreCase(file.getOriginalFilename()))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("No matching document found for file: " + file.getOriginalFilename()));
+        if (files!=null && !files.isEmpty()) {
+            for (MultipartFile file : files) {
+                ClientDocumentDTO matchingDocument = documents.stream()
+                        .filter(doc -> doc.getDocumentName().equalsIgnoreCase(file.getOriginalFilename()))
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException("No matching document found for file: " + file.getOriginalFilename()));
 
-            if (matchingDocument!=null){
-                String lastClientDocumentID = clientDocumentRepository.getLastIdOfClientDocument();
-                String newClientDocumentID = Micro_utils.idGenerator("clientDocuments",lastClientDocumentID);
-                matchingDocument.setClientDocumentID(newClientDocumentID);
+                if (matchingDocument != null) {
+                    String lastClientDocumentID = clientDocumentRepository.getLastIdOfClientDocument();
+                    String newClientDocumentID = Micro_utils.idGenerator("clientDocuments", lastClientDocumentID);
+                    matchingDocument.setClientDocumentID(newClientDocumentID);
 
-                try {
-                    if (file!=null){
-                        String originalFileName = file.getOriginalFilename();
-                        String fileExtension = originalFileName;
-                        if (originalFileName != null && originalFileName.contains(".")) {
-                            fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
-                        }
-                        System.out.println("original file name "+originalFileName);
-                        File directory = new File(DIRECTORY);
-                        if(!directory.exists()){
-                            directory.mkdirs();
-                        }
-
-                        File destinationFile = new File(DIRECTORY, newClientDocumentID+"_"+originalFileName+ fileExtension);
-                        if (destinationFile.exists()) {
-                            // Delete the existing file
-                            boolean deleted = destinationFile.delete();
-                            if (!deleted) {
-                                throw new RuntimeException("Failed to delete the existing file: " + destinationFile.getName());
+                    try {
+                        if (file != null) {
+                            String originalFileName = file.getOriginalFilename();
+                            String fileExtension = originalFileName;
+                            if (originalFileName != null && originalFileName.contains(".")) {
+                                fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
                             }
+                            System.out.println("original file name " + originalFileName);
+                            File directory = new File(DIRECTORY);
+                            if (!directory.exists()) {
+                                directory.mkdirs();
+                            }
+
+                            File destinationFile = new File(DIRECTORY, newClientDocumentID + "_" + originalFileName + fileExtension);
+                            if (destinationFile.exists()) {
+                                // Delete the existing file
+                                boolean deleted = destinationFile.delete();
+                                if (!deleted) {
+                                    throw new RuntimeException("Failed to delete the existing file: " + destinationFile.getName());
+                                }
+                            }
+
+                            file.transferTo(destinationFile);
+                            matchingDocument.setDocumentLocation(destinationFile.getAbsolutePath());
+                            matchingDocument.setDocumentName(newClientDocumentID + "_" + originalFileName + fileExtension);
+
+                            clientDocumentRepository.save(toEntity(matchingDocument));
                         }
 
-                        file.transferTo(destinationFile);
-                        matchingDocument.setDocumentLocation(destinationFile.getAbsolutePath());
-                        matchingDocument.setDocumentName(newClientDocumentID+"_"+originalFileName+ fileExtension);
-
-                        clientDocumentRepository.save(toEntity(matchingDocument));
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
                     }
-
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
                 }
-            }
 
+            }
+        }else{
+            for (ClientDocumentDTO clientDocumentDTO:documents){
+                String lastClientDocumentID = clientDocumentRepository.getLastIdOfClientDocument();
+                String newClientDocumentID = Micro_utils.idGenerator("clientDocuments", lastClientDocumentID);
+                clientDocumentDTO.setClientDocumentID(newClientDocumentID);
+                clientDocumentDTO.setDocumentName("Document Linked");
+                clientDocumentRepository.save(toEntity(clientDocumentDTO));
+            }
         }
     }
 

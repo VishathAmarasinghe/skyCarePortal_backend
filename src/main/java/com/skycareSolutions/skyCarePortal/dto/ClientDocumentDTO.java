@@ -12,5 +12,6 @@ public class ClientDocumentDTO {
     private String documentLocation;
     private LocalDate createdDate;
     private String clientId;
+    private String urlLink;
     private String shareType;
 }
