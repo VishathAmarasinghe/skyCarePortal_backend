@@ -43,7 +43,7 @@ public class ResourceController {
     public ResponseEntity<ResourceDTO> updateResourceWithFiles(
             @PathVariable("id") String resourceID,
             @RequestPart("resourceData") String resourceDTO,
-                                                               @RequestPart("files") List<MultipartFile> files) {
+                                                               @RequestPart(value = "files",required = false) List<MultipartFile> files) {
         try {
             ResourceDTO resource = objectMapper.readValue(resourceDTO, ResourceDTO.class);
             ResourceDTO savedResource = resourceService.updateResourceWithFiles(resourceID,resource,files);

@@ -1,10 +1,7 @@
 package com.skycareSolutions.skyCarePortal.service;
 
 import com.skycareSolutions.skyCarePortal.dto.*;
-import com.skycareSolutions.skyCarePortal.model.AppointmentAddress;
-import com.skycareSolutions.skyCarePortal.model.Client;
-import com.skycareSolutions.skyCarePortal.model.Employee;
-import com.skycareSolutions.skyCarePortal.model.Incidents;
+import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.IncidentRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -176,6 +173,13 @@ public class IncidentService {
         existingIncident.setAdmitDate(incidentsDTO.getAdmitDate());
         existingIncident.setDischargeDate(incidentsDTO.getDischargeDate());
 
+        IncidentType incidentType = incidentTypeService.getIncidentTypeByIdWithEntitiy(incidentsDTO.getIncidentTypeID());
+        existingIncident.setIncidentType(incidentType);
+
+        IncidentStatus incidentStatus = incidentStatusService.getStatusByIdWithEntity(incidentsDTO.getIncidentStatusID());
+        existingIncident.setIncidentStatus(incidentStatus);
+
+
         AppointmentAddressDTO appointmentAddressDTO = new AppointmentAddressDTO();
         appointmentAddressDTO.setAppointmentAddressID(existingIncident.getAppointmentAddress().getAppointmentAddressID());
         appointmentAddressDTO.setCity(incidentsDTO.getAddress().getCity());
@@ -183,10 +187,6 @@ public class IncidentService {
         appointmentAddressDTO.setAddress(incidentsDTO.getAddress().getAddress());
         appointmentAddressDTO.setPostalCode(incidentsDTO.getAddress().getPostalCode());
         appointmentAddressService.save(appointmentAddressDTO);
-
-
-        existingIncident.getIncidentType().setIncidentTypeID(incidentsDTO.getIncidentTypeID());
-        existingIncident.getIncidentStatus().setIncidentStatusID(incidentsDTO.getIncidentStatusID());
 
         incidentInvolvedPartiesService.deletePartiesByIncident(id);
 

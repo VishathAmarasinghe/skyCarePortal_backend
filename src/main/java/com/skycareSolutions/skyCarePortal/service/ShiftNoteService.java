@@ -315,6 +315,10 @@ public class ShiftNoteService {
                 EmployeeDTO employee  = employeeService.findOneEmployee(shiftNote.getEmployee().getEmployeeID());
                 timeSheet.setEmployeeDTO(employee);
             }
+            if (shiftNote.getClient()!=null){
+                ClientDTO clientDTO = clientService.getClientById(shiftNote.getClient().getClientID());
+                timeSheet.setClient(clientDTO);
+            }
             if (shiftNote.getRecurrentAppointment()!=null){
                 RecurrentAppointmentDTO recurrentAppointmentDTO = recurrenceService.getRecurrentAppointmentByID(shiftNote.getRecurrentAppointment().getRecurrentAppointmentID());
                 timeSheet.setRecurrentAppointment(recurrentAppointmentDTO);

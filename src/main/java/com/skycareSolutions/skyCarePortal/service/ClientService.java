@@ -264,6 +264,8 @@ public class ClientService {
         if (existingClient.isPresent()) {
             Client pastClient= existingClient.get();
             pastClient.getPhoneNumbers().clear();
+            pastClient.getClientClassifications().clear();
+            pastClient.getClientLanguages().clear();
             clientRepository.save(pastClient);
 
             Client updatedClient = toEntity(clientDTO);
