@@ -2,6 +2,8 @@ services:
   frontend-staging:
     container_name: frontend-staging
     image: frontend:latest
+    ports:
+      - "8080:80" 
     networks:
       - app-network
     volumes:
@@ -19,7 +21,7 @@ services:
     container_name: backend-staging
     image: backend:latest
     ports:
-      - "5000:5000"
+      - "5002:5000"
     networks:
       - app-network
     restart: always

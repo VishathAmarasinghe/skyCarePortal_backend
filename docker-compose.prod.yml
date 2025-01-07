@@ -1,52 +1,57 @@
 services:
-  frontend:
-    build:
-      context: ./frontend
-      args:
-        VITE_BACKEND_BASE_URL: "http://backend:5000"
-        VITE_APPLICATION_ADMIN: "admin.skyCarePortal"
-        VITE_APPLICATION_SUPER_ADMIN: "superadmin.skyCarePortal"
-        VITE_APPLICATION_CARE_GIVER: "caregiver.skyCarePortal"
-        VITE_FILE_DOWNLOAD_PATH: "/file/download"
+  frontend-production:
+    container_name: frontend-production
+    image: frontend:latest
     ports:
-      - "80:80"  # Expose frontend on port 80
+      - "8081:80" 
     networks:
-      - app-network
+      - app-prod-network
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    restart: always
     environment:
       - FRONTEND_URL=http://frontend:80
+      - VITE_BACKEND_BASE_URL=https://skycare.au/api
+      - VITE_APPLICATION_ADMIN=admin.skyCarePortal
+      - VITE_APPLICATION_SUPER_ADMIN=superadmin.skyCarePortal
+      - VITE_APPLICATION_CARE_GIVER=caregiver.skyCarePortal
+      - VITE_FILE_DOWNLOAD_PATH=/file/download
 
-  backend:
-    build:
-      context: ./backend
-      args:
-        SPRING_PROFILES_ACTIVE: "prod"
-        SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/skycareportal"
-        SPRING_DATASOURCE_USERNAME: "${SPRING_DATASOURCE_USERNAME}"
-        SPRING_DATASOURCE_PASSWORD: "${SPRING_DATASOURCE_PASSWORD}"
-        SPRING_MAIL_USERNAME: "projectvishath@gmail.com"
-        SPRING_MAIL_PASSWORD: "ovdi uiox jqvd avai"
-        FRONTEND_URL: "http://frontend:80"
-        SERVER_PORT: 5000
-    depends_on:
-      - mysql
+  backend-production:
+    container_name: backend-production
+    image: backend:latest
     ports:
-      - "5000:5000"  # Expose backend on port 5000
+      - "5001:5000"
     networks:
-      - app-network
-
-  mysql:
-    image: mysql:5.7
+      - app-prod-network
+    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
-      MYSQL_DATABASE: "skycareportal"
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL:-jdbc:mysql://139.99.236.174:3306/skycareportal_prod}
+      - SPRING_DATASOURCE_USERNAME=produser
+      - SPRING_DATASOURCE_PASSWORD=skycareProd123!
+      - SPRING_MAIL_USERNAME=no-reply@skycaresolutions.com.au
+      - SPRING_MAIL_PASSWORD=Skycare@3977
+      - SERVER_PORT=5000
     volumes:
-      - mysql-data-prod:/var/lib/mysql
+      - /var/lib/skycare_production/skycareuploads:/root/skyCareUploads
+
+  reverse-proxy:
+    container_name: reverse-proxy
+    image: proxy:latest
+    ports:
+      - "80:80"
+      - "443:443"
     networks:
+      - app-prod-network
       - app-network
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /etc/ssl/certs/dhparam.pem:/etc/ssl/certs/dhparam.pem:ro
+    restart: always
 
 networks:
+  app-prod-network:
+    driver: bridge
   app-network:
     driver: bridge
-
-volumes:
-  mysql-data:
