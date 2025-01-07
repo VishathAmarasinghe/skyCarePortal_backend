@@ -27,7 +27,7 @@ public class AppointmentAddressService {
     }
 
     /**
-     * Save or update an AppointmentAddress.
+     * Save or update an AppointmentAddress .
      *
      * @param address the AppointmentAddress object to save.
      * @return the saved AppointmentAddress.
