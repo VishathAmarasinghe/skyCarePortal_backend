@@ -5,7 +5,7 @@ services:
     ports:
       - "8081:80" 
     networks:
-      - app-prod-network
+      - app-network
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
     restart: always
@@ -23,7 +23,7 @@ services:
     ports:
       - "5001:5000"
     networks:
-      - app-prod-network
+      - app-network
     restart: always
     environment:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
@@ -43,7 +43,6 @@ services:
       - "80:80"
       - "443:443"
     networks:
-      - app-prod-network
       - app-network
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
@@ -51,7 +50,5 @@ services:
     restart: always
 
 networks:
-  app-prod-network:
-    driver: bridge
   app-network:
     driver: bridge
