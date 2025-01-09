@@ -136,6 +136,7 @@ public class ShiftNoteService {
             shiftNote.setShiftStartTime(shiftNoteDTO.getShiftStartTime());
             shiftNote.setShiftStartDate(shiftNoteDTO.getShiftStartDate());
             shiftNote.setNotes(shiftNoteDTO.getNotes());
+            shiftNote.setWorkHours(shiftNoteDTO.getTotalWorkHrs());
 
             if (shiftNoteDTO.getClientID()!=null && !shiftNoteDTO.getClientID().isEmpty()){
                 Client client = clientService.getClientByIdWithEntitiy(shiftNoteDTO.getClientID());
@@ -225,6 +226,7 @@ public class ShiftNoteService {
             shiftNote.setSystemShiftStartTime(shiftNote.getSystemShiftStartTime());
             shiftNote.setSystemShiftStartDate(shiftNoteDTO.getSystemShiftStartDate());
             shiftNote.setNotes(shiftNoteDTO.getNotes());
+            shiftNote.setWorkHours(shiftNoteDTO.getTotalWorkHrs());
 
 
             LocalDateTime now = LocalDateTime.now();
@@ -311,10 +313,17 @@ public class ShiftNoteService {
 
             timeSheet.setTotalHours(String.format("%d hours, %d minutes", hours, minutes));
             timeSheet.setShiftNoteDTO(toDTO(shiftNote));
-            if (shiftNote.getEmployee()!=null){
-                EmployeeDTO employee  = employeeService.findOneEmployee(shiftNote.getEmployee().getEmployeeID());
+            if (shiftNote.getCareGiver()!=null){
+                EmployeeDTO employee  = employeeService.findOneEmployee(shiftNote.getCareGiver().getEmployee().getEmployeeID());
                 timeSheet.setEmployeeDTO(employee);
+            }else{
+                if (shiftNote.getEmployee()!=null){
+
+                    EmployeeDTO employee  = employeeService.findOneEmployee(shiftNote.getEmployee().getEmployeeID());
+                    timeSheet.setEmployeeDTO(employee);
+                }
             }
+
             if (shiftNote.getClient()!=null){
                 ClientDTO clientDTO = clientService.getClientById(shiftNote.getClient().getClientID());
                 timeSheet.setClient(clientDTO);
@@ -360,6 +369,7 @@ public class ShiftNoteService {
                 shiftNotes.getRecurrentAppointment() != null ?
                         shiftNotes.getRecurrentAppointment().getRecurrentAppointmentID() : null
         );
+        shiftNoteDTO.setTotalWorkHrs(shiftNotes.getWorkHours());
         shiftNoteDTO.setNotes(shiftNotes.getNotes());
         shiftNoteDTO.setComments(shiftNotes.getComments());
         shiftNoteDTO.setEmployeeID(
@@ -483,6 +493,7 @@ public class ShiftNoteService {
         if (dto.getState() != null) {
             entity.setState(dto.getState());
         }
+        entity.setWorkHours(dto.getTotalWorkHrs());
     }
 
 
@@ -501,6 +512,7 @@ public class ShiftNoteService {
         shiftNotes.setNotes(shiftNoteDTO.getNotes());
         shiftNotes.setComments(shiftNoteDTO.getComments());
         shiftNotes.setState(shiftNoteDTO.getState());
+        shiftNotes.setWorkHours(shiftNoteDTO.getTotalWorkHrs());
 
         // Employee and CareGiver need to be set externally if required
         return shiftNotes;

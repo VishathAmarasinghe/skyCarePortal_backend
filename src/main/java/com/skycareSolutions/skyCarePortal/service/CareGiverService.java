@@ -206,6 +206,7 @@ public class CareGiverService {
         employeeDTO.setEmployeeID(entity.getEmployee().getEmployeeID());
         employeeDTO.setProfile_photo(entity.getEmployee().getProfile_photo());
         employeeDTO.setAccessRole(entity.getEmployee().getAccessRole());
+        employeeDTO.setJoinDate(entity.getEmployee().getJoinDate());
         List<Employee_address_DTO> employeeAddressDtos = new ArrayList<>();
         for (Employee_address address:entity.getEmployee().getEmployeeAddresses()){
             Employee_address_DTO employeeAddressDto = getEmployeeAddressDto(address);

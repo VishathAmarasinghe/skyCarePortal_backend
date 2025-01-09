@@ -284,6 +284,7 @@ public class EmployeeService {
         Employee existingEmployee = existingEmployeeOpt.get();
         System.out.println("functionality came here");
 
+
         // Update fields if they are provided in updatedEmployeeDTO
         if (updatedEmployeeDTO.getFirstName() != null) {
             System.out.println("employee "+updatedEmployeeDTO.getFirstName());
@@ -306,15 +307,26 @@ public class EmployeeService {
             existingEmployee.setJoinDate(updatedEmployeeDTO.getJoinDate());
         }
 
-        // Update phone numbers, job roles, and addresses similarly
         if (updatedEmployeeDTO.getEmployeePhoneNo() != null) {
-            existingEmployee.setEmployeePhoneNo(mapPhoneNumbersFromDTO(employeeID, updatedEmployeeDTO.getEmployeePhoneNo()));
+            List<Employee_phoneNo> newPhoneNumbers = mapPhoneNumbersFromDTO(employeeID, updatedEmployeeDTO.getEmployeePhoneNo());
+
+            // Clear existing phone numbers but retain the collection reference
+            existingEmployee.getEmployeePhoneNo().clear();
+
+            // Add the new phone numbers to the existing collection
+            existingEmployee.getEmployeePhoneNo().addAll(newPhoneNumbers);
         }
         if (updatedEmployeeDTO.getEmployeeJobRoles() != null) {
             existingEmployee.setEmployeeJobRoles(mapJobRolesFromDTO(employeeID, updatedEmployeeDTO.getEmployeeJobRoles()));
         }
         if (updatedEmployeeDTO.getEmployeeAddresses() != null) {
-            existingEmployee.setEmployeeAddresses(mapAddressesFromDTO(employeeID, updatedEmployeeDTO.getEmployeeAddresses()));
+            List<Employee_address> newAddresses = mapAddressesFromDTO(employeeID, updatedEmployeeDTO.getEmployeeAddresses());
+
+            // Clear the existing collection but maintain its reference
+            existingEmployee.getEmployeeAddresses().clear();
+
+            // Add all new addresses to the collection
+            existingEmployee.getEmployeeAddresses().addAll(newAddresses);
         }
 
         // Update profile photo if a new one is provided
