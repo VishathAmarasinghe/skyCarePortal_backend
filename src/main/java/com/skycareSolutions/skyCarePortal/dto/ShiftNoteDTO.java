@@ -22,6 +22,7 @@ public class ShiftNoteDTO {
     private String comments;
     private String employeeID;
     private String careGiverID;
+    private int totalWorkHrs;
     private String state;
     private String clientID;
     private List<ShiftNoteDocumentDTO> documents;

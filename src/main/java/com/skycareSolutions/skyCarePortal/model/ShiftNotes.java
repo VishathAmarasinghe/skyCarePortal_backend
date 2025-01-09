@@ -68,6 +68,9 @@ public class ShiftNotes {
     @Column(name = "State")
     private String state;
 
+    @Column(name = "workHours")
+    private int workHours=0;
+
     @ManyToOne
     @JoinColumn(name = "careGiverId")
     private CareGiver careGiver;
