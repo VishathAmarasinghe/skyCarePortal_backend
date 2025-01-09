@@ -39,7 +39,7 @@ public class Employee {
     private Date joinDate;
     @Column(name = "status")
     private String status;
-    @OneToMany(mappedBy = "employee",cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "employee",cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Employee_address> employeeAddresses;
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)

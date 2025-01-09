@@ -354,6 +354,7 @@ public class EmployeeService {
             CompletableFuture.runAsync(()->emailService.generateWelcomeLoginEmail(existingEmployee.getFirstName(),existingEmployee.getEmail(),password,frontendUrl));
         }
         existingEmployee.setStatus(updatedEmployeeDTO.getStatus());
+        existingEmployee.getEmployeeAddresses().clear();
         // Save and return the updated employee
         Employee updatedEmployee  = employeeRepository.save(existingEmployee);
         EmployeeDTO updatedEmployeeDTOData = convertToDTO(updatedEmployee);
