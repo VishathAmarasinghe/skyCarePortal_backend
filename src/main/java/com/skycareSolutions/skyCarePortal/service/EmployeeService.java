@@ -297,9 +297,6 @@ public class EmployeeService {
         if (updatedEmployeeDTO.getEmail() != null) {
             existingEmployee.setEmail(updatedEmployeeDTO.getEmail());
         }
-        if (updatedEmployeeDTO.getPassword() != null) {
-            existingEmployee.setPassword(updatedEmployeeDTO.getPassword());
-        }
         if (updatedEmployeeDTO.getAccessRole() != null) {
             existingEmployee.setAccessRole(updatedEmployeeDTO.getAccessRole());
         }

@@ -127,8 +127,35 @@ public class CareGiverService {
                 }
             }
         }
+        for (CareGiverDocumentsDTO doc:dto.getCareGiverDocuments()){
+            if (doc.getDocument().equalsIgnoreCase("")){
+                for (CareGiverDocumentsDTO exisitDoc:exisitingDocuments){
+                    if (exisitDoc.getDocumentTypeID().equalsIgnoreCase(doc.getDocumentTypeID())){
+                        try{
+                            File existingFile = new File(exisitDoc.getDocument());
+                            if (existingFile.exists()) {
+                                existingFile.delete();
+                            }
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        careGiverDocumentService.deleteDocument(exisitDoc.getCareGiverID(),exisitDoc.getDocumentTypeID());
+                    }
+                }
+            }
+        }
+        for (CareGiverDocumentsDTO newDocs:dto.getCareGiverDocuments()){
+            CareGiverDocumentsDTO eixis = exisitingDocuments.stream().filter(row->row.getDocumentTypeID().equalsIgnoreCase(newDocs.getDocumentTypeID())).findFirst().orElse(null);
+            if (eixis==null){
+                List<CareGiverDocumentsDTO> documentList= new ArrayList<>();
+                documentList.add(newDocs);
+                careGiverDocumentService.addDocument(documentList,documents);
+
+            }
+        }
 
         for (CareGiverDocumentsDTO exisitDoc:exisitingDocuments){
+
             CareGiverDocumentsDTO inputDoc = dto.getCareGiverDocuments()
                     .stream()
                     .filter(row -> exisitDoc != null &&
@@ -180,6 +207,9 @@ public class CareGiverService {
                         throw new RuntimeException(e);
                     }
                 }
+            }else{
+                System.out.println("null file returned "+exisitDoc.getDocumentTypeID());
+
             }
         }
 
