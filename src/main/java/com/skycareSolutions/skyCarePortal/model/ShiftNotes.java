@@ -68,7 +68,7 @@ public class ShiftNotes {
     @Column(name = "State")
     private String state;
 
-    @Column(name = "workHours")
+    @Column(name = "workHours",nullable = false)
     private int workHours=0;
 
     @ManyToOne

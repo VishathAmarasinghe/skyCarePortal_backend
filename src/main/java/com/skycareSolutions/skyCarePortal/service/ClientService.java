@@ -214,9 +214,6 @@ public class ClientService {
     // Create a new client
     public ClientDTO createClient(ClientDTO clientDTO, MultipartFile profilePhoto) {
         // Check if email already exists
-        if (clientRepository.findByEmail(clientDTO.getEmail()) != null) {
-            throw new DataIntegrityViolationException("Email already exists.");
-        }
         String lastClientID = clientRepository.getLastIdOfClient();
         String newClientID = Micro_utils.idGenerator("client",lastClientID);
         clientDTO.setClientID(newClientID);
