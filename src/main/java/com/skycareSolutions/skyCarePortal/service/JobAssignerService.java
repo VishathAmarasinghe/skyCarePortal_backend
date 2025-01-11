@@ -160,9 +160,8 @@ public class JobAssignerService {
                 singleView.setAppointment(appointment);
                 RecurrentAppointmentDTO recurrentAppointment = recurrenceService.getRecurrentAppointmentByID(job.getRecurrentAppointment().getRecurrentAppointmentID());
                 singleView.setRecurrentAppointment(recurrentAppointment);
-                if (!recurrentAppointment.isCancelled()){
                     assignViewer.add(singleView);
-                }
+                
 
             }
 
