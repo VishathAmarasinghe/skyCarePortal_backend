@@ -64,6 +64,8 @@ public class DashboardService {
 
         List<RecurrentAppointmentDTO> appointments = recurrenceService.getAppointmentsWithinGivenDateRange(formattedDate,formattedEndDate);
 
+        List<RecurrentAppointmentDTO> filteredAppointments =appointments.stream().filter(ap-> !ap.isCancelled()).toList();
+
         Map<String, Long> appointmentCountByDate = new HashMap<>();
 
 // Loop through each day in the range
@@ -72,7 +74,7 @@ public class DashboardService {
 
             // Filter appointments for the current day
             LocalDate finalDate = date;
-            long count = appointments.stream()
+            long count = filteredAppointments.stream()
                     .filter(appointment -> appointment.getStartDate().equals(finalDate))
                     .count();
 
@@ -128,9 +130,10 @@ public class DashboardService {
         List<RecurrentAppointmentDTO> Todayappointments = recurrenceService.getAppointmentsWithinGivenDateRange(formattedDate,formattedDate);
 
         List<RecurrentAppointmentDTO> appointments = recurrenceService.getAppointmentsWithinGivenDateRange(formattedDate,formattedEndDate);
+        List<RecurrentAppointmentDTO> filteredNotCanceledAppointments = appointments.stream().filter(ap-> !ap.isCancelled()).toList();
 
         List<RecurrentAppointmentDTO> filteredAppointments = new ArrayList<>();
-        for (RecurrentAppointmentDTO reApp:appointments){
+        for (RecurrentAppointmentDTO reApp:filteredNotCanceledAppointments){
             List<JobAssignerDTO> jobList = jobAssignerService.findJobAssignerByRecurrentID(reApp.getRecurrentAppointmentID());
             for (JobAssignerDTO job:jobList){
                 if (job.getCareGiverID().equalsIgnoreCase(careGiver.getCareGiverID())){

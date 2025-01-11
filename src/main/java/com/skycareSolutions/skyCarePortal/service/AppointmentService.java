@@ -85,7 +85,8 @@ public class AppointmentService {
         String formattedDate = currentDate.format(formatter);
         String endDateFormatter = endingDate.format(formatter);
 
-        List<RecurrentAppointmentDTO> appointments = recurrenceService.getAppointmentsWithinGivenDateRange(formattedDate,endDateFormatter);
+        List<RecurrentAppointmentDTO> appointmentsList = recurrenceService.getAppointmentsWithinGivenDateRange(formattedDate,endDateFormatter);
+        List<RecurrentAppointmentDTO> appointments = appointmentsList.stream().filter(ap-> !ap.isCancelled()).toList();
         CareGiverDTO careGiver = careGiverService.getCareGiverByEmployee(employeeID);
         List<PendingAppointmentDTO> result = new ArrayList<>();
         for (RecurrentAppointmentDTO ap:appointments){
