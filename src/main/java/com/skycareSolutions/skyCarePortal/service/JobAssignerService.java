@@ -6,6 +6,7 @@ import com.skycareSolutions.skyCarePortal.repository.JobAssignerRepository;
 import com.skycareSolutions.skyCarePortal.repository.ShiftNoteRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +43,9 @@ public class JobAssignerService {
     @Autowired
     @Lazy
     private ShiftNoteRepository shiftNoteRepository;
+
+    @Value("${app.external.service.frontendUrl}")
+    private String frontendUrl;
 
     // Map DTO to Entity
     private JobAssigner mapToEntity(JobAssignerDTO dto) {
@@ -96,7 +100,7 @@ public class JobAssignerService {
                         JobAssigner entity = mapToEntity(jobAssign);
                         JobAssigner savedEntity = jobAssignerRepository.save(entity);
 
-                        CompletableFuture.runAsync(()->emailService.generateAppointmentConfirmationEmail(careGiver.getEmployee().getFirstName(),careGiver.getEmployee().getEmail(),""));
+                        CompletableFuture.runAsync(()->emailService.generateAppointmentConfirmationEmail(careGiver.getEmployee().getFirstName(),careGiver.getEmployee().getEmail(),frontendUrl));
                     }
                 }
         }else{
@@ -161,7 +165,7 @@ public class JobAssignerService {
                 RecurrentAppointmentDTO recurrentAppointment = recurrenceService.getRecurrentAppointmentByID(job.getRecurrentAppointment().getRecurrentAppointmentID());
                 singleView.setRecurrentAppointment(recurrentAppointment);
                     assignViewer.add(singleView);
-                
+
 
             }
 
