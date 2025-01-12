@@ -121,7 +121,7 @@ public class JobAssignerService {
                     JobAssigner entity = mapToEntity(jobAssign);
                     JobAssigner savedEntity = jobAssignerRepository.save(entity);
 
-                    CompletableFuture.runAsync(()->emailService.generateAppointmentConfirmationEmail(careGiver.getEmployee().getFirstName(),careGiver.getEmployee().getEmail(),""));
+                    CompletableFuture.runAsync(()->emailService.generateAppointmentConfirmationEmail(careGiver.getEmployee().getFirstName(),careGiver.getEmployee().getEmail(),frontendUrl));
 
                 }
             }
