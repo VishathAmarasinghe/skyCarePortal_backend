@@ -33,6 +33,7 @@ services:
       - SPRING_MAIL_USERNAME=no-reply@skycaresolutions.com.au
       - SPRING_MAIL_PASSWORD=Skycare@3977
       - SERVER_PORT=5000
+      - FRONTEND_URL=https://skycare.au
     volumes:
       - /var/lib/skycareuploads:/root/skyCareUploads
 
