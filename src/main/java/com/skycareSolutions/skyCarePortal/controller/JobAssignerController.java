@@ -40,6 +40,12 @@ public class JobAssignerController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/careGiver-assigns/all/{id}")
+    public ResponseEntity<List<JobAssignCareGiverViewerDTO>> getAllJobsAssignCareTOCareGivers(@PathVariable String id){
+        return ResponseEntity.ok(jobAssignerService.allJobsAssignedToCareGivers(id));
+    }
+
+
     @GetMapping("/assignment/{appointmentID}")
     public ResponseEntity<List<JobAssignShowerDTO>> getJobAssignmentToCareGivers(@PathVariable(name = "appointmentID") String appointmentID){
         return ResponseEntity.ok(jobAssignerService.jobAssignerShower(appointmentID));

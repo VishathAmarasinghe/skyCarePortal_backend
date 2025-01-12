@@ -135,6 +135,8 @@ public class AppointmentController {
             throw new RuntimeException(e);
         }
     }
+    
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAppointment(@PathVariable String id) {
