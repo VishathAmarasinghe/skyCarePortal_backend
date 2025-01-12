@@ -173,6 +173,25 @@ public class JobAssignerService {
         return assignViewer;
     }
 
+    public List<JobAssignCareGiverViewerDTO> allJobsAssignedToCareGivers(String id){
+        CareGiverDTO careGiverDTO = careGiverService.getCareGiverByEmployee(id);
+        Employee employee = employeeService.findOneEmployeeWithEntity(id);
+        CareGiver careGiver = careGiverService.getCareGiverByIdWithEntity(careGiverDTO.getCareGiverID());
+        List<JobAssigner> jobs = jobAssignerRepository.findJobsAssignedToCareGiver(careGiver);
+        List<JobAssignCareGiverViewerDTO> assignViewer = new ArrayList<>();
+        for (JobAssigner job:jobs){
+                JobAssignCareGiverViewerDTO singleView = new JobAssignCareGiverViewerDTO();
+                singleView.setAssignJob(mapToDTO(job));
+                AppointmentDTO appointment = appointmentService.getAppointmentById(job.getAppointment().getAppointmentID());
+                singleView.setAppointment(appointment);
+                RecurrentAppointmentDTO recurrentAppointment = recurrenceService.getRecurrentAppointmentByID(job.getRecurrentAppointment().getRecurrentAppointmentID());
+                singleView.setRecurrentAppointment(recurrentAppointment);
+                assignViewer.add(singleView);
+
+        }
+        return assignViewer;
+    }
+
     public Boolean updateAssigners(UpdateAssignersDTO updateAssignersDTO){
         List<String> newComers = updateAssignersDTO.getAdded();
         List<String> removers = updateAssignersDTO.getDeleted();

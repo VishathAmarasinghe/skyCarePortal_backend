@@ -282,8 +282,6 @@ public class AppointmentService {
     }
 
 
-
-
     public AppointmentDTO createAppointment(AppointmentDTO appointmentDTO, List<MultipartFile> files) {
         String lastAppointmentID = appointmentRepository.getLastIdOfAppointments();
         String newAppointmentID = Micro_utils.idGenerator("appointment",lastAppointmentID);
