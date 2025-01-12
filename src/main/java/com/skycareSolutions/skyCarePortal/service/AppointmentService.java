@@ -554,10 +554,8 @@ public class AppointmentService {
         // Set AppointmentAddress
         appointmentAddressService.findById(dto.getAppointmentAddress().getAppointmentAddressID())
                 .ifPresentOrElse(
-                        appointment::setAppointmentAddress,
-                        () -> {
-                            throw new RuntimeException("AppointmentAddress not found for ID: " + dto.getAppointmentAddress().getAppointmentAddressID());
-                        }
+                        appointment::setAppointmentAddress, // Action when the value is present
+                        () -> appointment.setAppointmentAddress(null) // Action when the value is absent
                 );
 
         appointment.setBroadcastType(dto.getBroadcastType());
