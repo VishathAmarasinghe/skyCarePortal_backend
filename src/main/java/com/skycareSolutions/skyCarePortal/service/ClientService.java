@@ -54,6 +54,8 @@ public class ClientService {
         clientDTO.setAboutMe(clientEntity.getAboutMe());
         clientDTO.setInterests(clientEntity.getInterests());
         clientDTO.setDislikes(clientEntity.getDislikes());
+        clientDTO.setEmergencyUser(clientEntity.getEmergencyUserName());
+        clientDTO.setEmergencyPhoneNo(clientEntity.getEmergencyPhoneNo());
         clientDTO.setProfilePhoto(clientEntity.getProfilePhoto());
         clientDTO.setReferenceNo(clientEntity.getReferenceNo());
 
@@ -116,6 +118,8 @@ public class ClientService {
         clientEntity.setBirthday(clientDTO.getBirthday());
         clientEntity.setJoinDate(clientDTO.getJoinDate());
         clientEntity.setAboutMe(clientDTO.getAboutMe());
+        clientEntity.setEmergencyPhoneNo(clientDTO.getEmergencyPhoneNo());
+        clientEntity.setEmergencyUserName(clientDTO.getEmergencyUser());
         clientEntity.setInterests(clientDTO.getInterests());
         clientEntity.setDislikes(clientDTO.getDislikes());
         clientEntity.setProfilePhoto(clientDTO.getProfilePhoto());

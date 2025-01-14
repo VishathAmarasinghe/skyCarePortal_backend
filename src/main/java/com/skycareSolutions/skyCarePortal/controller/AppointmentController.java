@@ -135,7 +135,7 @@ public class AppointmentController {
             throw new RuntimeException(e);
         }
     }
-    
+
 
 
     @DeleteMapping("/{id}")

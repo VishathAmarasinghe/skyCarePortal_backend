@@ -46,6 +46,12 @@ public class Client {
     @Column(name = "referenceNo")
     private String referenceNo;
 
+    @Column(name = "emergencyPhoneNo",nullable = true)
+    private String emergencyPhoneNo;
+
+    @Column(name = "emergencyUserName" ,nullable = true)
+    private String emergencyUserName;
+
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "physicalAddressID")
     private ClientPhysicalAddress physicalAddress;

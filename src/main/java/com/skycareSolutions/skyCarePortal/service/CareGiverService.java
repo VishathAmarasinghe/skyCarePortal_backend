@@ -247,6 +247,8 @@ public class CareGiverService {
         employeeDTO.setEmployeeAddresses(employeeAddressDtos);
         employeeDTO.setStatus(entity.getEmployee().getStatus());
         employeeDTO.setEmail(entity.getEmployee().getEmail());
+        employeeDTO.setEmergencyUser(entity.getEmployee().getEmergencyUser());
+        employeeDTO.setEmergencyPhoneNo(entity.getEmployee().getEmergencyPhoneNo());
 
         List<String> employeePhoneNo = new ArrayList<>();
         for (Employee_phoneNo phoneNo:entity.getEmployee().getEmployeePhoneNo()){

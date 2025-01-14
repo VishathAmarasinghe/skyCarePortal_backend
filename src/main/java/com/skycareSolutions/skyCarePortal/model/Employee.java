@@ -35,6 +35,13 @@ public class Employee {
     private String accessRole;
     @Column(name = "profile_photo")
     private String profile_photo;
+
+    @Column(name = "emergencyPhoneNo")
+    private String emergencyPhoneNo;
+
+    @Column(name = "emergencyUser")
+    private String emergencyUser;
+
     @Column(name = "joinDate")
     private Date joinDate;
     @Column(name = "status")
