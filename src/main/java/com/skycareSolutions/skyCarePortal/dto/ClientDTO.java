@@ -30,6 +30,8 @@ public class ClientDTO {
     private String dislikes;
     private String profilePhoto;
     private String referenceNo;
+    private String emergencyPhoneNo;
+    private String emergencyUser;
     private ClientPhysicalAddressDTO physicalAddress;
     private ClientPostalAddressDTO postalAddress;
     private List<String> clientLanguages;

@@ -92,6 +92,8 @@ public class EmployeeService {
       employee.setEmail(employeeDTO.getEmail());
       employee.setAccessRole(employeeDTO.getAccessRole());
       employee.setJoinDate(employeeDTO.getJoinDate());
+      employee.setEmergencyPhoneNo(employeeDTO.getEmergencyPhoneNo());
+      employee.setEmergencyUser(employeeDTO.getEmergencyUser());
       employee.setProfile_photo(employeeDTO.getProfile_photo());
       employee.setStatus(employeeDTO.getStatus());
       List<Employee_phoneNo> empPhoneNo = new ArrayList<>();
@@ -142,6 +144,8 @@ public class EmployeeService {
         dto.setPassword(employee.getPassword());
         dto.setAccessRole(employee.getAccessRole());
         dto.setProfile_photo(employee.getProfile_photo());
+        dto.setEmergencyUser(employee.getEmergencyUser());
+        dto.setEmergencyPhoneNo(employee.getEmergencyPhoneNo());
         dto.setJoinDate(employee.getJoinDate());
         dto.setStatus(employee.getStatus());
 
@@ -303,6 +307,12 @@ public class EmployeeService {
         if (updatedEmployeeDTO.getJoinDate() != null) {
             existingEmployee.setJoinDate(updatedEmployeeDTO.getJoinDate());
         }
+        if (updatedEmployeeDTO.getEmergencyPhoneNo()!=null){
+            existingEmployee.setEmergencyPhoneNo(updatedEmployeeDTO.getEmergencyPhoneNo());
+        }
+        if (updatedEmployeeDTO.getEmergencyUser()!=null){
+            existingEmployee.setEmergencyUser(updatedEmployeeDTO.getEmergencyUser());
+        }
 
         if (updatedEmployeeDTO.getEmployeePhoneNo() != null) {
             List<Employee_phoneNo> newPhoneNumbers = mapPhoneNumbersFromDTO(employeeID, updatedEmployeeDTO.getEmployeePhoneNo());
@@ -425,6 +435,7 @@ public class EmployeeService {
             singleEmployeeDetails.setFirstName(employee.getFirstName());
             singleEmployeeDetails.setLastName(employee.getLastName());
             singleEmployeeDetails.setAccessRole(employee.getAccessRole());
+
             employeeDetailsDTOS.add(singleEmployeeDetails);
         }
         return employeeDetailsDTOS;

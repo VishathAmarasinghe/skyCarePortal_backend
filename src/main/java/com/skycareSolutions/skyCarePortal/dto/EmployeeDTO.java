@@ -21,6 +21,8 @@ public class EmployeeDTO {
     private String accessRole;
     private Date joinDate;
     private String profile_photo;
+    private String emergencyPhoneNo;
+    private String emergencyUser;
     private String status;
     private List<Employee_address_DTO> employeeAddresses;
     private List<String> employeeJobRoles;
