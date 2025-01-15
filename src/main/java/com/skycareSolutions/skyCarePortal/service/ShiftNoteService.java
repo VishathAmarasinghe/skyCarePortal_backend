@@ -379,6 +379,9 @@ public class ShiftNoteService {
                 shiftNotes.getCareGiver() != null ? shiftNotes.getCareGiver().getCareGiverID() : null
         );
         shiftNoteDTO.setState(shiftNotes.getState());
+        if (shiftNotes.getClient()!=null){
+            shiftNoteDTO.setClientID(shiftNotes.getClient().getClientID());
+        }
 
         // Convert associated documents
 
@@ -492,6 +495,15 @@ public class ShiftNoteService {
         }
         if (dto.getState() != null) {
             entity.setState(dto.getState());
+        }
+        entity.setWorkHours(dto.getTotalWorkHrs());
+        if (dto.getClientID()!=null && !dto.getClientID().isEmpty()){
+            Client client = clientService.getClientByIdWithEntitiy(dto.getClientID());
+            entity.setClient(client);
+        }
+        if (dto.getCareGiverID()!=null && !dto.getCareGiverID().isEmpty()){
+            CareGiver careGiver = careGiverService.getCareGiverByIdWithEntity(dto.getCareGiverID());
+            entity.setCareGiver(careGiver);
         }
         entity.setWorkHours(dto.getTotalWorkHrs());
     }
