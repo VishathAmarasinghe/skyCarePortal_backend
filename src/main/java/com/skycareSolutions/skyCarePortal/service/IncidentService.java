@@ -102,10 +102,13 @@ public class IncidentService {
         String lastIncidentID = incidentRepository.getLastIdOfIncident();
         String newIncidentID = Micro_utils.idGenerator("incidents",lastIncidentID);
         incidentsDTO.setIncidentID(newIncidentID);
-
-        AppointmentAddress appointmentAddress =  appointmentAddressService.save(incidentsDTO.getAddress());
         Incidents incident = convertToEntity(incidentsDTO);
-        incident.setAppointmentAddress(appointmentAddress);
+
+        if (incidentsDTO.getAddress()!=null){
+            AppointmentAddress appointmentAddress =  appointmentAddressService.save(incidentsDTO.getAddress());
+            incident.setAppointmentAddress(appointmentAddress);
+        }
+
 
         Incidents incident1 = incidentRepository.save(incident);
 
@@ -291,14 +294,15 @@ public class IncidentService {
             incidentsDTO.setClientID(incident.getClient().getClientID());
         }
 
-        AppointmentAddressDTO appointmentAddressDTO = new AppointmentAddressDTO();
-        AppointmentAddress appointmentAddress = incident.getAppointmentAddress();
-        appointmentAddressDTO.setAddress(appointmentAddress.getAddress());
-        appointmentAddressDTO.setCity(appointmentAddress.getCity());
-        appointmentAddressDTO.setPostalCode(appointmentAddress.getPostalCode());
-        appointmentAddressDTO.setState(appointmentAddress.getState());
-
-        incidentsDTO.setAddress(appointmentAddressDTO);
+        if (incident.getAppointmentAddress()!=null){
+            AppointmentAddressDTO appointmentAddressDTO = new AppointmentAddressDTO();
+            AppointmentAddress appointmentAddress = incident.getAppointmentAddress();
+            appointmentAddressDTO.setAddress(appointmentAddress.getAddress());
+            appointmentAddressDTO.setCity(appointmentAddress.getCity());
+            appointmentAddressDTO.setPostalCode(appointmentAddress.getPostalCode());
+            appointmentAddressDTO.setState(appointmentAddress.getState());
+            incidentsDTO.setAddress(appointmentAddressDTO);
+        }
         return incidentsDTO;
     }
 
