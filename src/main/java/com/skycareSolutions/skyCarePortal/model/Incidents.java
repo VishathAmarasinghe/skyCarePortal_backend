@@ -21,7 +21,7 @@ public class Incidents {
     @Column(name = "incidentID")
     private String incidentID;
 
-    @Column(name = "title")
+    @Column(name = "title",columnDefinition = "TEXT")
     private String title;
 
     @Column(name = "reportDate")
@@ -45,16 +45,16 @@ public class Incidents {
     @JoinColumn(name = "addressID")
     private AppointmentAddress appointmentAddress;
 
-    @Column(name = "issue")
+    @Column(name = "issue",columnDefinition = "TEXT")
     private String issue;
 
-    @Column(name = "description")
+    @Column(name = "description",columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "followUp")
+    @Column(name = "followUp",columnDefinition = "TEXT")
     private String followUp;
 
-    @Column(name = "notes")
+    @Column(name = "notes",columnDefinition = "TEXT")
     private String notes;
 
     @Column(name = "hospitalizedStatus")
