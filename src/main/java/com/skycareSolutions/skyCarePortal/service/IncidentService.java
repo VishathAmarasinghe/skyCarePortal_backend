@@ -182,7 +182,6 @@ public class IncidentService {
         IncidentStatus incidentStatus = incidentStatusService.getStatusByIdWithEntity(incidentsDTO.getIncidentStatusID());
         existingIncident.setIncidentStatus(incidentStatus);
 
-
         AppointmentAddressDTO appointmentAddressDTO = new AppointmentAddressDTO();
         appointmentAddressDTO.setAppointmentAddressID(existingIncident.getAppointmentAddress().getAppointmentAddressID());
         appointmentAddressDTO.setCity(incidentsDTO.getAddress().getCity());
