@@ -26,7 +26,7 @@ public class AuthController {
         try {
             EmployeeDTO user = employeeService.loginUser(loginRequestDTO.getEmail(),loginRequestDTO.getPassword());
             if (user.getStatus().equalsIgnoreCase("Activated")){
-                String token = authConfis.generateToken(user);
+                String token = authConfis.generateToken(user,"web");
                 return ResponseEntity.ok(token); // Return JWT token
             }else{
                 return ResponseEntity.status(401).body("Deactivated User. Please contact Admin");
@@ -37,6 +37,24 @@ public class AuthController {
             return ResponseEntity.status(401).body("Invalid email or password");
         }
     }
+
+    @PostMapping("/mobile/login")
+    public ResponseEntity<String> loginMobile(@RequestBody LoginRequestDTO loginRequestDTO) {
+        try {
+            EmployeeDTO user = employeeService.loginUser(loginRequestDTO.getEmail(),loginRequestDTO.getPassword());
+            if (user.getStatus().equalsIgnoreCase("Activated") && user.getAccessRole().equalsIgnoreCase("CareGiver")){
+                String token = authConfis.generateToken(user,"mobile");
+                return ResponseEntity.ok(token); // Return JWT token
+            }else{
+                return ResponseEntity.status(401).body("Deactivated User. Please contact Admin");
+            }
+
+        } catch (RuntimeException e) {
+            System.out.println(e);
+            return ResponseEntity.status(401).body("Invalid email or password");
+        }
+    }
+
 
     @PostMapping("/reset")
     public ResponseEntity<String> resetPassword(@RequestBody PasswordResetDTO passwordResetDTO){
