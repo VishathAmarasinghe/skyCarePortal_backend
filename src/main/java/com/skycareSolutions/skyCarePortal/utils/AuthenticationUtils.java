@@ -30,7 +30,7 @@ public class AuthenticationUtils {
         return encoder.matches(rawPassword, hashedPassword);
     }
 
-    public String generateToken(EmployeeDTO user) {
+    public String generateToken(EmployeeDTO user,String tokenType) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("email", user.getEmail());
         claims.put("userId", user.getEmployeeID());
@@ -42,15 +42,32 @@ public class AuthenticationUtils {
         } else if (user.getAccessRole().equalsIgnoreCase("CareGiver")){
             claims.put("accessRole", List.of("caregiver.skyCarePortal"));
         }
+        if (tokenType.equalsIgnoreCase("web")){
+            return Jwts.builder()
+                    .setSubject(user.getEmail())
+                    .setClaims(claims)
+                    .setIssuedAt(new Date())
+                    .setExpiration(new Date(System.currentTimeMillis() + 3600000)) // Token valid for 1 hour
+                    .signWith(SECRET_KEY)
+                    .compact();
+        }else if (tokenType.equalsIgnoreCase("mobile")){
+            return Jwts.builder()
+                    .setSubject(user.getEmail())
+                    .setClaims(claims)
+                    .setIssuedAt(new Date())
+                    .setExpiration(new Date(System.currentTimeMillis() + 90L * 24 * 60 * 60 * 1000)) // Token valid for 3 months
+                    .signWith(SECRET_KEY)
+                    .compact();
+        }else {
+            return Jwts.builder()
+                    .setSubject(user.getEmail())
+                    .setClaims(claims)
+                    .setIssuedAt(new Date())
+                    .setExpiration(new Date(System.currentTimeMillis() + 3600000)) // Token valid for 1 hour
+                    .signWith(SECRET_KEY)
+                    .compact();
+        }
 
-        // Create the JWT token
-        return Jwts.builder()
-                .setSubject(user.getEmail())
-                .setClaims(claims)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 3600000)) // Token valid for 1 hour
-                .signWith(SECRET_KEY)
-                .compact();
     }
 
     public boolean validateToken(String token) {

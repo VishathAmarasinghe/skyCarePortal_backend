@@ -83,6 +83,7 @@ public class JobAssignerService {
     // Create a new JobAssigner
     public void createJobAssigner(JobAssignCreationDTO dto, String broadcastType) {
         List<RecurrentAppointmentDTO> recurrentAppointmentDTOList = recurrenceService.getRecurrentAppointmentsByAppointmentID(dto.getAppointmentID());
+        List<String> careGiverSendList = new ArrayList<>();
         if (broadcastType.equalsIgnoreCase("All Caregivers")){
                 List<CareGiverDTO> careGivers = careGiverService.getAllCareGivers();
                 for (CareGiverDTO careGiver : careGivers) {
@@ -100,7 +101,14 @@ public class JobAssignerService {
                         JobAssigner entity = mapToEntity(jobAssign);
                         JobAssigner savedEntity = jobAssignerRepository.save(entity);
 
-                        CompletableFuture.runAsync(()->emailService.generateAppointmentConfirmationEmail(careGiver.getEmployee().getFirstName(),careGiver.getEmployee().getEmail(),frontendUrl));
+                        if (!careGiverSendList.contains(careGiver.getEmployee().getEmployeeID())) {
+                            careGiverSendList.add(careGiver.getEmployee().getEmployeeID()); // Add to the list to prevent duplicate emails
+                            CompletableFuture.runAsync(() -> emailService.generateAppointmentConfirmationEmail(
+                                    careGiver.getEmployee().getFirstName(),
+                                    careGiver.getEmployee().getEmail(),
+                                    frontendUrl
+                            ));
+                        }
                     }
                 }
         }else{
@@ -121,8 +129,14 @@ public class JobAssignerService {
                     JobAssigner entity = mapToEntity(jobAssign);
                     JobAssigner savedEntity = jobAssignerRepository.save(entity);
 
-                    CompletableFuture.runAsync(()->emailService.generateAppointmentConfirmationEmail(careGiver.getEmployee().getFirstName(),careGiver.getEmployee().getEmail(),frontendUrl));
-
+                    if (!careGiverSendList.contains(careGiver.getEmployee().getEmployeeID())) {
+                        careGiverSendList.add(careGiver.getEmployee().getEmployeeID()); // Add to the list to prevent duplicate emails
+                        CompletableFuture.runAsync(() -> emailService.generateAppointmentConfirmationEmail(
+                                careGiver.getEmployee().getFirstName(),
+                                careGiver.getEmployee().getEmail(),
+                                frontendUrl
+                        ));
+                    }
                 }
             }
         }
