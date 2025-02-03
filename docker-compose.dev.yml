@@ -16,6 +16,7 @@ services:
       - VITE_APPLICATION_SUPER_ADMIN=superadmin.skyCarePortal
       - VITE_APPLICATION_CARE_GIVER=caregiver.skyCarePortal
       - VITE_FILE_DOWNLOAD_PATH=/file/download
+      - VITE_GOOGLE_MAP_API_KEY=AIzaSyB_cvNijyVjUPr189twbkzvxKNPId0rPNk
 
   backend-staging:
     container_name: backend-staging
