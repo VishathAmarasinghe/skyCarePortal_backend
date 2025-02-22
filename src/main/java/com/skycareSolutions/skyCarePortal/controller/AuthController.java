@@ -31,7 +31,6 @@ public class AuthController {
             }else{
                 return ResponseEntity.status(401).body("Deactivated User. Please contact Admin");
             }
-
         } catch (RuntimeException e) {
             System.out.println(e);
             return ResponseEntity.status(401).body("Invalid email or password");

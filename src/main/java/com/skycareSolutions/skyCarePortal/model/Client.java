@@ -76,4 +76,10 @@ public class Client {
     @ManyToOne
     @JoinColumn(name = "clientStatusID")
     private ClientStatus clientStatus;
+
+    @Column(name = "password")
+    private String password;
+
+    @Column(name = "status", columnDefinition = "varchar(255) default 'Deactivated'")
+    private String status;
 }

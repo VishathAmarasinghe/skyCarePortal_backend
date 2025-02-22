@@ -1,9 +1,11 @@
 package com.skycareSolutions.skyCarePortal.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.skycareSolutions.skyCarePortal.dto.AppointmentDTO;
 import com.skycareSolutions.skyCarePortal.dto.CareGiverDTO;
+import com.skycareSolutions.skyCarePortal.dto.CareGiverDocumentsDTO;
 import com.skycareSolutions.skyCarePortal.service.CareGiverService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -66,6 +68,22 @@ public class CareGiverController {
             return careGiverService.updateCareGiver(id, careGiverDTO,profilePhoto,documents);
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @PutMapping("/documents/{id}")
+    public ResponseEntity<String> updateCareGiverDocuments(
+            @PathVariable String id,
+            @RequestPart("careGiver") String careGiverData,
+            @RequestPart(value = "files",required = false) List<MultipartFile> files) {
+        try {
+            CareGiverDTO careGiverDetails = objectMapper.readValue(careGiverData, CareGiverDTO.class);
+            for (CareGiverDocumentsDTO doc:careGiverDetails.getCareGiverDocuments()){
+                System.out.println("care Giver doc expo date "+doc.getExpDate());
+            }
+            return careGiverService.updateCareGiverDocuments(id, careGiverDetails.getCareGiverDocuments(), files);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse careGiverDocuments", e);
         }
     }
 

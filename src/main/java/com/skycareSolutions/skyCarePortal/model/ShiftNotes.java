@@ -74,4 +74,7 @@ public class ShiftNotes {
     @ManyToOne
     @JoinColumn(name = "careGiverId")
     private CareGiver careGiver;
+
+    @Column(name = "paymentState",columnDefinition = "varchar(255) default 'Pending'")
+    private String paymentState;
 }

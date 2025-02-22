@@ -46,6 +46,10 @@ public class DashboardService {
     @Lazy
     private JobAssignerService jobAssignerService;
 
+    @Autowired
+    @Lazy
+    private ShiftNoteService shiftNoteService;
+
     public DashboardDTO getAdminDashboardStats(){
         DashboardDTO dashboardDTO  = new DashboardDTO();
 
@@ -160,5 +164,14 @@ public class DashboardService {
         }
         careGiverDashboardDTO.setTwoWeekAppointmentCount(appointmentCountByDate);
         return careGiverDashboardDTO;
+    }
+
+    public MobileDashboardDTO getMobileDashboardComponents(String userID){
+        MobileDashboardDTO result = new MobileDashboardDTO();
+        result.setCompletedAppointmentCount(shiftNoteService.getCompletedShiftNoteCount(userID));
+        List<PendingAppointmentDTO> appointments=appointmentService.getPendingAppointmentsRelatedToUser(userID);
+        result.setPendingAppointmentCount(appointments.size());
+
+        return result;
     }
 }

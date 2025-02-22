@@ -205,16 +205,19 @@ public class IncidentService {
 
         try {
             List<IncidentDocumentsDTO> documents = incidentsDTO.getDocuments();
-            for (IncidentDocumentsDTO note:documents){
-                IncidentDocumentsDTO noteExist = incidentDocumentServicel.getDocumentById(note.getDocumentID());
-                if (noteExist.getDocumentID()!=null && !noteExist.getDocumentID().isEmpty()){
-                    incidentDocumentServicel.deleteDocument(noteExist.getDocumentID());
-                    File directory = new File(noteExist.getDocumentLocation());
-                    if (directory.exists()){
-                        directory.delete();
+            if (documents!=null && documents.size()>0){
+                for (IncidentDocumentsDTO note:documents){
+                    IncidentDocumentsDTO noteExist = incidentDocumentServicel.getDocumentById(note.getDocumentID());
+                    if (noteExist.getDocumentID()!=null && !noteExist.getDocumentID().isEmpty()){
+                        incidentDocumentServicel.deleteDocument(noteExist.getDocumentID());
+                        File directory = new File(noteExist.getDocumentLocation());
+                        if (directory.exists()){
+                            directory.delete();
+                        }
                     }
                 }
             }
+
             if (files!=null && !files.isEmpty()){
                 for (MultipartFile file:files){
                     System.out.println("lenght "+files.size());
@@ -318,6 +321,7 @@ public class IncidentService {
         incident.setHospitalized(dto.isHospitalized());
         incident.setFollowUp(dto.getFollowUp());
         incident.setAdmitDate(dto.getAdmitDate());
+        incident.setNotes(dto.getNotes());
         incident.setDischargeDate(dto.getDischargeDate());
         if (dto.getClientID()!=null){
             Client client = clientService.getClientByIdWithEntitiy(dto.getClientID());

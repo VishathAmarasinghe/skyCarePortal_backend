@@ -26,4 +26,5 @@ public class ShiftNoteDTO {
     private String state;
     private String clientID;
     private List<ShiftNoteDocumentDTO> documents;
+    private String paymentState;
 }

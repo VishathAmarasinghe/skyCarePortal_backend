@@ -37,6 +37,11 @@ public class EmployeeController {
         return employeeService.findAllEmployees();
     }
 
+    @GetMapping("/clientAssignedCareGivers")
+    public List<EmployeeDTO> getCareGiversAsEmployeesAssignToClient(@RequestParam String clientID){
+        return employeeService.findCareGiversAsEmployeesAssignedWithClients(clientID);
+    }
+
     @PostMapping
     public ResponseEntity<ApiResponse> addEmployee(
             @RequestPart("employeeData") String employeeData,

@@ -171,6 +171,8 @@ public class ShiftNoteService {
 
             shiftNoteRepository.save(shiftNote);
 
+        System.out.println("files "+files);
+
         try {
             if (files!=null && !files.isEmpty()){
                 for (MultipartFile file:files){
@@ -206,6 +208,7 @@ public class ShiftNoteService {
             return true;
 
         } catch (Exception e) {
+            System.out.println("run time exceptipn");
             throw new RuntimeException(e);
         }
     }
@@ -290,7 +293,7 @@ public class ShiftNoteService {
         return shiftNoteRepository.getAllShiftNotes().stream().map(this::toDTO).toList();
     }
 
-    public List<TimeSheetDTO> getTimeSheetsForGivenDateRange(String startDate,String endDate,String careGiverID){
+    public List<TimeSheetDTO> getTimeSheetsForGivenDateRange(String startDate,String endDate,String careGiverID,String clientID){
         LocalDate start = LocalDate.parse(startDate);
         LocalDate end = LocalDate.parse(endDate);
         List<ShiftNotes> shiftNoteList = shiftNoteRepository.findShiftNotesBetweenDates(start,end);
@@ -337,7 +340,14 @@ public class ShiftNoteService {
                 ClientDTO clientDTO = clientService.getClientById(appointmentDTO.getClientID());
                 timeSheet.setClient(clientDTO);
             }
-            timeSheetList.add(timeSheet);
+            if (clientID!=""){
+                if (clientID.equalsIgnoreCase(timeSheet.getClient().getClientID())){
+                    timeSheetList.add(timeSheet);
+                }
+            }else{
+                timeSheetList.add(timeSheet);
+            }
+
         }
         if (careGiverID.equalsIgnoreCase("all")){
             return timeSheetList;
@@ -365,6 +375,7 @@ public class ShiftNoteService {
         shiftNoteDTO.setSystemShiftEndDate(shiftNotes.getSystemShiftEndDate());
         shiftNoteDTO.setSystemShiftStartTime(shiftNotes.getSystemShiftStartTime());
         shiftNoteDTO.setSystemShiftEndTime(shiftNotes.getSystemShiftEndTime());
+        shiftNoteDTO.setPaymentState(shiftNotes.getPaymentState());
         shiftNoteDTO.setRecurrentAppointmentID(
                 shiftNotes.getRecurrentAppointment() != null ?
                         shiftNotes.getRecurrentAppointment().getRecurrentAppointmentID() : null
@@ -398,6 +409,15 @@ public class ShiftNoteService {
         return shiftNoteDTO;
     }
 
+    public String updateShiftNotePaymentStatus(String id,String state,String comment){
+        ShiftNotes existingShiftNote = shiftNoteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("ShiftNote not found"));
+        existingShiftNote.setPaymentState(state);
+        existingShiftNote.setComments(comment);
+        shiftNoteRepository.save(existingShiftNote);
+        return "Updated state successfully";
+    }
+
     public ShiftNoteDTO updateShiftNote(String noteID, ShiftNoteDTO shiftNoteDTO, List<MultipartFile> files) {
         // Fetch the existing ShiftNote entity
         ShiftNotes existingShiftNote = shiftNoteRepository.findById(noteID)
@@ -418,15 +438,17 @@ public class ShiftNoteService {
                 for (ShiftNoteDocumentDTO document : documents) {
                     ShiftNoteDocumentDTO existingDocument = shiftDocumentService.getDocumentById(document.getDocumentId()).getBody();
                     if (existingDocument != null && existingDocument.getShiftNoteID() != null) {
-                        shiftDocumentService.deleteDocument(existingDocument.getDocumentId());
-
                         File fileToDelete = new File(existingDocument.getDocumentLocation());
                         if (fileToDelete.exists() && !fileToDelete.delete()) {
                             throw new RuntimeException("Failed to delete the file: " + fileToDelete.getName());
+                        }else{
+                            shiftDocumentService.deleteDocument(existingDocument.getDocumentId());
                         }
                     }
                 }
             }
+            System.out.println("process came here without issue");
+            System.out.println("files are here  "+files);
 
             // Add new files
             if (files != null && !files.isEmpty()) {
@@ -464,9 +486,9 @@ public class ShiftNoteService {
             }
 
         } catch (Exception e) {
+            System.out.println("error in the context "+e);
             throw new RuntimeException("Error while updating shift note and documents", e);
         }
-
         // Convert the updated entity back to DTO and return
         return toDTO(updatedNote);
     }
@@ -525,6 +547,7 @@ public class ShiftNoteService {
         shiftNotes.setComments(shiftNoteDTO.getComments());
         shiftNotes.setState(shiftNoteDTO.getState());
         shiftNotes.setWorkHours(shiftNoteDTO.getTotalWorkHrs());
+        shiftNotes.setPaymentState(shiftNoteDTO.getPaymentState());
 
         // Employee and CareGiver need to be set externally if required
         return shiftNotes;
@@ -540,6 +563,11 @@ public class ShiftNoteService {
         }else{
             throw new RuntimeException();
         }
+    }
+
+    public long getCompletedShiftNoteCount(String employeeID){
+        Employee employee = employeeService.findOneEmployeeWithEntity(employeeID);
+        return shiftNoteRepository.countByStateCompletedAndEmployee(employee);
     }
 
 

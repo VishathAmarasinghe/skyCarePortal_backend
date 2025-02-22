@@ -162,6 +162,11 @@ public class JobAssignerService {
         return clientList.stream().toList();
     }
 
+    public List<String> getAllCareGiverIDsAssignToAppointment(String appointmentID){
+        Appointment appointment = appointmentService.getAppointmentByIdWithEntity(appointmentID);
+        return jobAssignerRepository.findCareGiverListAssociatedWithAppointment(appointment);
+    }
+
     public List<JobAssignCareGiverViewerDTO> jobAssignTOCareGivers(String id){
         CareGiverDTO careGiverDTO = careGiverService.getCareGiverByEmployee(id);
         Employee employee = employeeService.findOneEmployeeWithEntity(id);

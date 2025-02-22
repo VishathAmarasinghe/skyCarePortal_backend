@@ -2,14 +2,12 @@ package com.skycareSolutions.skyCarePortal.service;
 
 import com.skycareSolutions.skyCarePortal.dto.*;
 import com.skycareSolutions.skyCarePortal.model.*;
-import com.skycareSolutions.skyCarePortal.repository.EmployeeAddressRepository;
-import com.skycareSolutions.skyCarePortal.repository.EmployeeJobRolesRepository;
-import com.skycareSolutions.skyCarePortal.repository.EmployeePhoneNoRepository;
-import com.skycareSolutions.skyCarePortal.repository.EmployeeRepository;
+import com.skycareSolutions.skyCarePortal.repository.*;
 import com.skycareSolutions.skyCarePortal.utils.AuthenticationUtils;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,7 +33,17 @@ public class EmployeeService {
     private EmailService emailService;
 
     @Autowired
+    private JobAssignerService jobAssignerService;
+
+    @Autowired
     private CareGiverService careGiverService;
+
+    @Lazy
+    @Autowired
+    private AppointmentService appointmentService;
+
+    @Autowired
+    private ClientRepository clientRepository;
 
     AuthenticationUtils authenticationUtils= new AuthenticationUtils();
 
@@ -51,6 +59,21 @@ public class EmployeeService {
             Employee user = userOptional.get();
             if (passwordUtil.matchPassword(password, user.getPassword())) {
                 return convertToDTO(user);
+            }
+        }else {
+            Client clientOptional = clientRepository.findByEmail(email);
+            if (clientOptional!=null){
+                if (passwordUtil.matchPassword(password, clientOptional.getPassword())) {
+                    EmployeeDTO employeeDTO = new EmployeeDTO();
+                    employeeDTO.setEmployeeID(clientOptional.getClientID());
+                    employeeDTO.setStatus(clientOptional.getStatus());
+                    List<String> roles = new ArrayList<>();
+                    roles.add("Client");
+                    employeeDTO.setEmployeeJobRoles(roles);
+                    employeeDTO.setEmail(clientOptional.getEmail());
+                    employeeDTO.setAccessRole("Client");
+                    return employeeDTO;
+                }
             }
         }
         throw new RuntimeException("Invalid email or password");
@@ -198,6 +221,22 @@ public class EmployeeService {
         }
 
         return empResult;
+    }
+
+
+    public List<EmployeeDTO> findCareGiversAsEmployeesAssignedWithClients(String clientID){
+        List<EmployeeDTO> employeeList = new ArrayList<>();
+        List<AppointmentDTO> appointments = appointmentService.getAppointmentsbyClientID(clientID);
+        Set<String> careGiverList = new HashSet<>();
+        for (AppointmentDTO singleAppointment:appointments){
+            List<String> careGivers = jobAssignerService.getAllCareGiverIDsAssignToAppointment(singleAppointment.getAppointmentID());
+            careGiverList.addAll(careGivers);
+        }
+        for (String careGiverID: careGiverList){
+            CareGiver careGiver = careGiverService.getCareGiverByIdWithEntity(careGiverID);
+            employeeList.add(convertToDTO(careGiver.getEmployee()));
+        }
+        return employeeList;
     }
 
     public EmployeeDTO getSingleEmployee(String employeeID){
