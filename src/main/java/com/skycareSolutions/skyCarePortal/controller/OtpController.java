@@ -3,6 +3,9 @@ package com.skycareSolutions.skyCarePortal.controller;
 import com.skycareSolutions.skyCarePortal.dto.EmployeeDTO;
 import com.skycareSolutions.skyCarePortal.dto.OTPValidResponseDTO;
 import com.skycareSolutions.skyCarePortal.dto.PasswordResetDTO;
+import com.skycareSolutions.skyCarePortal.model.Client;
+import com.skycareSolutions.skyCarePortal.repository.ClientRepository;
+import com.skycareSolutions.skyCarePortal.service.ClientService;
 import com.skycareSolutions.skyCarePortal.service.EmailService;
 import com.skycareSolutions.skyCarePortal.service.EmployeeService;
 import com.skycareSolutions.skyCarePortal.service.OtpService;
@@ -29,6 +32,10 @@ public class OtpController {
     @Lazy
     private EmployeeService employeeService;
 
+    @Autowired
+    @Lazy
+    private ClientRepository clientRepository;
+
     @PostMapping("/send")
     public ResponseEntity<String> sendOtp(@RequestParam String email) {
         EmployeeDTO employee = employeeService.findEmployeeByEmail(email);
@@ -37,6 +44,12 @@ public class OtpController {
             CompletableFuture.runAsync(()->emailService.generateResetPasswordEmail(employee.getFirstName(),otp,email));
             return ResponseEntity.ok("OTP sent successfully");
         }else{
+            Client client = clientRepository.findByEmail(email);
+            if (client!=null){
+                String otp = otpService.generateAndStoreOtp(email);
+                CompletableFuture.runAsync(()->emailService.generateResetPasswordEmail(client.getFirstName(),otp,email));
+                return ResponseEntity.ok("OTP sent successfully");
+            }
             return ResponseEntity.badRequest().body("Employee not found with the given email");
         }
     }
@@ -46,9 +59,14 @@ public class OtpController {
         boolean isValid = otpService.validateOtp(email, otp);
         OTPValidResponseDTO otpValidResponseDTO = new OTPValidResponseDTO();
         if (isValid) {
-            EmployeeDTO employee = employeeService.findEmployeeByEmail(email);
-            otpValidResponseDTO.setEmployeeID(employee.getEmployeeID());
-            otpValidResponseDTO.setMessage("OTP validated Successfully");
+            Client client = clientRepository.findByEmail(email);
+            if (client!=null){
+                otpValidResponseDTO.setEmployeeID(client.getClientID());
+            }else{
+                EmployeeDTO employee = employeeService.findEmployeeByEmail(email);
+                otpValidResponseDTO.setEmployeeID(employee.getEmployeeID());
+                otpValidResponseDTO.setMessage("OTP validated Successfully");
+            }
             return ResponseEntity.ok(otpValidResponseDTO);
         } else {
             otpValidResponseDTO.setMessage("Invalid or expired OTP");

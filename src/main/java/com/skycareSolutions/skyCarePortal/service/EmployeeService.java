@@ -519,10 +519,21 @@ public class EmployeeService {
     }
 
     public Boolean resetPassword(PasswordResetDTO passwordResetDTO){
-        EmployeeDTO employee = findEmployeeByEmail(passwordResetDTO.getEmail());
-        employee.setPassword(authenticationUtils.hashPassword(passwordResetDTO.getPassword()));
-        employeeRepository.save(mapEmployeeFromDTO(employee));
-        return true;
+        if (passwordResetDTO.getEmployeeID().substring(0,2).equalsIgnoreCase("CU")){
+            Client client = clientRepository.findByEmail(passwordResetDTO.getEmail());
+            if (client!=null){
+                client.setPassword(authenticationUtils.hashPassword(passwordResetDTO.getPassword()));
+                clientRepository.save(client);
+                return true;
+            }else{
+                throw new RuntimeException();
+            }
+        }else{
+            EmployeeDTO employee = findEmployeeByEmail(passwordResetDTO.getEmail());
+            employee.setPassword(authenticationUtils.hashPassword(passwordResetDTO.getPassword()));
+            employeeRepository.save(mapEmployeeFromDTO(employee));
+            return true;
+        }
     }
 
 }
