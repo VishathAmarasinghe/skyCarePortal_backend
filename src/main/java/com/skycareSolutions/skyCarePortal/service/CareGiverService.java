@@ -118,7 +118,6 @@ public class CareGiverService {
             for (CareGiverPaymentsDTO payment:dto.getCareGiverPayments()){
                 Optional<CareGiverPaymentsDTO> paymentValue = exisitingCareGiverPayments.stream().filter(sm->payment.getPaymentTypeID().equalsIgnoreCase(sm.getPaymentTypeID())).findFirst();
                 if (paymentValue.isPresent()){
-                    System.out.println("incomming payment value is "+payment.getAmount());
                     careGiverPaymentService.updatePayment(id,paymentValue.get().getPaymentTypeID(),payment);
                 }else{
                     List<CareGiverPaymentsDTO> paymentList = new ArrayList<>();

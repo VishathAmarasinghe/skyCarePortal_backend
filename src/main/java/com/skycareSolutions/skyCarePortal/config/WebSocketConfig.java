@@ -14,13 +14,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws") // WebSocket endpoint
-                .setAllowedOrigins("*") // Allow all origins (change for production)
+                .setAllowedOriginPatterns("*") // Allow all origins (change for production)
+//                .addInterceptors(new CustomHandshakeInterceptor())
                 .withSockJS(); // Enable SockJS fallback
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/topic"); // Clients subscribe to /topic/*
+        registry.enableSimpleBroker("/topic","/queue"); // Clients subscribe to /topic/*
         registry.setApplicationDestinationPrefixes("/app"); // Clients send messages to /app/*
+//        registry.setUserDestinationPrefix("/user"); // Enable /user/queue/* for private messaging
     }
 }

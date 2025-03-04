@@ -125,10 +125,18 @@ public class RecurrenceService {
                 .toList();
     }
 
+
     public List<RecurrentAppointmentDTO> getAppointmentsWithinGivenDateRange(String startDate,String endDate){
         LocalDate start = LocalDate.parse(startDate);
         LocalDate end = LocalDate.parse(endDate);
         return recurrentAppointmentRepository.findAppointmentsWithinDateRange(start,end)
+                .stream().map(this::mapToDTO).toList();
+    }
+
+    public List<RecurrentAppointmentDTO> getAppointmentsWithinGivenDateRangeAndAppointmentID(String startDate,String endDate,String appointmentID){
+        LocalDate start = LocalDate.parse(startDate);
+        LocalDate end = LocalDate.parse(endDate);
+        return recurrentAppointmentRepository.findAppointmentsWithinDateRangeAndAppointment(start,end,appointmentID)
                 .stream().map(this::mapToDTO).toList();
     }
 

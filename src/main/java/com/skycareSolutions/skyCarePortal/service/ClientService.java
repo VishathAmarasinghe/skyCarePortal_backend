@@ -3,13 +3,16 @@ package com.skycareSolutions.skyCarePortal.service;
 import com.skycareSolutions.skyCarePortal.dto.ClientDTO;
 import com.skycareSolutions.skyCarePortal.dto.ClientPhysicalAddressDTO;
 import com.skycareSolutions.skyCarePortal.dto.ClientPostalAddressDTO;
+import com.skycareSolutions.skyCarePortal.dto.PasswordChangeDTO;
 import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.ClientRepository;
 import com.skycareSolutions.skyCarePortal.repository.ClientStatusRepository;
 import com.skycareSolutions.skyCarePortal.repository.ClientTypeRepository;
 import com.skycareSolutions.skyCarePortal.repository.LanguageRepository;
+import com.skycareSolutions.skyCarePortal.utils.AuthenticationUtils;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,6 +21,7 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,6 +41,14 @@ public class ClientService {
 
     @Autowired
     private ClientStatusRepository clientStatusRepository;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Value("${app.external.service.frontendUrl}")
+    private String frontendUrl;
+
+    AuthenticationUtils authenticationUtils= new AuthenticationUtils();
 
 
 
@@ -58,6 +70,7 @@ public class ClientService {
         clientDTO.setEmergencyPhoneNo(clientEntity.getEmergencyPhoneNo());
         clientDTO.setProfilePhoto(clientEntity.getProfilePhoto());
         clientDTO.setReferenceNo(clientEntity.getReferenceNo());
+        clientDTO.setStatus(clientEntity.getStatus());
 
         // Map physicalAddress and postalAddress
         if (clientEntity.getPhysicalAddress() != null) {
@@ -124,6 +137,7 @@ public class ClientService {
         clientEntity.setDislikes(clientDTO.getDislikes());
         clientEntity.setProfilePhoto(clientDTO.getProfilePhoto());
         clientEntity.setReferenceNo(clientDTO.getReferenceNo());
+        clientEntity.setStatus(clientDTO.getStatus());
 
         // Map physicalAddress and postalAddress
         if (clientDTO.getPhysicalAddress() != null) {
@@ -254,6 +268,28 @@ public class ClientService {
         return clientEntity.map(client->fromEntity(client,"values")).orElseThrow(() -> new RuntimeException("Client not found"));
     }
 
+
+    //update client activation status
+    public String updateClientStatus(String clientID,String status) {
+        Optional<Client> clientEntity = clientRepository.findById(clientID);
+        if (clientEntity.isPresent()){
+            Client client = clientEntity.get();
+            client.setStatus(status);
+            if (status.equalsIgnoreCase("Activated")){
+                String password = Micro_utils.generateRandomPassword(10);
+                client.setPassword(authenticationUtils.hashPassword(password));
+                clientRepository.save(client);
+                CompletableFuture.runAsync(()->emailService.generateWelcomeLoginEmail(client.getFirstName(),client.getEmail(),password,frontendUrl));
+            }
+
+            return "updated successfully";
+        }else{
+            throw new RuntimeException();
+        }
+    }
+
+
+
     public Client getClientByIdWithEntitiy(String clientID) {
         Optional<Client> clientEntity = clientRepository.findById(clientID);
         return clientEntity.orElseThrow(() -> new RuntimeException("Client not found"));
@@ -276,6 +312,23 @@ public class ClientService {
         } else {
             throw new RuntimeException("Client not found");
         }
+    }
+
+    public String updatePasswords(PasswordChangeDTO passwordChangeDTO){
+        Optional<Client> employeeDTO =  clientRepository.findById(passwordChangeDTO.getEmployeeID());
+        if (employeeDTO.isPresent()){
+            Client exisitingEmployee = employeeDTO.get();
+            if (passwordChangeDTO.getCurrentPassword()!=null && passwordChangeDTO.getCurrentPassword()!="") {
+                if (!authenticationUtils.matchPassword(passwordChangeDTO.getCurrentPassword(), exisitingEmployee.getPassword())) {
+                    throw new RuntimeException("Old Password is incorrect");
+                }
+
+                String newPassword = authenticationUtils.hashPassword(passwordChangeDTO.getNewPassword());
+                exisitingEmployee.setPassword(newPassword);
+                clientRepository.save(exisitingEmployee);
+            }
+        }
+        return "Password Changed Successfully";
     }
 
     // Delete a client by ID

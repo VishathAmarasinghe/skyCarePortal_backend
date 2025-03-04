@@ -52,6 +52,21 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getPendingAppointmentsRelatedToUser(id));
     }
 
+    @GetMapping("/pending/client/{id}")
+    public ResponseEntity<List<PendingClientAppointmentDTO>> getPendingAppointmentsRelatedToClient(@PathVariable String id){
+        return ResponseEntity.ok(appointmentService.getPendingAppointmentsRelatedToClient(id));
+    }
+
+    @GetMapping("/past/client/{id}")
+    public ResponseEntity<List<PendingClientAppointmentDTO>> getPastAppointmentsRelatedToClient(
+            @PathVariable String id,
+            @RequestParam String startDate,
+            @RequestParam String endDate,
+            @RequestParam String careGiver
+    ){
+        return ResponseEntity.ok(appointmentService.getPastAppointmentsRelatedToClient(id,startDate,endDate,careGiver));
+    }
+
     @GetMapping("/calender/user/{id}")
     public ResponseEntity<List<AppointmentCalenderDTO>> getCalenderEventsByUser(
             @RequestParam(value = "startDate") String startDate,

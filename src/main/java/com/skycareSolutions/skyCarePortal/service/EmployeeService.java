@@ -126,7 +126,6 @@ public class EmployeeService {
           if (phone.isEmpty()) {
               Employee_phoneNo newPhone = new Employee_phoneNo(phoneId,employee);
               empPhoneNo.add(newPhone);
-              System.out.println("Added new phone number: " + phoe);
           } else {
               System.out.println("Phone number already exists: " + phoe);
           }
@@ -134,7 +133,6 @@ public class EmployeeService {
       employee.setEmployeePhoneNo(empPhoneNo);
       List<Employee_job_Roles> empJobRoles = new ArrayList<>();
       for (String roles:employeeDTO.getEmployeeJobRoles()){
-          System.out.println("employee job roles" + roles);
             EmployeeJobRolesId role = new EmployeeJobRolesId(employee.getEmployeeID(),roles);
             Optional<Employee_job_Roles> jobRole = employeeJobRolesRepository.findById(role);
             if (jobRole.isEmpty()) {
@@ -303,19 +301,43 @@ public class EmployeeService {
     }
 
     public String updateEmployeeBasicInfoWithPanel(EmployeeBasicInfoUpdaterDTO employeeBasicInfoUpdaterDTO,MultipartFile profilePhoto){
-        EmployeeDTO employeeDTO = getSingleEmployee(employeeBasicInfoUpdaterDTO.getEmployeeID());
-        if (!employeeDTO.getEmail().equalsIgnoreCase(employeeBasicInfoUpdaterDTO.getEmail())){
-            EmployeeDTO checkEmployee = findEmployeeByEmail(employeeBasicInfoUpdaterDTO.getEmail());
-            if (checkEmployee!=null){
-                return "User exist with new email";
-            }
-        }
-        employeeDTO.setFirstName(employeeBasicInfoUpdaterDTO.getFirstName());
-        employeeDTO.setLastName(employeeBasicInfoUpdaterDTO.getLastName());
-        employeeDTO.setEmail(employeeBasicInfoUpdaterDTO.getEmail());
+        if (employeeBasicInfoUpdaterDTO.getEmployeeID().substring(0,2).equalsIgnoreCase("CU")){
+            Optional<Client> client = clientRepository.findById(employeeBasicInfoUpdaterDTO.getEmployeeID());
+            if (client.isPresent()){
+                Client exisitingClient = client.get();
+                if (!exisitingClient.getEmail().equalsIgnoreCase(employeeBasicInfoUpdaterDTO.getEmail())){
+                    EmployeeDTO checkEmployee = findEmployeeByEmail(employeeBasicInfoUpdaterDTO.getEmail());
+                    Client clientDTO = clientRepository.findByEmail(employeeBasicInfoUpdaterDTO.getEmail());
+                    if (clientDTO!=null || checkEmployee!=null){
+                        return "User exist with new email";
+                    }
+                }
+                exisitingClient.setEmail(employeeBasicInfoUpdaterDTO.getEmail());
+                exisitingClient.setFirstName(employeeBasicInfoUpdaterDTO.getFirstName());
+                exisitingClient.setLastName(employeeBasicInfoUpdaterDTO.getLastName());
+                clientRepository.save(exisitingClient);
+                return "Account Updated Successfully";
 
-        updateEmployeeDetails(employeeDTO.getEmployeeID(),employeeDTO,profilePhoto);
-        return "Account Updated Successfully";
+            }else{
+                throw new RuntimeException();
+            }
+        }else{
+            EmployeeDTO employeeDTO = getSingleEmployee(employeeBasicInfoUpdaterDTO.getEmployeeID());
+            if (!employeeDTO.getEmail().equalsIgnoreCase(employeeBasicInfoUpdaterDTO.getEmail())){
+                EmployeeDTO checkEmployee = findEmployeeByEmail(employeeBasicInfoUpdaterDTO.getEmail());
+                if (checkEmployee!=null){
+                    return "User exist with new email";
+                }
+            }
+            employeeDTO.setFirstName(employeeBasicInfoUpdaterDTO.getFirstName());
+            employeeDTO.setLastName(employeeBasicInfoUpdaterDTO.getLastName());
+            employeeDTO.setEmail(employeeBasicInfoUpdaterDTO.getEmail());
+
+            updateEmployeeDetails(employeeDTO.getEmployeeID(),employeeDTO,profilePhoto);
+            return "Account Updated Successfully";
+        }
+
+
     }
 
     public EmployeeDTO updateEmployeeDetails(String employeeID, EmployeeDTO updatedEmployeeDTO, MultipartFile profilePhoto) {

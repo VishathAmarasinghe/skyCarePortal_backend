@@ -3,6 +3,7 @@ package com.skycareSolutions.skyCarePortal.repository;
 import com.skycareSolutions.skyCarePortal.model.ChatMember;
 import com.skycareSolutions.skyCarePortal.model.Client;
 import com.skycareSolutions.skyCarePortal.model.Employee;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -51,6 +52,15 @@ ChatMemberRepository extends CrudRepository<ChatMember,Long> {
     // Get all Employees for a specific chat ID
     @Query("SELECT cm.employee FROM ChatMember cm WHERE cm.chat.id = :chatId AND cm.employee IS NOT NULL")
     List<Employee> findEmployeesByChatId(@Param("chatId") Long chatId);
+
+    @Modifying
+    @Query("DELETE FROM ChatMember cm WHERE cm.chat.id = :chatId AND cm.employee = :employeeId")
+    void deleteByChatIdAndEmployeeId(@Param("chatId") Long chatId, @Param("employeeId") Employee employeeId);
+
+    // Delete by chatID and clientID
+    @Modifying
+    @Query("DELETE FROM ChatMember cm WHERE cm.chat.id = :chatId AND cm.client = :clientId")
+    void deleteByChatIdAndClientId(@Param("chatId") Long chatId, @Param("clientId") Client clientId);
 
 
 }

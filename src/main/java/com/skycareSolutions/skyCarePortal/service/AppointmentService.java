@@ -76,6 +76,81 @@ public class AppointmentService {
         return eventDTOs;
     }
 
+    public List<PendingClientAppointmentDTO> getPendingAppointmentsRelatedToClient(String clientID){
+        Client client= clientService.getClientByIdWithEntitiy(clientID);
+        List<PendingClientAppointmentDTO> pendingAppointmentDTOList = new ArrayList<>();
+        List<Appointment> appointmentList = appointmentRepository.findAppointmentsByClient(client);
+        for (Appointment ap:appointmentList){
+            List<RecurrentAppointmentDTO> recurrentAppointmentList = recurrenceService.getRecurrentAppointmentsByAppointmentID(ap.getAppointmentID());
+            for (RecurrentAppointmentDTO recurrentAP:recurrentAppointmentList){
+                LocalDateTime appointmentStartDateTime = LocalDateTime.of(recurrentAP.getStartDate(), LocalTime.parse(recurrentAP.getStartTime()));
+                LocalDateTime currentDateTime = LocalDateTime.now();
+                // Check if the appointment's start date-time is equal to or after the current date-time
+                if (!appointmentStartDateTime.isBefore(currentDateTime)) {
+                    PendingClientAppointmentDTO pendingSingleResult = new PendingClientAppointmentDTO();
+                    pendingSingleResult.setAppointmentData(mapToDTO(ap));
+                    pendingSingleResult.setRecurrentAppointmentID(recurrentAP.getRecurrentAppointmentID());
+                    pendingSingleResult.setEndTime(recurrentAP.getEndTime());
+                    pendingSingleResult.setStartTime(recurrentAP.getStartTime());
+                    pendingSingleResult.setStartDate(recurrentAP.getStartDate().toString());
+                    pendingSingleResult.setEndDate(recurrentAP.getEndDate().toString());
+                    List<JobAssignerDTO> jobAssigners = jobAssignerService.findJobAssignerByRecurrentID(recurrentAP.getRecurrentAppointmentID());
+                    List<String> jobAssignerList = new ArrayList<>();
+                    for (JobAssignerDTO careGiver:jobAssigners){
+                        CareGiverDTO careGiverDTO = careGiverService.getCareGiverById(careGiver.getCareGiverID()).getBody();
+                        String fullName = careGiverDTO.getEmployee().getFirstName()+" "+careGiverDTO.getEmployee().getLastName();
+                        jobAssignerList.add(fullName);
+                    }
+                    pendingSingleResult.setCareGiverNames(jobAssignerList);
+                    pendingAppointmentDTOList.add(pendingSingleResult);
+                }
+            }
+        }
+        return pendingAppointmentDTOList;
+    }
+
+    public List<PendingClientAppointmentDTO> getPastAppointmentsRelatedToClient(String clientID,String startDate,String endDate,String careGiverType){
+        Client client= clientService.getClientByIdWithEntitiy(clientID);
+        List<PendingClientAppointmentDTO> pendingAppointmentDTOList = new ArrayList<>();
+        List<Appointment> appointmentList = appointmentRepository.findAppointmentsByClient(client);
+        for (Appointment ap:appointmentList){
+            List<RecurrentAppointmentDTO> recurrentAppointmentList = recurrenceService.getAppointmentsWithinGivenDateRangeAndAppointmentID(startDate,endDate,ap.getAppointmentID());
+            for (RecurrentAppointmentDTO recurrentAP:recurrentAppointmentList){
+                LocalDateTime appointmentStartDateTime = LocalDateTime.of(recurrentAP.getStartDate(), LocalTime.parse(recurrentAP.getStartTime()));
+                LocalDateTime currentDateTime = LocalDateTime.now();
+                // Check if the appointment's start date-time is equal to or after the current date-time
+                if (appointmentStartDateTime.isBefore(currentDateTime)) {
+
+                    PendingClientAppointmentDTO pendingSingleResult = new PendingClientAppointmentDTO();
+                    pendingSingleResult.setAppointmentData(mapToDTO(ap));
+                    pendingSingleResult.setRecurrentAppointmentID(recurrentAP.getRecurrentAppointmentID());
+                    pendingSingleResult.setEndTime(recurrentAP.getEndTime());
+                    pendingSingleResult.setStartTime(recurrentAP.getStartTime());
+                    pendingSingleResult.setStartDate(recurrentAP.getStartDate().toString());
+                    pendingSingleResult.setEndDate(recurrentAP.getEndDate().toString());
+                    List<JobAssignerDTO> jobAssigners = jobAssignerService.findJobAssignerByRecurrentID(recurrentAP.getRecurrentAppointmentID());
+                    List<String> jobAssignerList = new ArrayList<>();
+                    for (JobAssignerDTO careGiver:jobAssigners){
+                        if (!careGiverType.equalsIgnoreCase("All")){
+                            if (careGiverType.equalsIgnoreCase(careGiver.getCareGiverID())){
+                                CareGiverDTO careGiverDTO = careGiverService.getCareGiverById(careGiver.getCareGiverID()).getBody();
+                                String fullName = careGiverDTO.getEmployee().getFirstName()+" "+careGiverDTO.getEmployee().getLastName();
+                                jobAssignerList.add(fullName);
+                            }
+                        }else{
+                            CareGiverDTO careGiverDTO = careGiverService.getCareGiverById(careGiver.getCareGiverID()).getBody();
+                            String fullName = careGiverDTO.getEmployee().getFirstName()+" "+careGiverDTO.getEmployee().getLastName();
+                            jobAssignerList.add(fullName);
+                        }
+                    }
+                    pendingSingleResult.setCareGiverNames(jobAssignerList);
+                    pendingAppointmentDTOList.add(pendingSingleResult);
+                }
+            }
+        }
+        return pendingAppointmentDTOList;
+    }
+
     public List<PendingAppointmentDTO> getPendingAppointmentsRelatedToUser(String employeeID){
         LocalDate currentDate = LocalDate.now();
         LocalTime currentTime = LocalTime.now();
@@ -421,7 +496,6 @@ public class AppointmentService {
             String[] careGiverIDs = new String[newCareGivers.size()];
             int index=0;
             for (String careGiverID:newCareGivers){
-                System.out.println("careGivers"+careGiverID);
                 careGiverIDs[index]=careGiverID;
             }
 
@@ -520,7 +594,6 @@ public class AppointmentService {
         int index = 0;
         for (JobAssignerDTO assigner : jobAssigner) {
             careGiverList[index] = assigner.getCareGiverID();
-            System.out.println("care givers "+assigner.getCareGiverID());
             index++;
         }
         createDTO.setCareGiverIDs(careGiverList);
@@ -566,7 +639,6 @@ public class AppointmentService {
         appointment.setCaregiverCount(dto.getCaregiverCount());
         appointment.setRecurrentState(dto.getRecurrenceState());
         if (dto.getCarePlanID()!=null && !dto.getCarePlanID().equalsIgnoreCase("")){
-            System.out.println("care plan id is there "+dto.getCarePlanID());
             carePlanService.findById(dto.getCarePlanID())
                     .ifPresentOrElse(
                             appointment::setCarePlan,
