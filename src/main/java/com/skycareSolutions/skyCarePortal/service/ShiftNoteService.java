@@ -272,7 +272,6 @@ public class ShiftNoteService {
                                 throw new RuntimeException("Failed to delete the existing file: " + destinationFile.getName());
                             }
                         }
-
                         file.transferTo(destinationFile);
                         ShiftNoteDocumentDTO docs  = new ShiftNoteDocumentDTO();
                         docs.setDocumentName(originalFileName);
@@ -283,7 +282,6 @@ public class ShiftNoteService {
                 }
             }
             return true;
-
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
