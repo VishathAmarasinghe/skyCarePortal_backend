@@ -278,10 +278,9 @@ public class ClientService {
             if (status.equalsIgnoreCase("Activated")){
                 String password = Micro_utils.generateRandomPassword(10);
                 client.setPassword(authenticationUtils.hashPassword(password));
-                clientRepository.save(client);
                 CompletableFuture.runAsync(()->emailService.generateWelcomeLoginEmail(client.getFirstName(),client.getEmail(),password,frontendUrl));
             }
-
+            clientRepository.save(client);
             return "updated successfully";
         }else{
             throw new RuntimeException();
