@@ -338,7 +338,7 @@ public class ShiftNoteService {
                 ClientDTO clientDTO = clientService.getClientById(appointmentDTO.getClientID());
                 timeSheet.setClient(clientDTO);
             }
-            if (clientID!=""){
+            if (!clientID.equalsIgnoreCase("")){
 
                 if (timeSheet.getClient()!=null){
                     if (clientID.equalsIgnoreCase(timeSheet.getClient().getClientID())){
