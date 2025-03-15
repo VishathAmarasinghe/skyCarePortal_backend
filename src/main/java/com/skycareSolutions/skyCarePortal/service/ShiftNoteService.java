@@ -348,7 +348,6 @@ public class ShiftNoteService {
             }else{
                 timeSheetList.add(timeSheet);
             }
-
         }
         if (careGiverID.equalsIgnoreCase("all")){
             return timeSheetList;
