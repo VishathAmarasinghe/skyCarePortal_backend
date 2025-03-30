@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -54,7 +55,7 @@ public class ShiftNoteController {
             ShiftNoteDTO notes = objectMapper.readValue(shiftNoteDTO,ShiftNoteDTO.class);
             return ResponseEntity.ok(shiftNoteService.newShiftNotes(notes,files));
         }catch (Exception e){
-            System.out.println(e);
+            System.out.println("exception "+e);
             return ResponseEntity.internalServerError().body(false);
         }
     }
@@ -88,8 +89,14 @@ public class ShiftNoteController {
     }
 
     @GetMapping("/time-sheets")
-    public ResponseEntity<List<TimeSheetDTO>> getTimeSheetsWithinDateRange(@RequestParam String startDate,@RequestParam String endDate,@RequestParam String careGiverID){
-        return ResponseEntity.ok(shiftNoteService.getTimeSheetsForGivenDateRange(startDate,endDate,careGiverID));
+    public ResponseEntity<List<TimeSheetDTO>> getTimeSheetsWithinDateRange(@RequestParam String startDate,@RequestParam String endDate,@RequestParam String careGiverID,@RequestParam String clientID){
+        return ResponseEntity.ok(shiftNoteService.getTimeSheetsForGivenDateRange(startDate,endDate,careGiverID,clientID));
+    }
+
+    @PutMapping("/time-sheets/status/{id}")
+    public ResponseEntity<String> updateTimeSheetPaymentState(@PathVariable String id,@RequestParam String status,@RequestBody Map<String, String> requestBody){
+        String comment = requestBody.get("comment");
+        return ResponseEntity.ok(shiftNoteService.updateShiftNotePaymentStatus(id,status,comment));
     }
 
     @GetMapping("/careGiver/{id}")
@@ -112,6 +119,7 @@ public class ShiftNoteController {
             ShiftNoteDTO updatedShiftNote = shiftNoteService.updateShiftNote(noteID, notes, files);
             return ResponseEntity.ok(updatedShiftNote);
         } catch (Exception e) {
+            System.out.println("issue found "+e);
             return ResponseEntity.status(500).body(null);
         }
     }

@@ -31,6 +31,9 @@ public interface ShiftNoteRepository extends JpaRepository<ShiftNotes,String> {
     @Query("SELECT r from ShiftNotes r WHERE r.careGiver=:careGiver ORDER BY shiftEndDate DESC")
     List<ShiftNotes> getAllShiftNotesByCareGiver(CareGiver careGiver);
 
+    @Query("SELECT COUNT(r) FROM ShiftNotes r WHERE r.state = 'Completed' AND r.employee = :employee")
+    long countByStateCompletedAndEmployee(@Param("employee") Employee employee);
+
     @Query("SELECT r FROM ShiftNotes r " +
             "WHERE r.employee = :createdById " +
             "AND r.shiftStartDate >= :startDate " +

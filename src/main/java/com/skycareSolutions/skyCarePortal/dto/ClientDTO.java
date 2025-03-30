@@ -39,5 +39,6 @@ public class ClientDTO {
     private List<String> clientClassifications;
     private String clientType;
     private String clientStatus;
+    private String status;
 }
 

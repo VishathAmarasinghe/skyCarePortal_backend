@@ -41,6 +41,8 @@ public class AuthenticationUtils {
             claims.put("accessRole", List.of("admin.skyCarePortal", "superadmin.skyCarePortal"));
         } else if (user.getAccessRole().equalsIgnoreCase("CareGiver")){
             claims.put("accessRole", List.of("caregiver.skyCarePortal"));
+        } else if (user.getAccessRole().equalsIgnoreCase("Client")){
+            claims.put("accessRole", List.of("client.skyCarePortal"));
         }
         if (tokenType.equalsIgnoreCase("web")){
             return Jwts.builder()

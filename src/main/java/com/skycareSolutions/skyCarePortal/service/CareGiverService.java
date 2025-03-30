@@ -118,7 +118,6 @@ public class CareGiverService {
             for (CareGiverPaymentsDTO payment:dto.getCareGiverPayments()){
                 Optional<CareGiverPaymentsDTO> paymentValue = exisitingCareGiverPayments.stream().filter(sm->payment.getPaymentTypeID().equalsIgnoreCase(sm.getPaymentTypeID())).findFirst();
                 if (paymentValue.isPresent()){
-                    System.out.println("incomming payment value is "+payment.getAmount());
                     careGiverPaymentService.updatePayment(id,paymentValue.get().getPaymentTypeID(),payment);
                 }else{
                     List<CareGiverPaymentsDTO> paymentList = new ArrayList<>();
@@ -215,6 +214,110 @@ public class CareGiverService {
 
         careGiverRepository.save(caregiver);
         return ResponseEntity.ok(mapToDTO(caregiver));
+    }
+
+    public ResponseEntity<String> updateCareGiverDocuments(String id, List<CareGiverDocumentsDTO> dto,List<MultipartFile> documents) {
+        Employee employee = employeeService.findOneEmployeeWithEntity(id);
+        if (employee == null) {
+            return ResponseEntity.notFound().build();
+        }
+        CareGiver careGiver = careGiverRepository.getCareGiverByEmployee(employee);
+        if (careGiver == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        id = careGiver.getCareGiverID();
+
+        List<CareGiverDocumentsDTO>  exisitingDocuments = careGiverDocumentService.getDocumentsByCareGiverId(id);
+
+        for (CareGiverDocumentsDTO doc:dto){
+            if (doc.getDocument().equalsIgnoreCase("")){
+                for (CareGiverDocumentsDTO exisitDoc:exisitingDocuments){
+                    if (exisitDoc.getDocumentTypeID().equalsIgnoreCase(doc.getDocumentTypeID())){
+                        try{
+                            File existingFile = new File(exisitDoc.getDocument());
+                            if (existingFile.exists()) {
+                                existingFile.delete();
+                            }
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        careGiverDocumentService.deleteDocument(exisitDoc.getCareGiverID(),exisitDoc.getDocumentTypeID());
+                    }
+                }
+            }
+        }
+
+        for (CareGiverDocumentsDTO newDocs:dto){
+            CareGiverDocumentsDTO eixis = exisitingDocuments.stream().filter(row->row.getDocumentTypeID().equalsIgnoreCase(newDocs.getDocumentTypeID())).findFirst().orElse(null);
+            if (eixis==null){
+                List<CareGiverDocumentsDTO> documentList= new ArrayList<>();
+                documentList.add(newDocs);
+                careGiverDocumentService.addDocument(documentList,documents);
+
+            }
+        }
+
+        for (CareGiverDocumentsDTO exisitDoc:exisitingDocuments){
+
+            CareGiverDocumentsDTO inputDoc = dto
+                    .stream()
+                    .filter(row -> exisitDoc != null &&
+                            row.getDocumentTypeID() != null &&
+                            row.getDocumentTypeID().equalsIgnoreCase(exisitDoc.getDocumentTypeID()))
+                    .findFirst()
+                    .orElse(null);
+            if (inputDoc!=null){
+                if (!inputDoc.getDocument().equalsIgnoreCase(exisitDoc.getDocument())){
+                    try {
+                        File existingFile = new File(exisitDoc.getDocument());
+                        if (existingFile.exists()) {
+                            existingFile.delete();
+                        }
+                        // Add new file
+                        if (documents!=null && documents.size()>0){
+                            MultipartFile newFile = documents.stream()
+                                    .filter(file -> file.getOriginalFilename() != null &&
+                                            file.getOriginalFilename().equalsIgnoreCase(inputDoc.getDocument()))
+                                    .findFirst()
+                                    .orElse(null);
+
+                            if (newFile != null) {
+                                try {
+                                    String originalFileName = newFile.getOriginalFilename();
+                                    String fileExtension = originalFileName != null && originalFileName.contains(".")
+                                            ? originalFileName.substring(originalFileName.lastIndexOf("."))
+                                            : "";
+
+                                    File directory = new File(DIRECTORY);
+                                    if (!directory.exists()) {
+                                        directory.mkdirs();
+                                    }
+
+                                    File newFilePath = new File(directory,
+                                            inputDoc.getCareGiverID() + "_" +
+                                                    inputDoc.getDocumentTypeID() + "_" +
+                                                    originalFileName + fileExtension);
+                                    newFile.transferTo(newFilePath);
+                                    inputDoc.setDocument(newFilePath.getAbsolutePath());
+                                    careGiverDocumentService.updateDocument(id,inputDoc.getDocumentTypeID(),inputDoc);
+                                } catch (Exception e) {
+                                    throw new RuntimeException("Error uploading new document", e);
+                                }
+                            }
+                        }
+
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }else{
+                System.out.println("null file returned "+exisitDoc.getDocumentTypeID());
+
+
+            }
+        }
+        return ResponseEntity.ok("Updated Documents");
     }
 
     public ResponseEntity<Void> deleteCareGiver(String id) {

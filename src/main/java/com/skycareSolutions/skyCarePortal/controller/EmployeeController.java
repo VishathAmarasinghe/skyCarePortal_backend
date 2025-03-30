@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skycareSolutions.skyCarePortal.dto.*;
 import com.skycareSolutions.skyCarePortal.model.Employee;
 import com.skycareSolutions.skyCarePortal.repository.EmployeeRepository;
+import com.skycareSolutions.skyCarePortal.service.ClientService;
 import com.skycareSolutions.skyCarePortal.service.EmployeeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,11 +31,19 @@ public class EmployeeController {
     @Autowired
     private EmployeeRepository employeeRepository;
 
+    @Autowired
+    private ClientService clientService;
+
     private static final Logger logger = LoggerFactory.getLogger(com.skycareSolutions.skyCarePortal.service.EmployeeService.class);
 
     @GetMapping
     public List<EmployeeDTO> getAllEmployees(){
         return employeeService.findAllEmployees();
+    }
+
+    @GetMapping("/clientAssignedCareGivers")
+    public List<EmployeeDTO> getCareGiversAsEmployeesAssignToClient(@RequestParam String clientID){
+        return employeeService.findCareGiversAsEmployeesAssignedWithClients(clientID);
     }
 
     @PostMapping
@@ -139,7 +148,11 @@ public class EmployeeController {
             @RequestBody PasswordChangeDTO passwordChangeDTO
     ){
         try {
-            return ResponseEntity.ok(employeeService.updatePasswords(passwordChangeDTO));
+            if (passwordChangeDTO.getEmployeeID().substring(0,2).equalsIgnoreCase("CU")){
+                return ResponseEntity.ok(clientService.updatePasswords(passwordChangeDTO));
+            }else {
+                return ResponseEntity.ok(employeeService.updatePasswords(passwordChangeDTO));
+            }
         }catch (Exception e){
             throw new RuntimeException(e);
         }

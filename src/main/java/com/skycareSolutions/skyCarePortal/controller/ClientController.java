@@ -2,6 +2,7 @@ package com.skycareSolutions.skyCarePortal.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skycareSolutions.skyCarePortal.dto.ClientDTO;
+import com.skycareSolutions.skyCarePortal.dto.PasswordChangeDTO;
 import com.skycareSolutions.skyCarePortal.model.Employee;
 import com.skycareSolutions.skyCarePortal.service.ClientService;
 import com.skycareSolutions.skyCarePortal.service.EmailService;
@@ -15,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @CrossOrigin("*")
@@ -43,6 +45,11 @@ public class ClientController {
     public ResponseEntity<ClientDTO> getClientById(@PathVariable String clientID) {
         ClientDTO client = clientService.getClientById(clientID);
         return new ResponseEntity<>(client, HttpStatus.OK);
+    }
+
+    @PutMapping("/status/{id}")
+    public ResponseEntity<String> updateClientActivationStatus(@PathVariable String id, @RequestParam String status){
+        return  new ResponseEntity<>(clientService.updateClientStatus(id,status),HttpStatus.OK);
     }
 
     @GetMapping("/careGiverAssignedClients/{id}")
