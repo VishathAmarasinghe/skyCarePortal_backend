@@ -100,10 +100,10 @@ public class EmployeeService {
     private List<Employee_address> mapAddressesFromDTO(String employeeID, List<Employee_address_DTO> addresses) {
         List<Employee_address> empAddressesList = new ArrayList<>();
         for (Employee_address_DTO addressDTO : addresses) {
-            if (addressDTO.getLongitude().equalsIgnoreCase("")){
+            if (addressDTO.getLongitude()==null || addressDTO.getLongitude().equalsIgnoreCase("")){
                 addressDTO.setLongitude("Google");
             }
-            if (addressDTO.getLatitude().equalsIgnoreCase("")){
+            if (addressDTO.getLatitude()==null ||addressDTO.getLatitude().equalsIgnoreCase("")){
                 addressDTO.setLatitude("Google");
             }
             Employee_addressId addressId = new Employee_addressId(employeeID, addressDTO.getLongitude(), addressDTO.getLatitude());
@@ -149,10 +149,10 @@ public class EmployeeService {
       employee.setEmployeeJobRoles(empJobRoles);
       List<Employee_address> empAddress = new ArrayList<>();
       for (Employee_address_DTO address:employeeDTO.getEmployeeAddresses()){
-          if (address.getLongitude().equalsIgnoreCase("")){
+          if (address.getLongitude()==null || address.getLongitude().equalsIgnoreCase("")){
               address.setLongitude("Google");
           }
-          if (address.getLatitude().equalsIgnoreCase("")){
+          if (address.getLatitude()==null ||address.getLatitude().equalsIgnoreCase("")){
               address.setLatitude("Google");
           }
           Employee_addressId addressId = new Employee_addressId(employee.getEmployeeID(),address.getLongitude(),address.getLatitude());
