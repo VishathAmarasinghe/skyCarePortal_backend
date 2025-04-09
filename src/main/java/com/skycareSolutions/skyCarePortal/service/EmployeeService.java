@@ -100,6 +100,12 @@ public class EmployeeService {
     private List<Employee_address> mapAddressesFromDTO(String employeeID, List<Employee_address_DTO> addresses) {
         List<Employee_address> empAddressesList = new ArrayList<>();
         for (Employee_address_DTO addressDTO : addresses) {
+            if (addressDTO.getLongitude().equalsIgnoreCase("")){
+                addressDTO.setLongitude("Google");
+            }
+            if (addressDTO.getLatitude().equalsIgnoreCase("")){
+                addressDTO.setLatitude("Google");
+            }
             Employee_addressId addressId = new Employee_addressId(employeeID, addressDTO.getLongitude(), addressDTO.getLatitude());
             empAddressesList.add(new Employee_address(addressId, null, addressDTO.getCity(), addressDTO.getAddress(), addressDTO.getState(), addressDTO.getCountry(), addressDTO.getPostal_code()));
         }
