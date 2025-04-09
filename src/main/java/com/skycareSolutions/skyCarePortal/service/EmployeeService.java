@@ -143,7 +143,12 @@ public class EmployeeService {
       employee.setEmployeeJobRoles(empJobRoles);
       List<Employee_address> empAddress = new ArrayList<>();
       for (Employee_address_DTO address:employeeDTO.getEmployeeAddresses()){
-
+          if (address.getLongitude().equalsIgnoreCase("")){
+              address.setLongitude("Google");
+          }
+          if (address.getLatitude().equalsIgnoreCase("")){
+              address.setLatitude("Google");
+          }
           Employee_addressId addressId = new Employee_addressId(employee.getEmployeeID(),address.getLongitude(),address.getLatitude());
           Optional<Employee_address> adressVlues = employeeAddressRepository.findById(addressId);
           if (adressVlues.isEmpty()) {
