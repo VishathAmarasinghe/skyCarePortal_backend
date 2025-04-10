@@ -54,7 +54,6 @@ public class CareGiverDocumentService {
 
                 if (selectedFile != null) {
                     try {
-
                         String originalFileName = selectedFile.getOriginalFilename();
                         String fileExtension = originalFileName;
                         if (originalFileName != null && originalFileName.contains(".")) {

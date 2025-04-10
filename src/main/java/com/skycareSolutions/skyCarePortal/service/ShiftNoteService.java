@@ -132,6 +132,7 @@ public class ShiftNoteService {
             shiftNote.setShiftEndTime(shiftNoteDTO.getShiftEndTime());
             shiftNote.setShiftEndDate(shiftNoteDTO.getShiftEndDate());
             shiftNote.setState("Completed");
+            shiftNote.setPaymentState("Pending");
             shiftNote.setTitle(shiftNoteDTO.getTitle());
             shiftNote.setShiftStartTime(shiftNoteDTO.getShiftStartTime());
             shiftNote.setShiftStartDate(shiftNoteDTO.getShiftStartDate());
@@ -222,6 +223,7 @@ public class ShiftNoteService {
             shiftNote.setShiftEndTime(shiftNoteDTO.getShiftEndTime());
             shiftNote.setShiftEndDate(shiftNoteDTO.getShiftEndDate());
             shiftNote.setState("Completed");
+            shiftNote.setPaymentState("Pending");
             shiftNote.setTitle(shiftNoteDTO.getTitle());
             shiftNote.setShiftStartTime(shiftNoteDTO.getShiftStartTime());
             shiftNote.setShiftStartDate(shiftNoteDTO.getShiftStartDate());
