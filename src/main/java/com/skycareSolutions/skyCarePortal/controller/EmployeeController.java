@@ -106,7 +106,6 @@ public class EmployeeController {
 
     @PatchMapping("/{employeeID}")
     public EmployeeDTO updateEmployee(@PathVariable String employeeID, @RequestPart("employeeData") String updatedEmployeeDTO, @RequestParam(required = false) MultipartFile profilePhoto) {
-        System.out.println("incomming employee id "+employeeID);
         try{
             ObjectMapper objectMapper = new ObjectMapper();
             EmployeeDTO employee = objectMapper.readValue(updatedEmployeeDTO,EmployeeDTO.class);

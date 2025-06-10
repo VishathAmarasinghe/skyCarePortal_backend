@@ -139,6 +139,14 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getNextAssignedAppointmentToCareGiver(id));
     }
 
+    @GetMapping("/next/appointment/client/{id}")
+    public ResponseEntity<NextAppointmentCareGiverDTO> getNextAppointmentToClient(
+            @PathVariable String id
+    )
+    {
+        return ResponseEntity.ok(appointmentService.getNextAssignedAppointmentToClient(id));
+    }
+
     @GetMapping("/careGiver/{employeeID}")
     public ResponseEntity<List<CareGiverAllocatedAppointmentsDTO>> getAppointmentsAssignedToCareGiver(
             @PathVariable(name = "employeeID") String employeeID,

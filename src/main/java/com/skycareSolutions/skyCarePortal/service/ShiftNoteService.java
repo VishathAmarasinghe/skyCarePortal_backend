@@ -373,6 +373,7 @@ public class ShiftNoteService {
         shiftNoteDTO.setShiftStartTime(shiftNotes.getShiftStartTime());
         shiftNoteDTO.setShiftEndDate(shiftNotes.getShiftEndDate());
         shiftNoteDTO.setShiftEndTime(shiftNotes.getShiftEndTime());
+        shiftNoteDTO.setCreatedAt(shiftNotes.getCreatedAt().toString());
         shiftNoteDTO.setSystemShiftStartDate(shiftNotes.getSystemShiftStartDate());
         shiftNoteDTO.setSystemShiftEndDate(shiftNotes.getSystemShiftEndDate());
         shiftNoteDTO.setSystemShiftStartTime(shiftNotes.getSystemShiftStartTime());
@@ -580,5 +581,11 @@ public class ShiftNoteService {
         }else{
             throw new RuntimeException();
         }
+    }
+
+    public List<ShiftNotes> getShiftNotesInPaymentStatusByClient(String clientID,String paymentStatus){
+        Client client = clientService.getClientByIdWithEntitiy(clientID);
+        List<ShiftNotes> notesList = shiftNoteRepository.findByClientAndPaymentState(client,paymentStatus);
+        return notesList;
     }
 }

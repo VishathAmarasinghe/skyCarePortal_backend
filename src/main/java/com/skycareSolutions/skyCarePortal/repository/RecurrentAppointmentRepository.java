@@ -25,10 +25,15 @@ public interface RecurrentAppointmentRepository extends JpaRepository<RecurrentA
     void deleteByAppointmentID(String appointmentID);
 
     // Fetch appointments within a date range (including appointments that overlap with the date range)
-    @Query("SELECT r FROM RecurrentAppointment r WHERE r.appointment.appointmentID = :appointmentID AND (r.startDate BETWEEN :startDate AND :endDate) " +
+    @Query("SELECT DISTINCT r FROM RecurrentAppointment r WHERE r.appointment.appointmentID = :appointmentID AND " +
+            "((r.startDate BETWEEN :startDate AND :endDate) " +
             "OR (r.endDate BETWEEN :startDate AND :endDate) " +
-            "OR (r.startDate <= :startDate AND r.endDate >= :endDate)")
-    List<RecurrentAppointment> findAppointmentsWithinDateRangeAndAppointment(LocalDate startDate, LocalDate endDate,String appointmentID);
+            "OR (r.startDate <= :startDate AND r.endDate >= :endDate))")
+    List<RecurrentAppointment> findAppointmentsWithinDateRangeAndAppointment(
+            LocalDate startDate,
+            LocalDate endDate,
+            String appointmentID
+    );
 
     // Fetch appointments within a date range (including appointments that overlap with the date range)
     @Query("SELECT r FROM RecurrentAppointment r WHERE (r.startDate BETWEEN :startDate AND :endDate) " +
