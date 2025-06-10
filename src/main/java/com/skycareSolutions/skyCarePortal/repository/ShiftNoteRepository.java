@@ -1,9 +1,6 @@
 package com.skycareSolutions.skyCarePortal.repository;
 
-import com.skycareSolutions.skyCarePortal.model.CareGiver;
-import com.skycareSolutions.skyCarePortal.model.Employee;
-import com.skycareSolutions.skyCarePortal.model.RecurrentAppointment;
-import com.skycareSolutions.skyCarePortal.model.ShiftNotes;
+import com.skycareSolutions.skyCarePortal.model.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -60,5 +57,7 @@ public interface ShiftNoteRepository extends JpaRepository<ShiftNotes,String> {
     List<String> getDistinctCreatedByIdsByDateRangeAndState(
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
+
+    List<ShiftNotes> findByClientAndPaymentState(Client client, String paymentState);
 
 }

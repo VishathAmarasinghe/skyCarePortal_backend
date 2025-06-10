@@ -174,4 +174,14 @@ public class DashboardService {
 
         return result;
     }
+
+
+    public MobileDashboardDTO getClientMobileDashboardComponents(String userID){
+        MobileDashboardDTO result = new MobileDashboardDTO();
+        result.setCompletedAppointmentCount(shiftNoteService.getShiftNotesInPaymentStatusByClient(userID,"Approved").size()+shiftNoteService.getShiftNotesInPaymentStatusByClient(userID,"Rejected").size());
+        result.setPendingAppointmentCount(shiftNoteService.getShiftNotesInPaymentStatusByClient(userID,"Pending").size());
+        return result;
+    }
+
+
 }

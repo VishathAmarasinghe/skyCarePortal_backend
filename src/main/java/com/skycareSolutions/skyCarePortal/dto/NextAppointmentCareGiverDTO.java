@@ -6,4 +6,5 @@ import lombok.Data;
 public class NextAppointmentCareGiverDTO {
     private AppointmentDTO appointment;
     private RecurrentAppointmentDTO recurrentTask;
+    private String employeeName;
 }

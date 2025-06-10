@@ -294,6 +294,94 @@ public class AppointmentService {
         }
     }
 
+
+    public NextAppointmentCareGiverDTO getNextAssignedAppointmentToClient(String clientID){
+        Client client = clientService.getClientByIdWithEntitiy(clientID);
+        List<Appointment> appointmentList = appointmentRepository.findAppointmentsByClient(client);
+        List<Appointment> futureAppointments = new ArrayList<>();
+
+        for (Appointment singleAppointment : appointmentList){
+            if (singleAppointment.getStartDate()!=null && !singleAppointment.getStartDate().isBefore(LocalDate.now())){
+                futureAppointments.add(singleAppointment);
+            }
+        }
+        List<RecurrentAppointmentDTO> recurrentAppointmentDTOList = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+        for (Appointment futureAppointment:futureAppointments){
+            List<RecurrentAppointmentDTO> recurrentAppointmentDTO = recurrenceService.getRecurrentAppointmentsByAppointmentID(futureAppointment.getAppointmentID());
+            for (RecurrentAppointmentDTO singleRecurrentOne:recurrentAppointmentDTO){
+                LocalDate recurDate = singleRecurrentOne.getStartDate();
+                String startTimeStr = singleRecurrentOne.getStartTime();
+
+                boolean isValid = false;
+
+                if (recurDate.isAfter(today)) {
+                    isValid = true;
+                } else if (recurDate.isEqual(today) && startTimeStr != null) {
+                    try {
+                        LocalTime recurTime = LocalTime.parse(startTimeStr, timeFormatter);
+                        if (recurTime.isAfter(now)) {
+                            isValid = true;
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Invalid time format: " + startTimeStr);
+                    }
+                }
+
+                if (isValid) {
+                    recurrentAppointmentDTOList.add(singleRecurrentOne);
+                }
+            }
+        }
+        recurrentAppointmentDTOList.sort((a, b) -> {
+            int dateCompare = a.getStartDate().compareTo(b.getStartDate());
+            if (dateCompare != 0) return dateCompare;
+
+            try {
+                LocalTime timeA = a.getStartTime() != null ? LocalTime.parse(a.getStartTime(), timeFormatter) : LocalTime.MIN;
+                LocalTime timeB = b.getStartTime() != null ? LocalTime.parse(b.getStartTime(), timeFormatter) : LocalTime.MIN;
+                return timeA.compareTo(timeB);
+            } catch (Exception e) {
+                return 0;
+            }
+        });
+
+        // Find the nearest future appointment
+        RecurrentAppointmentDTO nextAppointment = recurrentAppointmentDTOList.stream()
+                .filter(r -> {
+                    LocalDate date = r.getStartDate();
+                    if (date.isAfter(today)) return true;
+                    if (date.isEqual(today)) {
+                        try {
+                            LocalTime time = r.getStartTime() != null ? LocalTime.parse(r.getStartTime(), timeFormatter) : null;
+                            return time != null && time.isAfter(now);
+                        } catch (Exception e) {
+                            return false;
+                        }
+                    }
+                    return false;
+                })
+                .findFirst()
+                .orElse(null); // If not found, will be null
+
+        NextAppointmentCareGiverDTO result = new NextAppointmentCareGiverDTO();
+        if (nextAppointment != null) {
+            result.setAppointment(getAppointmentById(nextAppointment.getAppointmentID()));
+            result.setRecurrentTask(nextAppointment);
+            List<JobAssignerDTO> assigner = jobAssignerService.findJobAssignerByRecurrentID(nextAppointment.getRecurrentAppointmentID());
+            if (!assigner.isEmpty()){
+                CareGiver careGiver = careGiverService.getCareGiverByIdWithEntity(assigner.get(0).getCareGiverID());
+                result.setEmployeeName(careGiver.getEmployee().getFirstName()+" "+careGiver.getEmployee().getLastName());
+            }
+
+        } else {
+            result = new NextAppointmentCareGiverDTO();
+        }
+        return result;
+    }
+
     public List<CareGiverAllocatedAppointmentsDTO> getAppointmentsAssignedToCareGiver(String employeeID, String state) {
         CareGiverDTO careGiver = careGiverService.getCareGiverByEmployee(employeeID);
         List<JobAssignerDTO> jobs = jobAssignerService.assignedJobsBasedOnCareGiverAndStatus(careGiver.getCareGiverID(), state);

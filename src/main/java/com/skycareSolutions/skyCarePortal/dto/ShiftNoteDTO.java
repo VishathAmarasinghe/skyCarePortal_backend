@@ -27,4 +27,5 @@ public class ShiftNoteDTO {
     private String clientID;
     private List<ShiftNoteDocumentDTO> documents;
     private String paymentState;
+    private String createdAt;
 }

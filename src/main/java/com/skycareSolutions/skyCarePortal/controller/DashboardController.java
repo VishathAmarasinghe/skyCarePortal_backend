@@ -31,4 +31,13 @@ public class DashboardController {
         return dashboardService.getMobileDashboardComponents(id);
     }
 
+    @GetMapping("/mobile/client/{id}")
+    public MobileDashboardDTO getClientDashboardStatus(@PathVariable String id){
+        return dashboardService.getClientMobileDashboardComponents(id);
+    }
+
+
+
+
+
 }
