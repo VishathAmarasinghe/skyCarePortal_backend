@@ -115,6 +115,93 @@ public class DashboardService {
         return dashboardDTO;
     }
 
+
+    public MobileAdminDashboardDTO getMobileAdminDashboardStats(){
+        MobileAdminDashboardDTO dashboardDTO  = new MobileAdminDashboardDTO();
+
+        LocalDate currentDate = LocalDate.now();
+        LocalDate endDate = currentDate.plusDays(15);
+        LocalDate startDateForBack = currentDate.minusDays(14);
+
+        // Define the format
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        // Format the date
+        String formattedDate = currentDate.format(formatter);
+        String formattedEndDate = endDate.format(formatter);
+
+        List<AppointmentCalenderDTO> calender = appointmentService.getAllEventsRelatedToDateRange(formattedDate,formattedDate);
+        List<RecurrentAppointmentDTO> Todayappointments = recurrenceService.getAppointmentsWithinGivenDateRange(formattedDate,formattedDate);
+
+        List<RecurrentAppointmentDTO> appointments = recurrenceService.getAppointmentsWithinGivenDateRange(formattedDate,formattedEndDate);
+
+        List<RecurrentAppointmentDTO> filteredAppointments =appointments.stream().filter(ap-> !ap.isCancelled()).toList();
+
+        Map<String, Long> appointmentCountByDate = new HashMap<>();
+        Map<String,Long> timesheetCountByDate = new HashMap<>();
+
+        // Loop through each day in the range
+        for (LocalDate date = currentDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+            String formattedCurrentDate = date.format(formatter);
+
+            // Filter appointments for the current day
+            LocalDate finalDate = date;
+            long count = filteredAppointments.stream()
+                    .filter(appointment -> appointment.getStartDate().equals(finalDate))
+                    .count();
+
+
+            appointmentCountByDate.put(formattedCurrentDate, count);
+        }
+
+        for (LocalDate date = startDateForBack; !date.isAfter(currentDate); date = date.plusDays(1)) {
+            String formattedCurrentDate = date.format(formatter);
+
+            // Filter appointments for the current day
+            LocalDate finalDate = date;
+
+            // Add to the map
+            long timesheetCount = shiftNoteService.getTotalShiftNotesSubmittedBetween(finalDate,finalDate);
+            timesheetCountByDate.put(formattedCurrentDate,timesheetCount);
+        }
+
+        int completeCount = 0;
+        for (RecurrentAppointmentDTO rd:Todayappointments){
+            if (rd.getStatus().equalsIgnoreCase("Completed")){
+                completeCount++;
+            }
+        }
+
+        dashboardDTO.setTodayCompletedCount(completeCount);
+        dashboardDTO.setTodayTotalCount(calender.size());
+
+        dashboardDTO.setTwoWeekAppointmentCount(appointmentCountByDate);
+        dashboardDTO.setTwoWeekTimeSheetSubmissionCount(timesheetCountByDate);
+        dashboardDTO.setTodayAppointments(calender);
+
+        dashboardDTO.setAdminCount(employeeService.getEmployeesByRole("Admin").size());
+        dashboardDTO.setServiceCount(appointmentService.getAllAppointments().size());
+        dashboardDTO.setStaffCount(employeeService.getEmployeesByRole("CareGiver").size());
+        dashboardDTO.setClientCount(clientService.getAllClients().size());
+
+        dashboardDTO.setMonthlyPaidTimesheetCount((int) shiftNoteService.getCurrentMonthPaymentStateCount("Paid"));
+        dashboardDTO.setMonthlyApprovedTimesheetCount((int) shiftNoteService.getCurrentMonthPaymentStateCount("Approved"));
+        dashboardDTO.setMonthlyPendingTimesheetCount((int) shiftNoteService.getCurrentMonthPaymentStateCount("Pending"));
+        dashboardDTO.setMonthlyRejectedTimesheetCount((int) shiftNoteService.getCurrentMonthPaymentStateCount("Rejected"));
+        dashboardDTO.setMonthlyTimesheetSubmissionCount((int) shiftNoteService.getCurrentMonthlySubmittedTimesheetCount());
+
+        Map<String, Integer> appointmentCountByType = new HashMap<>();
+
+        List<AppointmentTypeDTO> appointmentTypeList = appointmentTypeService.getAllAppointmentTypes();
+        for (AppointmentTypeDTO ap:appointmentTypeList){
+            int count = appointmentService.getAppointmentCountBasedOnAppointmentType(ap.getAppointmentTypeID());
+            appointmentCountByType.put(ap.getName(),count);
+        }
+        dashboardDTO.setAppointmentCountByType(appointmentCountByType);
+
+        return dashboardDTO;
+    }
+
     public CareGiverDashboardDTO getCareGiverStats(String employeeID){
         CareGiverDashboardDTO careGiverDashboardDTO = new CareGiverDashboardDTO();
 

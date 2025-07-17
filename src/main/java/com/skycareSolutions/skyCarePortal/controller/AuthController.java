@@ -41,7 +41,7 @@ public class AuthController {
     public ResponseEntity<String> loginMobile(@RequestBody LoginRequestDTO loginRequestDTO) {
         try {
             EmployeeDTO user = employeeService.loginUser(loginRequestDTO.getEmail(),loginRequestDTO.getPassword());
-            if (user.getStatus().equalsIgnoreCase("Activated") && (user.getAccessRole().equalsIgnoreCase("CareGiver") || user.getAccessRole().equalsIgnoreCase("Client"))){
+            if (user.getStatus().equalsIgnoreCase("Activated") && (user.getAccessRole().equalsIgnoreCase("CareGiver") || user.getAccessRole().equalsIgnoreCase("Client") || user.getAccessRole().equalsIgnoreCase("Admin"))){
                 String token = authConfis.generateToken(user,"mobile");
                 return ResponseEntity.ok(token); // Return JWT token
             }else{

@@ -2,6 +2,7 @@ package com.skycareSolutions.skyCarePortal.controller;
 
 import com.skycareSolutions.skyCarePortal.dto.CareGiverDashboardDTO;
 import com.skycareSolutions.skyCarePortal.dto.DashboardDTO;
+import com.skycareSolutions.skyCarePortal.dto.MobileAdminDashboardDTO;
 import com.skycareSolutions.skyCarePortal.dto.MobileDashboardDTO;
 import com.skycareSolutions.skyCarePortal.service.DashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,12 @@ public class DashboardController {
     @GetMapping("/mobile/client/{id}")
     public MobileDashboardDTO getClientDashboardStatus(@PathVariable String id){
         return dashboardService.getClientMobileDashboardComponents(id);
+    }
+
+    @GetMapping("/mobile/admin")
+    public MobileAdminDashboardDTO getMobileAdminDashboardStats() {
+
+        return dashboardService.getMobileAdminDashboardStats();
     }
 
 

@@ -11,10 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
@@ -358,6 +355,44 @@ public class ShiftNoteService {
         }
 
     }
+
+
+    public long getTotalShiftNotesSubmittedBetween(LocalDate startDate, LocalDate endDate) {
+        // Convert LocalDate to LocalDateTime for start of day and end of day
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+        return shiftNoteRepository.countByCreatedAtBetween(startDateTime, endDateTime);
+    }
+
+    public long getCurrentMonthPaymentStateCount(String paymentState) {
+        // Get current date
+        LocalDate today = LocalDate.now();
+
+        // Get current YearMonth
+        YearMonth currentMonth = YearMonth.from(today);
+
+        // Calculate start and end of the month
+        LocalDateTime startOfMonth = currentMonth.atDay(1).atStartOfDay();
+        LocalDateTime endOfMonth = currentMonth.atEndOfMonth().atTime(23, 59, 59);
+
+        // Query the repository
+        return shiftNoteRepository.countByPaymentStateAndCreatedAtBetween(paymentState, startOfMonth, endOfMonth);
+    }
+
+    public long getCurrentMonthlySubmittedTimesheetCount(){
+        LocalDate today = LocalDate.now();
+
+        // Get current YearMonth
+        YearMonth currentMonth = YearMonth.from(today);
+
+        // Calculate start and end of the month
+        LocalDateTime startOfMonth = currentMonth.atDay(1).atStartOfDay();
+        LocalDateTime endOfMonth = currentMonth.atEndOfMonth().atTime(23, 59, 59);
+        return shiftNoteRepository.countByCreatedAtBetween(startOfMonth, endOfMonth);
+    }
+
+
+
 
     public List<ShiftNoteDTO> getAllShiftNotesRelatedToCareGiver(String employeeID){
         Employee employee = employeeService.findOneEmployeeWithEntity(employeeID);
