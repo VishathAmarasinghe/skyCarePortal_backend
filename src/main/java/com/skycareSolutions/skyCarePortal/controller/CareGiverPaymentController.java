@@ -42,6 +42,14 @@ public class CareGiverPaymentController {
         return ResponseEntity.ok(careGiverPaymentService.updatePayment(careGiverID, paymentTypeID, dto));
     }
 
+//    @PutMapping("/{careGiverID}")
+//    public ResponseEntity<List<CareGiverPaymentsDTO>> updatePaymentDetails(
+//            @PathVariable String careGiverID,
+//            @RequestBody CareGiverPaymentsDTO dto
+//    ) {
+//        return ResponseEntity.ok(careGiverPaymentService.updatePayment(careGiverID, paymentTypeID, dto));
+//    }
+
     @DeleteMapping("/{careGiverID}/{paymentTypeID}")
     public ResponseEntity<Void> deletePayment(@PathVariable String careGiverID, @PathVariable String paymentTypeID) {
         careGiverPaymentService.deletePayment(careGiverID, paymentTypeID);

@@ -490,6 +490,14 @@ public class EmployeeService {
             throw new RuntimeException();
         }
         Employee employeeData = existingEmployeeOpt.get();
+        if ((employeeData.getStatus().equalsIgnoreCase("Deactivated") && state.equalsIgnoreCase("Activated")) ||
+                (  employeeData.getStatus().equalsIgnoreCase("Pending") && state.equalsIgnoreCase("Activated"))
+        ){
+            String password = Micro_utils.generateRandomPassword(10);
+            employeeData.setPassword(authenticationUtils.hashPassword(password));
+
+            CompletableFuture.runAsync(()->emailService.generateWelcomeLoginEmail(employeeData.getFirstName(),employeeData.getEmail(),password,frontendUrl));
+        }
         employeeData.setStatus(state);
         employeeRepository.save(employeeData);
         return new ApiResponse("User "+state+" successfully",true);

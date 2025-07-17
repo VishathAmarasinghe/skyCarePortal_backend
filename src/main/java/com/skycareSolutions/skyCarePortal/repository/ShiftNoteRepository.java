@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ShiftNoteRepository extends JpaRepository<ShiftNotes,String> {
@@ -59,5 +60,17 @@ public interface ShiftNoteRepository extends JpaRepository<ShiftNotes,String> {
             @Param("endDate") LocalDate endDate);
 
     List<ShiftNotes> findByClientAndPaymentState(Client client, String paymentState);
+
+    @Query("SELECT COUNT(s) FROM ShiftNotes s WHERE s.createdAt BETWEEN :startDate AND :endDate")
+    long countByCreatedAtBetween(@Param("startDate") LocalDateTime startDate,
+                                 @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT COUNT(s) FROM ShiftNotes s " +
+            "WHERE s.paymentState = :paymentState " +
+            "AND s.createdAt BETWEEN :startDate AND :endDate")
+    long countByPaymentStateAndCreatedAtBetween(@Param("paymentState") String paymentState,
+                                                @Param("startDate") LocalDateTime startDate,
+                                                @Param("endDate") LocalDateTime endDate);
+
 
 }

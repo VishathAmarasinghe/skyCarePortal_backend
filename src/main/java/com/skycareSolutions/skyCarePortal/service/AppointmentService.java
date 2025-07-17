@@ -194,23 +194,48 @@ public class AppointmentService {
     public List<AppointmentCalenderDTO> getAllEventsRelatedToDateRangeWithUser(String employeeID,String startDate,String endDate){
         List<RecurrentAppointmentDTO> appointments = recurrenceService.getAppointmentsWithinGivenDateRange(startDate,endDate);
         List<AppointmentCalenderDTO> eventDTOs = new ArrayList<>();
-        CareGiverDTO careGiver = careGiverService.getCareGiverByEmployee(employeeID);
-        for (RecurrentAppointmentDTO ap:appointments){
-             List<JobAssignerDTO> jobAssignerDTO = jobAssignerService.findJobAssignerByRecurrentID(ap.getRecurrentAppointmentID());
-             for (JobAssignerDTO job:jobAssignerDTO){
-                 if (job.getCareGiverID().equalsIgnoreCase(careGiver.getCareGiverID())){
-                     Appointment appointment = getAppointmentByIdWithEntity(ap.getAppointmentID());
-                     appointment.setStartDate(ap.getStartDate());
-                     appointment.setEndDate(ap.getEndDate());
-                     appointment.setStartTime(ap.getStartTime());
-                     appointment.setEndTime(ap.getEndTime());
-                     AppointmentCalenderDTO calender = toCalenderDTO(appointment);
-                     calender.setRecurrentAppointmentID(ap.getRecurrentAppointmentID());
-                     if (!ap.isCancelled()){
-                         eventDTOs.add(calender);
-                     }
-                 }
-             }
+        if (employeeID.substring(0,2).equalsIgnoreCase("CU")){
+            ClientDTO clientDTO = clientService.getClientById(employeeID);
+            List<AppointmentDTO> appointmentDTO = getAppointmentsbyClientID(employeeID);
+            for (AppointmentDTO appList:appointmentDTO){
+                List<RecurrentAppointmentDTO> recurrentAppointmentDTOList = recurrenceService.getRecurrentAppointmentsByAppointmentID(appList.getAppointmentID());
+                for (RecurrentAppointmentDTO ap : recurrentAppointmentDTOList) {
+
+                    List<JobAssignerDTO> jobAssignerDTO = jobAssignerService.findJobAssignerByRecurrentID(ap.getRecurrentAppointmentID());
+                    for (JobAssignerDTO job : jobAssignerDTO) {
+                            Appointment appointment = getAppointmentByIdWithEntity(ap.getAppointmentID());
+                            appointment.setStartDate(ap.getStartDate());
+                            appointment.setEndDate(ap.getEndDate());
+                            appointment.setStartTime(ap.getStartTime());
+                            appointment.setEndTime(ap.getEndTime());
+                            AppointmentCalenderDTO calender = toCalenderDTO(appointment);
+                            calender.setRecurrentAppointmentID(ap.getRecurrentAppointmentID());
+                            if (!ap.isCancelled()) {
+                                eventDTOs.add(calender);
+                            }
+
+                    }
+                }
+            }
+        }else {
+            CareGiverDTO careGiver = careGiverService.getCareGiverByEmployee(employeeID);
+            for (RecurrentAppointmentDTO ap : appointments) {
+                List<JobAssignerDTO> jobAssignerDTO = jobAssignerService.findJobAssignerByRecurrentID(ap.getRecurrentAppointmentID());
+                for (JobAssignerDTO job : jobAssignerDTO) {
+                    if (job.getCareGiverID().equalsIgnoreCase(careGiver.getCareGiverID())) {
+                        Appointment appointment = getAppointmentByIdWithEntity(ap.getAppointmentID());
+                        appointment.setStartDate(ap.getStartDate());
+                        appointment.setEndDate(ap.getEndDate());
+                        appointment.setStartTime(ap.getStartTime());
+                        appointment.setEndTime(ap.getEndTime());
+                        AppointmentCalenderDTO calender = toCalenderDTO(appointment);
+                        calender.setRecurrentAppointmentID(ap.getRecurrentAppointmentID());
+                        if (!ap.isCancelled()) {
+                            eventDTOs.add(calender);
+                        }
+                    }
+                }
+            }
         }
         return eventDTOs;
     }

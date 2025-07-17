@@ -217,15 +217,21 @@ public class CareGiverService {
     }
 
     public ResponseEntity<String> updateCareGiverDocuments(String id, List<CareGiverDocumentsDTO> dto,List<MultipartFile> documents) {
-        Employee employee = employeeService.findOneEmployeeWithEntity(id);
-        if (employee == null) {
-            return ResponseEntity.notFound().build();
-        }
-        CareGiver careGiver = careGiverRepository.getCareGiverByEmployee(employee);
-        if (careGiver == null) {
-            return ResponseEntity.notFound().build();
-        }
 
+        CareGiver careGiver = new CareGiver();
+        Employee employee = new Employee();
+        if (id.substring(0,2).equalsIgnoreCase("CG")){
+            careGiver=careGiverRepository.findById(id).get();
+        }else{
+            employee = employeeService.findOneEmployeeWithEntity(id);
+            if (employee == null) {
+                return ResponseEntity.notFound().build();
+            }
+            careGiver = careGiverRepository.getCareGiverByEmployee(employee);
+            if (careGiver == null) {
+                return ResponseEntity.notFound().build();
+            }
+        }
         id = careGiver.getCareGiverID();
 
         List<CareGiverDocumentsDTO>  exisitingDocuments = careGiverDocumentService.getDocumentsByCareGiverId(id);
