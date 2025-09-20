@@ -1,4 +1,5 @@
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/SkyCarePortalApplication.java
+/Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/config/CustomHandshakeInterceptor.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/config/ModelMapperConfig.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/config/WebSocketConfig.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/controller/AppointmentController.java
@@ -38,10 +39,12 @@
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/controller/ResourceController.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/controller/ResourceDocumentController.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/controller/ShiftNoteController.java
+/Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/controller/SignatureController.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/controller/TaskController.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/controller/TaskImportanceController.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/controller/TaskItemController.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/controller/TaskStatusController.java
+/Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/controller/WaitingListController.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/ApiResponse.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/AppointmentAddressDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/AppointmentAttachmentsDTO.java
@@ -66,6 +69,7 @@
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/CarePlanShortTermGoalDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/CarePlanStatusDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/ChatDTO.java
+/Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/ChatMemberDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/ChatMessageDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/ChatUserDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/ClassificationDTO.java
@@ -106,6 +110,7 @@
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/MessageDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/MetaEmployeeCareGiverMapDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/MetaEmployeeDetailsDTO.java
+/Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/MobileAdminDashboardDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/MobileDashboardDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/NextAppointmentCareGiverDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/NoteDocumentsDTO.java
@@ -114,6 +119,7 @@
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/PasswordChangeDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/PasswordResetDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/PendingAppointmentDTO.java
+/Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/PendingClientAppointmentDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/RecurrentAppointmentDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/RecurrentAppointmentUpdateDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/RecurrentWorkDTO.java
@@ -122,6 +128,7 @@
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/ShiftNoteDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/ShiftNoteDocumentDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/ShiftNoteStateDTO.java
+/Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/SignatureDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/StartShiftNoteDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/TaskAttachmentsDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/TaskDTO.java
@@ -130,6 +137,7 @@
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/TaskStatusDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/TimeSheetDTO.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/dto/UpdateAssignersDTO.java
+/Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/event/WebSocketEventListener.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/Appointment.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/AppointmentAddress.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/AppointmentAttachments.java
@@ -148,6 +156,7 @@
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/CarePlanShortTermGoal.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/CarePlanStatus.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/Chat.java
+/Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/ChatDocuments.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/ChatMember.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/ChatType.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/Classification.java
@@ -194,12 +203,14 @@
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/ResourceDocument.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/ShiftNoteDocuments.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/ShiftNotes.java
+/Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/Signature.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/Task.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/TaskAttachements.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/TaskAttachmentID.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/TaskImportance.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/TaskItems.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/TaskStatus.java
+/Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/model/WaitList.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/AppointmentAddressRepository.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/AppointmentAttachmentsRepository.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/AppointmentRepository.java
@@ -214,6 +225,7 @@
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/CarePlanRepository.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/CarePlanShortTermRepository.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/CarePlanStatusRepository.java
+/Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/ChatDocumentRepository.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/ChatMemberRepository.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/ChatRepository.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/ClassificationRepository.java
@@ -248,11 +260,13 @@
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/ResourceRepository.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/ShiftDocumentRepository.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/ShiftNoteRepository.java
+/Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/SignatureRepository.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/TaskAttachmentRepository.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/TaskImportanceRepository.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/TaskItemRepository.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/TaskRepository.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/TaskStatusRepository.java
+/Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/repository/WaitListRepository.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/scheduler/AppointmentReminderMail.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/scheduler/DocumentExpirationReminder.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/scheduler/OtpCleanupScheduler.java
@@ -299,6 +313,7 @@
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/service/ResourceService.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/service/ShiftDocumentService.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/service/ShiftNoteService.java
+/Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/service/SignatureService.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/service/TaskAttachmentService.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/service/TaskImportanceService.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/service/TaskItemService.java
@@ -306,3 +321,4 @@
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/service/TaskStatusService.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/utils/AuthenticationUtils.java
 /Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/utils/Micro_utils.java
+/Users/vishathamarasinghe/Documents/Codings/Web Apps/skyCarePortal_backend/src/main/java/com/skycareSolutions/skyCarePortal/utils/UserSessionRegistry.java
