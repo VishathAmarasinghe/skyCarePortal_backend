@@ -293,21 +293,23 @@ public class ShiftNoteService {
     public List<TimeSheetDTO> getTimeSheetsForGivenDateRange(String startDate,String endDate,String careGiverID,String clientID){
         LocalDate start = LocalDate.parse(startDate);
         LocalDate end = LocalDate.parse(endDate);
-        List<ShiftNotes> shiftNoteList = shiftNoteRepository.findShiftNotesBetweenDates(start,end);
+        LocalDateTime startDateTime = start.atStartOfDay();
+        LocalDateTime endDateTime = end.atTime(23, 59, 59);
+        List<ShiftNotes> shiftNoteList = shiftNoteRepository.findShiftNotesByStartDateOrCreatedAtBetween(start, end, startDateTime, endDateTime);
         List<TimeSheetDTO> timeSheetList = new ArrayList<>();
         for (ShiftNotes shiftNote:shiftNoteList){
             DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
             TimeSheetDTO timeSheet = new TimeSheetDTO();
 
-            LocalDateTime startDateTime = LocalDateTime.of(
+            LocalDateTime shiftStartDateTime = LocalDateTime.of(
                     shiftNote.getShiftStartDate(),
                     LocalTime.parse(shiftNote.getShiftStartTime(), timeFormatter)
             );
-            LocalDateTime endDateTime = LocalDateTime.of(
+            LocalDateTime shiftEndDateTime = LocalDateTime.of(
                     shiftNote.getShiftEndDate(),
                     LocalTime.parse(shiftNote.getShiftEndTime(), timeFormatter)
             );
-            long durationInMinutes = Duration.between(startDateTime, endDateTime).toMinutes();
+            long durationInMinutes = Duration.between(shiftStartDateTime, shiftEndDateTime).toMinutes();
             long hours = durationInMinutes/60;
             long minutes = durationInMinutes%60;
 
