@@ -295,7 +295,8 @@ public class ShiftNoteService {
         LocalDate end = LocalDate.parse(endDate);
         LocalDateTime startDateTime = start.atStartOfDay();
         LocalDateTime endDateTime = end.atTime(23, 59, 59);
-        List<ShiftNotes> shiftNoteList = shiftNoteRepository.findShiftNotesByStartDateOrCreatedAtBetween(start, end, startDateTime, endDateTime);
+        List<ShiftNotes> shiftNoteList = shiftNoteRepository.findShiftNotesBetweenDates(start,end);
+        // List<ShiftNotes> shiftNoteList = shiftNoteRepository.findShiftNotesByStartInRangeOrCreatedInRangeAndStartBeforeStart(start, end, startDateTime, endDateTime);
         List<TimeSheetDTO> timeSheetList = new ArrayList<>();
         for (ShiftNotes shiftNote:shiftNoteList){
             DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
