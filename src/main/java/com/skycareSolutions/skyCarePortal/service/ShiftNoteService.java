@@ -296,6 +296,15 @@ public class ShiftNoteService {
         LocalDateTime startDateTime = start.atStartOfDay();
         LocalDateTime endDateTime = end.atTime(23, 59, 59);
         List<ShiftNotes> shiftNoteList = shiftNoteRepository.findShiftNotesBetweenDates(start,end);
+        // Enforce inclusive date range on shiftStartDate: start <= date <= end
+        if (shiftNoteList != null) {
+            shiftNoteList = shiftNoteList.stream()
+                    .filter(sn -> {
+                        LocalDate d = sn.getShiftStartDate();
+                        return (d.isEqual(start) || d.isAfter(start)) && (d.isEqual(end) || d.isBefore(end));
+                    })
+                    .toList();
+        }
         // List<ShiftNotes> shiftNoteList = shiftNoteRepository.findShiftNotesByStartInRangeOrCreatedInRangeAndStartBeforeStart(start, end, startDateTime, endDateTime);
         List<TimeSheetDTO> timeSheetList = new ArrayList<>();
         for (ShiftNotes shiftNote:shiftNoteList){
@@ -306,8 +315,80 @@ public class ShiftNoteService {
                     shiftNote.getShiftStartDate(),
                     LocalTime.parse(shiftNote.getShiftStartTime(), timeFormatter)
             );
+            // Calculate duration using the start date for both start and end times
+            // As requested: do not consider the stored end date, only start date + start/end times
+            LocalDate shiftDate = shiftNote.getShiftStartDate();
             LocalDateTime shiftEndDateTime = LocalDateTime.of(
-                    shiftNote.getShiftEndDate(),
+                    shiftDate,
+                    LocalTime.parse(shiftNote.getShiftEndTime(), timeFormatter)
+            );
+            long durationInMinutes = Duration.between(shiftStartDateTime, shiftEndDateTime).toMinutes();
+            long hours = durationInMinutes/60;
+            long minutes = durationInMinutes%60;
+
+            timeSheet.setTotalHours(String.format("%d hours, %d minutes", hours, minutes));
+            timeSheet.setShiftNoteDTO(toDTO(shiftNote));
+            if (shiftNote.getCareGiver()!=null){
+                EmployeeDTO employee  = employeeService.findOneEmployee(shiftNote.getCareGiver().getEmployee().getEmployeeID());
+                timeSheet.setEmployeeDTO(employee);
+            }else{
+                if (shiftNote.getEmployee()!=null){
+
+                    EmployeeDTO employee  = employeeService.findOneEmployee(shiftNote.getEmployee().getEmployeeID());
+                    timeSheet.setEmployeeDTO(employee);
+                }
+            }
+
+            if (shiftNote.getClient()!=null){
+                ClientDTO clientDTO = clientService.getClientById(shiftNote.getClient().getClientID());
+                timeSheet.setClient(clientDTO);
+            }
+            if (shiftNote.getRecurrentAppointment()!=null){
+                RecurrentAppointmentDTO recurrentAppointmentDTO = recurrenceService.getRecurrentAppointmentByID(shiftNote.getRecurrentAppointment().getRecurrentAppointmentID());
+                timeSheet.setRecurrentAppointment(recurrentAppointmentDTO);
+                AppointmentDTO appointmentDTO = appointmentService.getAppointmentById(recurrentAppointmentDTO.getAppointmentID());
+                timeSheet.setAppointment(appointmentDTO);
+
+                ClientDTO clientDTO = clientService.getClientById(appointmentDTO.getClientID());
+                timeSheet.setClient(clientDTO);
+            }
+            if (!clientID.equalsIgnoreCase("")){
+
+                if (timeSheet.getClient()!=null){
+                    if (clientID.equalsIgnoreCase(timeSheet.getClient().getClientID())){
+                        timeSheetList.add(timeSheet);
+                    }
+                }
+            }else{
+                timeSheetList.add(timeSheet);
+            }
+        }
+        if (careGiverID.equalsIgnoreCase("all")){
+            return timeSheetList;
+        }else{
+            return timeSheetList.stream().filter(timeSheetDTO -> timeSheetDTO.getEmployeeDTO().getEmployeeID().equalsIgnoreCase(careGiverID)).toList();
+        }
+
+    }
+
+
+    public List<TimeSheetDTO> getTimeSheetsForGivenDateRangeForExport(String startDate,String endDate,String careGiverID,String clientID){
+        LocalDate start = LocalDate.parse(startDate);
+        LocalDate end = LocalDate.parse(endDate);
+        List<ShiftNotes> shiftNoteList = shiftNoteRepository.findExportableShiftNotes(start,end);
+        List<TimeSheetDTO> timeSheetList = new ArrayList<>();
+        for (ShiftNotes shiftNote:shiftNoteList){
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+            TimeSheetDTO timeSheet = new TimeSheetDTO();
+
+            LocalDateTime shiftStartDateTime = LocalDateTime.of(
+                    shiftNote.getShiftStartDate(),
+                    LocalTime.parse(shiftNote.getShiftStartTime(), timeFormatter)
+            );
+            // For export as well: calculate duration using the start date for both timestamps
+            LocalDate exportShiftDate = shiftNote.getShiftStartDate();
+            LocalDateTime shiftEndDateTime = LocalDateTime.of(
+                    exportShiftDate,
                     LocalTime.parse(shiftNote.getShiftEndTime(), timeFormatter)
             );
             long durationInMinutes = Duration.between(shiftStartDateTime, shiftEndDateTime).toMinutes();
@@ -431,6 +512,7 @@ public class ShiftNoteService {
                 shiftNotes.getCareGiver() != null ? shiftNotes.getCareGiver().getCareGiverID() : null
         );
         shiftNoteDTO.setState(shiftNotes.getState());
+        shiftNoteDTO.setExportCount(shiftNotes.getExportCount());
         if (shiftNotes.getClient()!=null){
             shiftNoteDTO.setClientID(shiftNotes.getClient().getClientID());
         }
@@ -624,6 +706,13 @@ public class ShiftNoteService {
     public List<ShiftNotes> getShiftNotesInPaymentStatusByClient(String clientID,String paymentStatus){
         Client client = clientService.getClientByIdWithEntitiy(clientID);
         List<ShiftNotes> notesList = shiftNoteRepository.findByClientAndPaymentState(client,paymentStatus);
-        return notesList;
+        return notesList; 
+    }
+    
+    public int incrementExportCount(List<String> noteIds){
+        if (noteIds == null || noteIds.isEmpty()){
+            return 0;
+        }
+        return shiftNoteRepository.incrementExportCountByIds(noteIds);
     }
 }

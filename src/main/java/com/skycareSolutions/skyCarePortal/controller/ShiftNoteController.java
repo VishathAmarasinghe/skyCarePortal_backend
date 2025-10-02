@@ -3,7 +3,6 @@ package com.skycareSolutions.skyCarePortal.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.skycareSolutions.skyCarePortal.dto.*;
-import com.skycareSolutions.skyCarePortal.service.ResourceService;
 import com.skycareSolutions.skyCarePortal.service.ShiftNoteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -122,5 +121,23 @@ public class ShiftNoteController {
             System.out.println("issue found "+e);
             return ResponseEntity.status(500).body(null);
         }
+    }
+
+    @PostMapping("/export/increment")
+    public ResponseEntity<Integer> incrementExportCount(@RequestBody List<String> noteIds){
+        int updated = shiftNoteService.incrementExportCount(noteIds);
+        return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping("/export/time-sheets")
+    public ResponseEntity<List<TimeSheetDTO>> getExportableTimeSheets(
+            @RequestParam String startDate,
+            @RequestParam String endDate,
+            @RequestParam String careGiverID,
+            @RequestParam String clientID
+    ){
+        return ResponseEntity.ok(
+                shiftNoteService.getTimeSheetsForGivenDateRangeForExport(startDate,endDate,careGiverID,clientID)
+        );
     }
 }
