@@ -80,6 +80,9 @@ public class ShiftNotes {
     @Column(name = "paymentState",columnDefinition = "varchar(255) default 'Pending'")
     private String paymentState;
 
+    @Column(name = "export_count", nullable = false, columnDefinition = "INT DEFAULT 0")
+    private int exportCount = 0;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false,nullable = false)
     private LocalDateTime createdAt;

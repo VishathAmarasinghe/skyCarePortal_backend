@@ -3,6 +3,8 @@ package com.skycareSolutions.skyCarePortal.repository;
 import com.skycareSolutions.skyCarePortal.model.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
@@ -44,7 +46,7 @@ public interface ShiftNoteRepository extends JpaRepository<ShiftNotes,String> {
     );
 
     @Query("SELECT s FROM ShiftNotes s " +
-            "WHERE s.shiftStartDate >= :startDate AND s.shiftEndDate <= :endDate")
+            "WHERE s.shiftStartDate >= :startDate AND s.shiftStartDate <= :endDate")
     List<ShiftNotes> findShiftNotesBetweenDates(
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
@@ -54,6 +56,16 @@ public interface ShiftNoteRepository extends JpaRepository<ShiftNotes,String> {
             "WHERE (s.shiftStartDate >= :startDate AND s.shiftStartDate <= :endDate) " +
             "OR (s.createdAt >= :startDateTime AND s.createdAt <= :endDateTime)")
     List<ShiftNotes> findShiftNotesByStartDateOrCreatedAtBetween(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime
+    );
+
+    @Query("SELECT s FROM ShiftNotes s " +
+            "WHERE (s.shiftStartDate >= :startDate AND s.shiftStartDate <= :endDate) " +
+            "OR ((s.createdAt >= :startDateTime AND s.createdAt <= :endDateTime) AND s.shiftStartDate < :startDate)")
+    List<ShiftNotes> findShiftNotesByStartInRangeOrCreatedInRangeAndStartBeforeStart(
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             @Param("startDateTime") LocalDateTime startDateTime,
@@ -82,5 +94,14 @@ public interface ShiftNoteRepository extends JpaRepository<ShiftNotes,String> {
                                                 @Param("startDate") LocalDateTime startDate,
                                                 @Param("endDate") LocalDateTime endDate);
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE ShiftNotes s SET s.exportCount = s.exportCount + 1 WHERE s.noteID IN :ids")
+    int incrementExportCountByIds(@Param("ids") List<String> ids);
 
+    @Query("SELECT s FROM ShiftNotes s WHERE s.exportCount = 0 AND ((s.shiftStartDate >= :startDate AND s.shiftStartDate <= :endDate) OR (s.shiftStartDate < :startDate)) ORDER BY s.shiftStartDate DESC")
+    List<ShiftNotes> findExportableShiftNotes(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 }

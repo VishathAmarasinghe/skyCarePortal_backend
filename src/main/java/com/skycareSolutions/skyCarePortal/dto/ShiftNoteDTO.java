@@ -28,4 +28,5 @@ public class ShiftNoteDTO {
     private List<ShiftNoteDocumentDTO> documents;
     private String paymentState;
     private String createdAt;
+    private int exportCount;
 }
