@@ -15,7 +15,9 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -714,5 +716,67 @@ public class ShiftNoteService {
             return 0;
         }
         return shiftNoteRepository.incrementExportCountByIds(noteIds);
+    }
+
+    public int decrementExportCount(List<String> noteIds){
+        if (noteIds == null || noteIds.isEmpty()){
+            return 0;
+        }
+        return shiftNoteRepository.decrementExportCountByIds(noteIds);
+    }
+
+    public Map<String, Integer> bulkUpdateExportCount(List<String> noteIds, String action){
+        Map<String, Integer> result = new HashMap<>();
+        
+        if (noteIds == null || noteIds.isEmpty()){
+            result.put("incremented", 0);
+            result.put("decremented", 0);
+            return result;
+        }
+
+        int incremented = 0;
+        int decremented = 0;
+
+        switch (action.toLowerCase()) {
+            case "export":
+                incremented = shiftNoteRepository.incrementExportCountByIds(noteIds);
+                break;
+            case "reverse":
+                decremented = shiftNoteRepository.decrementExportCountByIds(noteIds);
+                break;
+            case "both":
+                // For "both" action, we need to selectively apply operations based on current export status
+                // First, get all timesheets to check their current export status
+                List<ShiftNotes> allTimesheets = shiftNoteRepository.findAllById(noteIds);
+                
+                // Separate into exported and unexported
+                List<String> unexportedIds = new ArrayList<>();
+                List<String> exportedIds = new ArrayList<>();
+                
+                for (ShiftNotes timesheet : allTimesheets) {
+                    if (timesheet.getExportCount() == 0) {
+                        unexportedIds.add(timesheet.getNoteID());
+                    } else {
+                        exportedIds.add(timesheet.getNoteID());
+                    }
+                }
+                
+                // Increment unexported ones
+                if (!unexportedIds.isEmpty()) {
+                    incremented = shiftNoteRepository.incrementExportCountByIds(unexportedIds);
+                }
+                
+                // Decrement exported ones
+                if (!exportedIds.isEmpty()) {
+                    decremented = shiftNoteRepository.decrementExportCountByIds(exportedIds);
+                }
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid action: " + action);
+        }
+
+        result.put("incremented", incremented);
+        result.put("decremented", decremented);
+        return result;
     }
 }
