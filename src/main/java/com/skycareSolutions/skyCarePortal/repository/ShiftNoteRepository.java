@@ -99,6 +99,11 @@ public interface ShiftNoteRepository extends JpaRepository<ShiftNotes,String> {
     @Query("UPDATE ShiftNotes s SET s.exportCount = s.exportCount + 1 WHERE s.noteID IN :ids")
     int incrementExportCountByIds(@Param("ids") List<String> ids);
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE ShiftNotes s SET s.exportCount = s.exportCount - 1 WHERE s.noteID IN :ids AND s.exportCount > 0")
+    int decrementExportCountByIds(@Param("ids") List<String> ids);
+
     @Query("SELECT s FROM ShiftNotes s WHERE s.exportCount = 0 AND ((s.shiftStartDate >= :startDate AND s.shiftStartDate <= :endDate) OR (s.shiftStartDate < :startDate)) ORDER BY s.shiftStartDate DESC")
     List<ShiftNotes> findExportableShiftNotes(
             @Param("startDate") LocalDate startDate,

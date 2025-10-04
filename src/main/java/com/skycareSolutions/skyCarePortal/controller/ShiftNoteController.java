@@ -129,6 +129,22 @@ public class ShiftNoteController {
         return ResponseEntity.ok(updated);
     }
 
+    @PostMapping("/export/decrement")
+    public ResponseEntity<Integer> decrementExportCount(@RequestBody List<String> noteIds){
+        int updated = shiftNoteService.decrementExportCount(noteIds);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/export/bulk-update")
+    public ResponseEntity<Map<String, Integer>> bulkUpdateExportCount(
+            @RequestBody Map<String, Object> request){
+        List<String> noteIds = (List<String>) request.get("noteIds");
+        String action = (String) request.get("action");
+        
+        Map<String, Integer> result = shiftNoteService.bulkUpdateExportCount(noteIds, action);
+        return ResponseEntity.ok(result);
+    }
+
     @GetMapping("/export/time-sheets")
     public ResponseEntity<List<TimeSheetDTO>> getExportableTimeSheets(
             @RequestParam String startDate,
