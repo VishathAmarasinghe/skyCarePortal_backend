@@ -779,4 +779,31 @@ public class ShiftNoteService {
         result.put("decremented", decremented);
         return result;
     }
+
+    public Map<String, Integer> bulkUpdatePaymentStatus(List<String> noteIds, String status, String comment){
+        Map<String, Integer> result = new HashMap<>();
+        
+        if (noteIds == null || noteIds.isEmpty()){
+            result.put("updated", 0);
+            return result;
+        }
+
+        int updated = 0;
+
+        // Fetch all shift notes by IDs
+        List<ShiftNotes> shiftNotes = shiftNoteRepository.findAllById(noteIds);
+        
+        // Update each shift note's payment status
+        for (ShiftNotes shiftNote : shiftNotes) {
+            shiftNote.setPaymentState(status);
+            if (comment != null && !comment.isEmpty()) {
+                shiftNote.setComments(comment);
+            }
+            shiftNoteRepository.save(shiftNote);
+            updated++;
+        }
+
+        result.put("updated", updated);
+        return result;
+    }
 }

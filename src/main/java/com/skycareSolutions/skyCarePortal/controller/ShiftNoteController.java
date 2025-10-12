@@ -156,4 +156,15 @@ public class ShiftNoteController {
                 shiftNoteService.getTimeSheetsForGivenDateRangeForExport(startDate,endDate,careGiverID,clientID)
         );
     }
+
+    @PostMapping("/time-sheets/bulk-status-update")
+    public ResponseEntity<Map<String, Integer>> bulkUpdatePaymentStatus(
+            @RequestBody Map<String, Object> request){
+        List<String> noteIds = (List<String>) request.get("noteIds");
+        String status = (String) request.get("status");
+        String comment = (String) request.get("comment");
+        
+        Map<String, Integer> result = shiftNoteService.bulkUpdatePaymentStatus(noteIds, status, comment);
+        return ResponseEntity.ok(result);
+    }
 }
