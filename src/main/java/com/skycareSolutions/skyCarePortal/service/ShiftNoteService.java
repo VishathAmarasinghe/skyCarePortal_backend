@@ -119,9 +119,22 @@ public class ShiftNoteService {
     }
 
     public Boolean newShiftNotes(ShiftNoteDTO shiftNoteDTO,List<MultipartFile> files){
+        Employee employee = employeeService.findOneEmployeeWithEntity(shiftNoteDTO.getEmployeeID());
+        
+        // Check for duplicate timesheets based on same date, time, and user
+        List<ShiftNotes> duplicates = shiftNoteRepository.findDuplicateShiftNotes(
+            shiftNoteDTO.getShiftStartDate(),
+            shiftNoteDTO.getShiftStartTime(),
+            employee
+        );
+        
+        if (!duplicates.isEmpty()) {
+            System.out.println("Duplicate timesheet detected - same date, time, and user already exists");
+            throw new RuntimeException("Duplicate timesheet: A timesheet with the same date, time, and user already exists");
+        }
+        
         String lastShiftNoteID = shiftNoteRepository.getLastIdOfShiftNotes();
         String newShiftNoteID = Micro_utils.idGenerator("shiftNotes",lastShiftNoteID);
-        Employee employee = employeeService.findOneEmployeeWithEntity(shiftNoteDTO.getEmployeeID());
         shiftNoteDTO.setNoteID(newShiftNoteID);
 
             ShiftNotes  shiftNote  = new ShiftNotes();
@@ -218,6 +231,22 @@ public class ShiftNoteService {
 
         if (exisitingShiftNote.isPresent()){
             ShiftNotes  shiftNote  = exisitingShiftNote.get();
+            
+            // Check for duplicate timesheets based on same date, time, and user (excluding current note)
+            List<ShiftNotes> duplicates = shiftNoteRepository.findDuplicateShiftNotes(
+                shiftNoteDTO.getShiftStartDate(),
+                shiftNoteDTO.getShiftStartTime(),
+                shiftNote.getEmployee()
+            );
+            
+            // Remove the current shift note from duplicates if it exists
+            duplicates.removeIf(duplicate -> duplicate.getNoteID().equals(shiftNote.getNoteID()));
+            
+            if (!duplicates.isEmpty()) {
+                System.out.println("Duplicate timesheet detected - same date, time, and user already exists");
+                throw new RuntimeException("Duplicate timesheet: A timesheet with the same date, time, and user already exists");
+            }
+            
             JobAssignerDTO jobAssigner = jobAssignerService.findJobAssignerByCareGiverIDAndRecurrentID(shiftNote.getCareGiver().getCareGiverID(),shiftNote.getRecurrentAppointment().getRecurrentAppointmentID());
             shiftNote.setShiftEndTime(shiftNoteDTO.getShiftEndTime());
             shiftNote.setShiftEndDate(shiftNoteDTO.getShiftEndDate());
@@ -547,6 +576,23 @@ public class ShiftNoteService {
         // Fetch the existing ShiftNote entity
         ShiftNotes existingShiftNote = shiftNoteRepository.findById(noteID)
                 .orElseThrow(() -> new RuntimeException("ShiftNote not found"));
+
+        // Check for duplicate timesheets based on same date, time, and user (excluding current note)
+        if (shiftNoteDTO.getShiftStartDate() != null && shiftNoteDTO.getShiftStartTime() != null) {
+            List<ShiftNotes> duplicates = shiftNoteRepository.findDuplicateShiftNotes(
+                shiftNoteDTO.getShiftStartDate(),
+                shiftNoteDTO.getShiftStartTime(),
+                existingShiftNote.getEmployee()
+            );
+            
+            // Remove the current shift note from duplicates if it exists
+            duplicates.removeIf(duplicate -> duplicate.getNoteID().equals(noteID));
+            
+            if (!duplicates.isEmpty()) {
+                System.out.println("Duplicate timesheet detected - same date, time, and user already exists");
+                throw new RuntimeException("Duplicate timesheet: A timesheet with the same date, time, and user already exists");
+            }
+        }
 
         // Update fields in the existing entity
         updateEntityFromDTO(shiftNoteDTO, existingShiftNote);

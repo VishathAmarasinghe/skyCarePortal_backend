@@ -109,4 +109,14 @@ public interface ShiftNoteRepository extends JpaRepository<ShiftNotes,String> {
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
+
+    @Query("SELECT s FROM ShiftNotes s " +
+            "WHERE s.shiftStartDate = :shiftStartDate " +
+            "AND s.shiftStartTime = :shiftStartTime " +
+            "AND s.employee = :employee")
+    List<ShiftNotes> findDuplicateShiftNotes(
+            @Param("shiftStartDate") LocalDate shiftStartDate,
+            @Param("shiftStartTime") String shiftStartTime,
+            @Param("employee") Employee employee
+    );
 }
