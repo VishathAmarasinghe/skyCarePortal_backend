@@ -12,7 +12,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -99,6 +98,23 @@ public class IncidentService {
 
     // Create a new incident
     public IncidentsDTO createIncident(IncidentsDTO incidentsDTO, List<MultipartFile> files) {
+        // Check for duplicate incident
+        if (incidentsDTO.getClientID() != null && !incidentsDTO.getClientID().isEmpty()) {
+            Client client = clientService.getClientByIdWithEntitiy(incidentsDTO.getClientID());
+            Employee employee = employeeService.findOneEmployeeWithEntity(incidentsDTO.getEmployeeID());
+            
+            Optional<Incidents> duplicateIncident = incidentRepository.findDuplicateIncident(
+                    incidentsDTO.getIncidentDate(),
+                    incidentsDTO.getIncidentTime(),
+                    client,
+                    employee
+            );
+            
+            if (duplicateIncident.isPresent()) {
+                throw new RuntimeException("A duplicate incident already exists with the same date, time, client, and employee.");
+            }
+        }
+        
         String lastIncidentID = incidentRepository.getLastIdOfIncident();
         String newIncidentID = Micro_utils.idGenerator("incidents",lastIncidentID);
         incidentsDTO.setIncidentID(newIncidentID);

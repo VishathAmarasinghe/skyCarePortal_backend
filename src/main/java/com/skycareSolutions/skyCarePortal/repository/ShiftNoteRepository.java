@@ -1,6 +1,10 @@
 package com.skycareSolutions.skyCarePortal.repository;
 
-import com.skycareSolutions.skyCarePortal.model.*;
+import com.skycareSolutions.skyCarePortal.model.CareGiver;
+import com.skycareSolutions.skyCarePortal.model.Client;
+import com.skycareSolutions.skyCarePortal.model.Employee;
+import com.skycareSolutions.skyCarePortal.model.RecurrentAppointment;
+import com.skycareSolutions.skyCarePortal.model.ShiftNotes;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.Modifying;
@@ -113,10 +117,14 @@ public interface ShiftNoteRepository extends JpaRepository<ShiftNotes,String> {
     @Query("SELECT s FROM ShiftNotes s " +
             "WHERE s.shiftStartDate = :shiftStartDate " +
             "AND s.shiftStartTime = :shiftStartTime " +
+            "AND s.shiftEndTime = :shiftEndTime " +
+            "AND (s.client = :client OR (s.client IS NULL AND :client IS NULL)) " +
             "AND s.employee = :employee")
     List<ShiftNotes> findDuplicateShiftNotes(
             @Param("shiftStartDate") LocalDate shiftStartDate,
             @Param("shiftStartTime") String shiftStartTime,
+            @Param("shiftEndTime") String shiftEndTime,
+            @Param("client") Client client,
             @Param("employee") Employee employee
     );
 }
