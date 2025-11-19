@@ -121,16 +121,28 @@ public class ShiftNoteService {
     public Boolean newShiftNotes(ShiftNoteDTO shiftNoteDTO,List<MultipartFile> files){
         Employee employee = employeeService.findOneEmployeeWithEntity(shiftNoteDTO.getEmployeeID());
         
-        // Check for duplicate timesheets based on same date, time, and user
+        // Get client from DTO (either directly or from recurrent appointment)
+        Client client = null;
+        if (shiftNoteDTO.getClientID() != null && !shiftNoteDTO.getClientID().isEmpty()) {
+            client = clientService.getClientByIdWithEntitiy(shiftNoteDTO.getClientID());
+        } else if (shiftNoteDTO.getRecurrentAppointmentID() != null && !shiftNoteDTO.getRecurrentAppointmentID().isEmpty()) {
+            RecurrentAppointment recurrentAppointment = recurrenceService.getRecurrentAppointmentByIDWithEntity(shiftNoteDTO.getRecurrentAppointmentID());
+            if (recurrentAppointment != null && recurrentAppointment.getAppointment() != null) {
+                client = recurrentAppointment.getAppointment().getClient();
+            }
+        }
+        
+        // Check for duplicate timesheets based on start date, start time, end time, client, and employee
         List<ShiftNotes> duplicates = shiftNoteRepository.findDuplicateShiftNotes(
             shiftNoteDTO.getShiftStartDate(),
             shiftNoteDTO.getShiftStartTime(),
+            shiftNoteDTO.getShiftEndTime(),
+            client,
             employee
         );
         
         if (!duplicates.isEmpty()) {
-            System.out.println("Duplicate timesheet detected - same date, time, and user already exists");
-            throw new RuntimeException("Duplicate timesheet: A timesheet with the same date, time, and user already exists");
+            throw new RuntimeException("A duplicate timesheet already exists with the same start date, start time, end time, client, and employee.");
         }
         
         String lastShiftNoteID = shiftNoteRepository.getLastIdOfShiftNotes();
@@ -152,7 +164,6 @@ public class ShiftNoteService {
             shiftNote.setWorkHours(shiftNoteDTO.getTotalWorkHrs());
 
             if (shiftNoteDTO.getClientID()!=null && !shiftNoteDTO.getClientID().isEmpty()){
-                Client client = clientService.getClientByIdWithEntitiy(shiftNoteDTO.getClientID());
                 shiftNote.setClient(client);
             }
 
@@ -232,10 +243,18 @@ public class ShiftNoteService {
         if (exisitingShiftNote.isPresent()){
             ShiftNotes  shiftNote  = exisitingShiftNote.get();
             
-            // Check for duplicate timesheets based on same date, time, and user (excluding current note)
+            // Get client from existing shift note or DTO
+            Client client = shiftNote.getClient();
+            if (client == null && shiftNoteDTO.getClientID() != null && !shiftNoteDTO.getClientID().isEmpty()) {
+                client = clientService.getClientByIdWithEntitiy(shiftNoteDTO.getClientID());
+            }
+            
+            // Check for duplicate timesheets based on start date, start time, end time, client, and employee (excluding current note)
             List<ShiftNotes> duplicates = shiftNoteRepository.findDuplicateShiftNotes(
                 shiftNoteDTO.getShiftStartDate(),
                 shiftNoteDTO.getShiftStartTime(),
+                shiftNoteDTO.getShiftEndTime(),
+                client,
                 shiftNote.getEmployee()
             );
             
@@ -243,8 +262,7 @@ public class ShiftNoteService {
             duplicates.removeIf(duplicate -> duplicate.getNoteID().equals(shiftNote.getNoteID()));
             
             if (!duplicates.isEmpty()) {
-                System.out.println("Duplicate timesheet detected - same date, time, and user already exists");
-                throw new RuntimeException("Duplicate timesheet: A timesheet with the same date, time, and user already exists");
+                throw new RuntimeException("A duplicate timesheet already exists with the same start date, start time, end time, client, and employee.");
             }
             
             JobAssignerDTO jobAssigner = jobAssignerService.findJobAssignerByCareGiverIDAndRecurrentID(shiftNote.getCareGiver().getCareGiverID(),shiftNote.getRecurrentAppointment().getRecurrentAppointmentID());
@@ -577,11 +595,19 @@ public class ShiftNoteService {
         ShiftNotes existingShiftNote = shiftNoteRepository.findById(noteID)
                 .orElseThrow(() -> new RuntimeException("ShiftNote not found"));
 
-        // Check for duplicate timesheets based on same date, time, and user (excluding current note)
-        if (shiftNoteDTO.getShiftStartDate() != null && shiftNoteDTO.getShiftStartTime() != null) {
+        // Check for duplicate timesheets based on start date, start time, end time, client, and employee (excluding current note)
+        if (shiftNoteDTO.getShiftStartDate() != null && shiftNoteDTO.getShiftStartTime() != null && shiftNoteDTO.getShiftEndTime() != null) {
+            // Get client from existing shift note or DTO
+            Client client = existingShiftNote.getClient();
+            if (client == null && shiftNoteDTO.getClientID() != null && !shiftNoteDTO.getClientID().isEmpty()) {
+                client = clientService.getClientByIdWithEntitiy(shiftNoteDTO.getClientID());
+            }
+            
             List<ShiftNotes> duplicates = shiftNoteRepository.findDuplicateShiftNotes(
                 shiftNoteDTO.getShiftStartDate(),
                 shiftNoteDTO.getShiftStartTime(),
+                shiftNoteDTO.getShiftEndTime(),
+                client,
                 existingShiftNote.getEmployee()
             );
             
@@ -589,8 +615,7 @@ public class ShiftNoteService {
             duplicates.removeIf(duplicate -> duplicate.getNoteID().equals(noteID));
             
             if (!duplicates.isEmpty()) {
-                System.out.println("Duplicate timesheet detected - same date, time, and user already exists");
-                throw new RuntimeException("Duplicate timesheet: A timesheet with the same date, time, and user already exists");
+                throw new RuntimeException("A duplicate timesheet already exists with the same start date, start time, end time, client, and employee.");
             }
         }
 

@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +46,7 @@ public class ShiftNoteController {
     }
 
     @PostMapping("/new")
-    public ResponseEntity<Boolean> newShiftNote(
+    public ResponseEntity<?> newShiftNote(
             @RequestPart("note") String shiftNoteDTO,
             @RequestPart(value = "files",required = false) List<MultipartFile> files
     ) {
@@ -53,7 +54,16 @@ public class ShiftNoteController {
         try {
             ShiftNoteDTO notes = objectMapper.readValue(shiftNoteDTO,ShiftNoteDTO.class);
             return ResponseEntity.ok(shiftNoteService.newShiftNotes(notes,files));
-        }catch (Exception e){
+        } catch (RuntimeException e) {
+            // Check if it's a duplicate error
+            if (e.getMessage() != null && e.getMessage().contains("duplicate")) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", e.getMessage());
+                errorResponse.put("duplicate", true);
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+            }
+            throw e;
+        } catch (Exception e){
             System.out.println("exception "+e);
             return ResponseEntity.internalServerError().body(false);
         }
@@ -76,7 +86,13 @@ public class ShiftNoteController {
             ShiftNoteDTO notes = objectMapper.readValue(shiftNoteDTO,ShiftNoteDTO.class);
             shiftNoteService.finishShift(notes,files);
             return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse("Shift Added successfully",true));
-        }catch (Exception e){
+        } catch (RuntimeException e) {
+            // Check if it's a duplicate error
+            if (e.getMessage() != null && e.getMessage().contains("duplicate")) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse(e.getMessage(), false));
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(e.getMessage(), false));
+        } catch (Exception e){
             System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(e.getMessage(),false));
         }
@@ -109,7 +125,7 @@ public class ShiftNoteController {
     }
 
     @PutMapping("/{noteID}")
-    public ResponseEntity<ShiftNoteDTO> updateShiftNote(
+    public ResponseEntity<?> updateShiftNote(
             @PathVariable String noteID,
             @RequestPart("note") String shiftNoteDTO,
             @RequestPart(value = "files",required = false) List<MultipartFile> files) {
@@ -117,9 +133,19 @@ public class ShiftNoteController {
             ShiftNoteDTO notes = objectMapper.readValue(shiftNoteDTO,ShiftNoteDTO.class);
             ShiftNoteDTO updatedShiftNote = shiftNoteService.updateShiftNote(noteID, notes, files);
             return ResponseEntity.ok(updatedShiftNote);
+        } catch (RuntimeException e) {
+            // Check if it's a duplicate error
+            if (e.getMessage() != null && e.getMessage().contains("duplicate")) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", e.getMessage());
+                errorResponse.put("duplicate", true);
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+            }
+            System.out.println("issue found "+e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         } catch (Exception e) {
             System.out.println("issue found "+e);
-            return ResponseEntity.status(500).body(null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
