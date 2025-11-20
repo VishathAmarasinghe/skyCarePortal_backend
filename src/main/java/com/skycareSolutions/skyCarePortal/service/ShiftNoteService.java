@@ -16,6 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -335,8 +336,54 @@ public class ShiftNoteService {
         }
     }
 
+    /**
+     * Generates a unique key for identifying duplicate shift notes.
+     * Duplicates are identified by: shift_start_date, shift_start_time, shift_end_time, clientID, and employeeID.
+     */
+    private String generateDuplicateKey(ShiftNotes shiftNote) {
+        String startDate = shiftNote.getShiftStartDate() != null ? shiftNote.getShiftStartDate().toString() : "null";
+        String startTime = shiftNote.getShiftStartTime() != null ? shiftNote.getShiftStartTime() : "null";
+        String endTime = shiftNote.getShiftEndTime() != null ? shiftNote.getShiftEndTime() : "null";
+        
+        String clientID = "null";
+        if (shiftNote.getClient() != null) {
+            clientID = shiftNote.getClient().getClientID();
+        }
+        
+        String employeeID = "null";
+        if (shiftNote.getEmployee() != null) {
+            employeeID = shiftNote.getEmployee().getEmployeeID();
+        } else if (shiftNote.getCareGiver() != null && shiftNote.getCareGiver().getEmployee() != null) {
+            employeeID = shiftNote.getCareGiver().getEmployee().getEmployeeID();
+        }
+        
+        return String.format("%s|%s|%s|%s|%s", startDate, startTime, endTime, clientID, employeeID);
+    }
+
+    /**
+     * Removes duplicate shift notes from a list, keeping only the first occurrence of each duplicate group.
+     * Duplicates are identified by: shift_start_date, shift_start_time, shift_end_time, clientID, and employeeID.
+     */
+    private List<ShiftNotes> removeDuplicates(List<ShiftNotes> shiftNotesList) {
+        if (shiftNotesList == null || shiftNotesList.isEmpty()) {
+            return shiftNotesList;
+        }
+        
+        Map<String, ShiftNotes> uniqueMap = new LinkedHashMap<>();
+        for (ShiftNotes shiftNote : shiftNotesList) {
+            String key = generateDuplicateKey(shiftNote);
+            if (!uniqueMap.containsKey(key)) {
+                uniqueMap.put(key, shiftNote);
+            }
+        }
+        
+        return new ArrayList<>(uniqueMap.values());
+    }
+
     public List<ShiftNoteDTO> getAllShiftNotes(){
-        return shiftNoteRepository.getAllShiftNotes().stream().map(this::toDTO).toList();
+        List<ShiftNotes> allShiftNotes = shiftNoteRepository.getAllShiftNotes();
+        List<ShiftNotes> uniqueShiftNotes = removeDuplicates(allShiftNotes);
+        return uniqueShiftNotes.stream().map(this::toDTO).toList();
     }
 
     public List<TimeSheetDTO> getTimeSheetsForGivenDateRange(String startDate,String endDate,String careGiverID,String clientID){
@@ -354,6 +401,8 @@ public class ShiftNoteService {
                     })
                     .toList();
         }
+        // Remove duplicates before processing
+        shiftNoteList = removeDuplicates(shiftNoteList);
         // List<ShiftNotes> shiftNoteList = shiftNoteRepository.findShiftNotesByStartInRangeOrCreatedInRangeAndStartBeforeStart(start, end, startDateTime, endDateTime);
         List<TimeSheetDTO> timeSheetList = new ArrayList<>();
         for (ShiftNotes shiftNote:shiftNoteList){
@@ -425,6 +474,8 @@ public class ShiftNoteService {
         LocalDate start = LocalDate.parse(startDate);
         LocalDate end = LocalDate.parse(endDate);
         List<ShiftNotes> shiftNoteList = shiftNoteRepository.findExportableShiftNotes(start,end);
+        // Remove duplicates before processing
+        shiftNoteList = removeDuplicates(shiftNoteList);
         List<TimeSheetDTO> timeSheetList = new ArrayList<>();
         for (ShiftNotes shiftNote:shiftNoteList){
             DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
@@ -529,7 +580,9 @@ public class ShiftNoteService {
 
     public List<ShiftNoteDTO> getAllShiftNotesRelatedToCareGiver(String employeeID){
         Employee employee = employeeService.findOneEmployeeWithEntity(employeeID);
-        return shiftNoteRepository.getAllShiftNotesByEmployee(employee).stream().map(this::toDTO).toList();
+        List<ShiftNotes> shiftNotesList = shiftNoteRepository.getAllShiftNotesByEmployee(employee);
+        List<ShiftNotes> uniqueShiftNotes = removeDuplicates(shiftNotesList);
+        return uniqueShiftNotes.stream().map(this::toDTO).toList();
 
     }
 
@@ -779,7 +832,8 @@ public class ShiftNoteService {
     public List<ShiftNotes> getShiftNotesInPaymentStatusByClient(String clientID,String paymentStatus){
         Client client = clientService.getClientByIdWithEntitiy(clientID);
         List<ShiftNotes> notesList = shiftNoteRepository.findByClientAndPaymentState(client,paymentStatus);
-        return notesList; 
+        List<ShiftNotes> uniqueNotesList = removeDuplicates(notesList);
+        return uniqueNotesList; 
     }
     
     public int incrementExportCount(List<String> noteIds){
