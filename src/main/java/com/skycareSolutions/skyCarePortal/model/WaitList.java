@@ -14,6 +14,7 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(name = "waitlist")
 public class WaitList {
 
     @Id

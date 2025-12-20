@@ -1,21 +1,15 @@
 package com.skycareSolutions.skyCarePortal.controller;
 
-
-import com.skycareSolutions.skyCarePortal.dto.CareGiverDTO;
 import com.skycareSolutions.skyCarePortal.model.WaitList;
 import com.skycareSolutions.skyCarePortal.repository.WaitListRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @RestController
 @CrossOrigin("*")
 @RequestMapping("/waitlist")
 public class WaitingListController {
-
 
     @Autowired
     private WaitListRepository waitListRepository;
