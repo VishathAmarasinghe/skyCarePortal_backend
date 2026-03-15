@@ -13,10 +13,12 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 # Environment Variables
-SMTP_SERVER = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
+SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.environ.get("SMTP_PORT", 587))
-SMTP_USERNAME = os.environ.get("SMTP_USERNAME")
+SMTP_SECURE = os.environ.get("SMTP_SECURE", "false").lower() == "true"
+SMTP_USER = os.environ.get("SMTP_USER")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
+NOTIFICATION_FROM_EMAIL = os.environ.get("NOTIFICATION_FROM_EMAIL", SMTP_USER)
 ALERT_RECEIVER_EMAIL = os.environ.get("ALERT_RECEIVER_EMAIL")
 
 # Initialize docker client
@@ -62,20 +64,21 @@ def get_container_logs(container_name_or_port, lines=50):
         return f"Error fetching logs: {str(e)}"
 
 def send_email(subject, body):
-    if not all([SMTP_USERNAME, SMTP_PASSWORD, ALERT_RECEIVER_EMAIL]):
+    if not all([SMTP_USER, SMTP_PASSWORD, ALERT_RECEIVER_EMAIL]):
         logger.error("Missing email configuration. Cannot send email.")
         return False
         
     msg = EmailMessage()
     msg.set_content(body)
     msg['Subject'] = subject
-    msg['From'] = SMTP_USERNAME
+    msg['From'] = NOTIFICATION_FROM_EMAIL
     msg['To'] = ALERT_RECEIVER_EMAIL
 
     try:
-        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
+        # Gmail on port 587 requires STARTTLS even if SMTP_SECURE is logically false
         server.starttls()
-        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.login(SMTP_USER, SMTP_PASSWORD)
         server.send_message(msg)
         server.quit()
         logger.info(f"Successfully sent email: {subject}")
