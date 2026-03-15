@@ -79,7 +79,7 @@ services:
     container_name: mysql-exporter
     restart: always
     environment:
-      - DATA_SOURCE_NAME=${MYSQL_EXPORTER_DATA_SOURCE_NAME}
+      DATA_SOURCE_NAME: "${MYSQL_EXPORTER_DATA_SOURCE_NAME}"
     networks:
       - monitoring
     extra_hosts:
@@ -103,11 +103,11 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - SMTP_SERVER=smtp.gmail.com
-      - SMTP_PORT=587
-      - SMTP_USERNAME=${SMTP_USERNAME:-projectvishath@gmail.com}
-      - SMTP_PASSWORD=${SMTP_PASSWORD:-your_app_password_here}
-      - ALERT_RECEIVER_EMAIL=${ALERT_RECEIVER_EMAIL:-projectvishath@gmail.com}
+      SMTP_SERVER: smtp.gmail.com
+      SMTP_PORT: "587"
+      SMTP_USERNAME: "${SMTP_USERNAME:-projectvishath@gmail.com}"
+      SMTP_PASSWORD: "${SMTP_PASSWORD:-your_app_password_here}"
+      ALERT_RECEIVER_EMAIL: "${ALERT_RECEIVER_EMAIL:-projectvishath@gmail.com}"
     ports:
       - "5005:5000"
     networks:
