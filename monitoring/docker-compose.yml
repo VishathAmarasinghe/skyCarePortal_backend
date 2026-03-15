@@ -98,6 +98,8 @@ services:
       - '--config.file=/etc/blackbox_exporter/config.yml'
     networks:
       - monitoring
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   webhook-receiver:
     build: ./webhook-receiver
