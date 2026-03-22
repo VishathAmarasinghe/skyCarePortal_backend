@@ -1,57 +1,27 @@
+# Staging stack (branch dev). Default DB: skycareportal_staging (override with SPRING_DATASOURCE_URL).
+# Uses Compose default network (no external network). Host nginx reaches services via published ports only.
 services:
   frontend-staging:
     container_name: frontend-staging
-    image: frontend:latest
+    image: frontend:staging
     ports:
-      - "8082:80" 
-    networks:
-      - app-network
-    volumes:
-      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - "127.0.0.1:8082:80"
     restart: always
-    environment:
-      - FRONTEND_URL=http://frontend:80
-      - VITE_BACKEND_BASE_URL=https://stg.skycare.au/api
-      - VITE_APPLICATION_ADMIN=admin.skyCarePortal
-      - VITE_APPLICATION_SUPER_ADMIN=superadmin.skyCarePortal
-      - VITE_APPLICATION_CARE_GIVER=caregiver.skyCarePortal
-      - VITE_APPLICATION_CLIENT=client.skyCarePortal
-      - VITE_FILE_DOWNLOAD_PATH=/file/download
-      - VITE_GOOGLE_MAP_API_KEY=AIzaSyB_cvNijyVjUPr189twbkzvxKNPId0rPNk
 
   backend-staging:
     container_name: backend-staging
-    image: backend:latest
+    image: backend:staging
     ports:
-      - "5002:5000"
-    networks:
-      - app-network
+      - "127.0.0.1:5002:5000"
     restart: always
     environment:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL:-jdbc:mysql://139.99.236.174:3306/skycareportal_dev}
-      - SPRING_DATASOURCE_USERNAME=devuser
-      - SPRING_DATASOURCE_PASSWORD=skycaredev
-      - SPRING_MAIL_USERNAME=no-reply@skycaresolutions.com.au
-      - SPRING_MAIL_PASSWORD=Skycare@3977
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL:-jdbc:mysql://139.99.236.174:3306/skycareportal_staging}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_MAIL_USERNAME=${SPRING_MAIL_USERNAME}
+      - SPRING_MAIL_PASSWORD=${SPRING_MAIL_PASSWORD}
       - SERVER_PORT=5000
-      - FRONTEND_URL=https://skycare.au
+      - FRONTEND_URL=https://stg.skycare.au
     volumes:
       - /var/lib/skycareuploads:/root/skyCareUploads
-
-  reverse-proxy:
-    container_name: reverse-proxy
-    image: proxy:latest
-    ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      - app-network
-    volumes:
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - /etc/ssl/certs/dhparam.pem:/etc/ssl/certs/dhparam.pem:ro
-    restart: always
-
-networks:
-  app-network:
-    external: true
