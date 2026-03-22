@@ -1,4 +1,5 @@
-# Step 1: Build the Spring Boot application with Maven
+# Spring Boot JAR — runtime config (DB, mail) comes from docker-compose env, not baked into the image.
+# Step 1: Build
 FROM maven:3.9.9-eclipse-temurin-17 AS build
 
 # Set the working directory inside the container
