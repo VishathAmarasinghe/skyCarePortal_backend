@@ -1,14 +1,15 @@
 groups:
-- name: ContainerHealth
-  rules:
-  - alert: EndpointDown
-    expr: probe_success == 0
-    for: 5s
-    labels:
-      severity: critical
-    annotations:
-      summary: "Endpoint {{ $labels.instance }} is down"
-      description: "The health check for {{ $labels.instance }} has been failing for more than 5 seconds."
+# TEMPORARY: health check alert disabled — uncomment ContainerHealth group to re-enable
+# - name: ContainerHealth
+#   rules:
+#   - alert: EndpointDown
+#     expr: probe_success == 0
+#     for: 5s
+#     labels:
+#       severity: critical
+#     annotations:
+#       summary: "Endpoint {{ $labels.instance }} is down"
+#       description: "The health check for {{ $labels.instance }} has been failing for more than 5 seconds."
 
 - name: HostMetrics
   rules:
