@@ -57,7 +57,8 @@ public class CareGiverDocumentService {
                 String storedPath = CareGiverDocumentFileUtil.storeFile(
                         doc.getCareGiverID(),
                         doc.getDocumentTypeID(),
-                        selectedFile
+                        selectedFile,
+                        doc.getDocument()
                 );
                 doc.setDocument(storedPath);
                 careGiverDocumentsRepository.save(mapToEntity(doc));
@@ -77,14 +78,16 @@ public class CareGiverDocumentService {
         }
 
         boolean singleFileUpload = files != null && files.size() == 1;
+        List<CareGiverDocumentsDTO> existingDocuments = getDocumentsByCareGiverId(careGiverId);
+
         if (singleFileUpload) {
-            inputDtos = narrowInputForSingleFileUpload(inputDtos, files);
+            inputDtos = narrowInputForSingleFileUpload(inputDtos, files, existingDocuments);
             if (inputDtos.isEmpty()) {
                 return;
             }
         }
 
-        List<CareGiverDocumentsDTO> existingDocuments = getDocumentsByCareGiverId(careGiverId);
+        boolean singleTargetedUpload = singleFileUpload && inputDtos.size() == 1;
         Set<String> consumedFiles = new HashSet<>();
 
         for (CareGiverDocumentsDTO input : inputDtos) {
@@ -96,7 +99,9 @@ public class CareGiverDocumentService {
             boolean alreadyExists = existingDocuments.stream()
                     .anyMatch(row -> row.getDocumentTypeID().equalsIgnoreCase(input.getDocumentTypeID()));
             if (!alreadyExists) {
-                MultipartFile newFile = resolveFileForDocument(input, files, consumedFiles);
+                MultipartFile newFile = resolveFileForDocument(
+                        input, files, consumedFiles, singleTargetedUpload
+                );
                 if (newFile != null) {
                     addDocument(List.of(input), List.of(newFile));
                 }
@@ -120,7 +125,9 @@ public class CareGiverDocumentService {
                 continue;
             }
 
-            MultipartFile newFile = resolveFileForDocument(inputDoc, files, consumedFiles);
+            MultipartFile newFile = resolveFileForDocument(
+                    inputDoc, files, consumedFiles, singleTargetedUpload
+            );
 
             if (newFile != null) {
                 CareGiverDocumentFileUtil.deleteFileIfExists(existingDoc.getDocument());
@@ -128,7 +135,8 @@ public class CareGiverDocumentService {
                     String storedPath = CareGiverDocumentFileUtil.storeFile(
                             careGiverId,
                             inputDoc.getDocumentTypeID(),
-                            newFile
+                            newFile,
+                            inputDoc.getDocument()
                     );
                     inputDoc.setDocument(storedPath);
                     updateDocument(careGiverId, inputDoc.getDocumentTypeID(), inputDoc);
@@ -162,28 +170,45 @@ public class CareGiverDocumentService {
      */
     private List<CareGiverDocumentsDTO> narrowInputForSingleFileUpload(
             List<CareGiverDocumentsDTO> inputDtos,
-            List<MultipartFile> files
+            List<MultipartFile> files,
+            List<CareGiverDocumentsDTO> existingDocuments
     ) {
         if (files == null || files.isEmpty() || inputDtos == null || inputDtos.size() <= 1) {
             return inputDtos;
         }
 
         MultipartFile uploaded = files.get(0);
-        String uploadedName = uploaded.getOriginalFilename();
-        if (uploadedName == null || uploadedName.isBlank()) {
-            return inputDtos;
+        String uploadedName = CareGiverDocumentFileUtil.effectiveOriginalFilename(uploaded, null);
+
+        if (uploadedName != null && !uploadedName.isBlank()) {
+            List<CareGiverDocumentsDTO> explicitUploadRows = inputDtos.stream()
+                    .filter(dto -> dto != null
+                            && dto.getDocument() != null
+                            && !dto.getDocument().isBlank()
+                            && !CareGiverDocumentFileUtil.isPersistedPath(dto.getDocument())
+                            && CareGiverDocumentFileUtil.filenamesMatch(dto.getDocument(), uploadedName))
+                    .collect(Collectors.toList());
+
+            if (explicitUploadRows.size() == 1) {
+                return explicitUploadRows;
+            }
         }
 
-        List<CareGiverDocumentsDTO> explicitUploadRows = inputDtos.stream()
-                .filter(dto -> dto != null
-                        && dto.getDocument() != null
-                        && !dto.getDocument().isBlank()
-                        && !CareGiverDocumentFileUtil.isPersistedPath(dto.getDocument())
-                        && CareGiverDocumentFileUtil.filenamesMatch(dto.getDocument(), uploadedName))
+        List<CareGiverDocumentsDTO> changedRows = inputDtos.stream()
+                .filter(dto -> isChangedUploadRow(dto, existingDocuments))
                 .collect(Collectors.toList());
 
-        if (explicitUploadRows.size() == 1) {
-            return explicitUploadRows;
+        if (changedRows.size() == 1) {
+            return changedRows;
+        }
+
+        if (changedRows.size() > 1 && uploadedName != null && !uploadedName.isBlank()) {
+            List<CareGiverDocumentsDTO> changedMatching = changedRows.stream()
+                    .filter(dto -> CareGiverDocumentFileUtil.filenamesMatch(dto.getDocument(), uploadedName))
+                    .collect(Collectors.toList());
+            if (changedMatching.size() == 1) {
+                return changedMatching;
+            }
         }
 
         List<CareGiverDocumentsDTO> withIntent = inputDtos.stream()
@@ -205,6 +230,35 @@ public class CareGiverDocumentService {
         }
 
         return inputDtos;
+    }
+
+    private boolean isChangedUploadRow(
+            CareGiverDocumentsDTO dto,
+            List<CareGiverDocumentsDTO> existingDocuments
+    ) {
+        if (dto == null || dto.getDocumentTypeID() == null) {
+            return false;
+        }
+        String inputDoc = dto.getDocument();
+        if (inputDoc == null || inputDoc.isBlank()) {
+            return false;
+        }
+        if (CareGiverDocumentFileUtil.isPersistedPath(inputDoc)) {
+            return false;
+        }
+
+        Optional<CareGiverDocumentsDTO> existing = existingDocuments.stream()
+                .filter(row -> row.getDocumentTypeID().equalsIgnoreCase(dto.getDocumentTypeID()))
+                .findFirst();
+
+        if (existing.isEmpty()) {
+            return true;
+        }
+
+        return !CareGiverDocumentFileUtil.sameDocumentReference(
+                inputDoc,
+                existing.get().getDocument()
+        );
     }
 
     public CareGiverDocumentsDTO updateDocument(String careGiverID, String documentTypeID, CareGiverDocumentsDTO dto) {
@@ -230,20 +284,34 @@ public class CareGiverDocumentService {
     private MultipartFile resolveFileForDocument(
             CareGiverDocumentsDTO doc,
             List<MultipartFile> files,
-            Set<String> consumedFiles
+            Set<String> consumedFiles,
+            boolean acceptUnmatchedSingleFile
     ) {
         if (files == null || files.isEmpty() || doc == null) {
             return null;
         }
         String reference = doc.getDocument();
-        if (!CareGiverDocumentFileUtil.hasUploadIntent(reference, files)) {
+
+        MultipartFile matched = null;
+        if (reference != null
+                && !reference.isBlank()
+                && CareGiverDocumentFileUtil.hasUploadIntent(reference, files)) {
+            matched = CareGiverDocumentFileUtil.resolveMultipartFile(reference, files);
+        }
+
+        if (matched == null && acceptUnmatchedSingleFile && files.size() == 1) {
+            matched = files.get(0);
+        }
+
+        if (matched == null) {
             return null;
         }
-        MultipartFile matched = CareGiverDocumentFileUtil.resolveMultipartFile(reference, files);
-        if (matched == null || matched.getOriginalFilename() == null) {
-            return null;
-        }
-        String fileKey = matched.getOriginalFilename().toLowerCase();
+
+        String fileKey = CareGiverDocumentFileUtil
+                .normalizeForMatch(
+                        CareGiverDocumentFileUtil.effectiveOriginalFilename(matched, reference)
+                )
+                .toLowerCase();
         if (consumedFiles.contains(fileKey)) {
             return null;
         }
