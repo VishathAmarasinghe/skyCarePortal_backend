@@ -48,8 +48,13 @@ public class CareGiverDocumentService {
             return;
         }
         Set<String> consumedFiles = new HashSet<>();
+        boolean allowUnmatchedSingleFile = files != null
+                && files.size() == 1
+                && documentList.size() == 1;
         for (CareGiverDocumentsDTO doc : documentList) {
-            MultipartFile selectedFile = resolveFileForDocument(doc, files, consumedFiles);
+            MultipartFile selectedFile = resolveFileForDocument(
+                    doc, files, consumedFiles, allowUnmatchedSingleFile
+            );
             if (selectedFile == null) {
                 continue;
             }
