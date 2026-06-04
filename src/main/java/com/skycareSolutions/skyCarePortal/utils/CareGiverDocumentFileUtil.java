@@ -3,6 +3,8 @@ package com.skycareSolutions.skyCarePortal.utils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -25,6 +27,19 @@ public final class CareGiverDocumentFileUtil {
         return sanitized;
     }
 
+    public static String normalizeForMatch(String name) {
+        if (name == null) {
+            return "";
+        }
+        String normalized = name.trim();
+        try {
+            normalized = URLDecoder.decode(normalized, StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException ignored) {
+        }
+        normalized = normalized.replace('+', ' ');
+        return sanitizeFileName(normalized);
+    }
+
     public static boolean filenamesMatch(String a, String b) {
         if (a == null || b == null || a.isBlank() || b.isBlank()) {
             return false;
@@ -32,7 +47,7 @@ public final class CareGiverDocumentFileUtil {
         if (a.equalsIgnoreCase(b)) {
             return true;
         }
-        return sanitizeFileName(a).equalsIgnoreCase(sanitizeFileName(b));
+        return normalizeForMatch(a).equalsIgnoreCase(normalizeForMatch(b));
     }
 
     public static boolean isPersistedPath(String document) {
@@ -54,7 +69,13 @@ public final class CareGiverDocumentFileUtil {
             String basename = new File(documentReference).getName();
             return resolveMultipartFile(basename, files) != null;
         }
-        return resolveMultipartFile(documentReference, files) != null;
+        for (MultipartFile file : files) {
+            String original = effectiveOriginalFilename(file, documentReference);
+            if (filenamesMatch(original, documentReference)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static MultipartFile resolveMultipartFile(String referenceName, List<MultipartFile> files) {
@@ -75,6 +96,23 @@ public final class CareGiverDocumentFileUtil {
             }
         }
         return null;
+    }
+
+    /**
+     * Prefer the multipart original filename; fall back to the client-provided reference name.
+     */
+    public static String effectiveOriginalFilename(MultipartFile file, String referenceName) {
+        if (file == null) {
+            return referenceName;
+        }
+        String original = file.getOriginalFilename();
+        if (original != null && !original.isBlank()) {
+            return original.trim();
+        }
+        if (referenceName != null && !referenceName.isBlank() && !isPersistedPath(referenceName)) {
+            return referenceName.trim();
+        }
+        return original;
     }
 
     public static boolean sameDocumentReference(String inputReference, String existingReference) {
@@ -101,8 +139,13 @@ public final class CareGiverDocumentFileUtil {
         return directory;
     }
 
-    public static String storeFile(String careGiverID, String documentTypeID, MultipartFile file) throws Exception {
-        String original = file.getOriginalFilename();
+    public static String storeFile(
+            String careGiverID,
+            String documentTypeID,
+            MultipartFile file,
+            String referenceName
+    ) throws Exception {
+        String original = effectiveOriginalFilename(file, referenceName);
         if (original == null || original.isBlank()) {
             throw new IllegalArgumentException("Uploaded file has no name");
         }
