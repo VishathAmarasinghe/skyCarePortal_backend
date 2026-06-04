@@ -11,9 +11,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,8 +47,9 @@ public class CareGiverDocumentService {
         if (documentList == null) {
             return;
         }
+        Set<String> consumedFiles = new HashSet<>();
         for (CareGiverDocumentsDTO doc : documentList) {
-            MultipartFile selectedFile = resolveFileForDocument(doc, files);
+            MultipartFile selectedFile = resolveFileForDocument(doc, files, consumedFiles);
             if (selectedFile == null) {
                 continue;
             }
@@ -74,6 +77,7 @@ public class CareGiverDocumentService {
         }
 
         List<CareGiverDocumentsDTO> existingDocuments = getDocumentsByCareGiverId(careGiverId);
+        Set<String> consumedFiles = new HashSet<>();
 
         for (CareGiverDocumentsDTO input : inputDtos) {
             if (input == null || input.getDocumentTypeID() == null) {
@@ -84,7 +88,7 @@ public class CareGiverDocumentService {
             boolean alreadyExists = existingDocuments.stream()
                     .anyMatch(row -> row.getDocumentTypeID().equalsIgnoreCase(input.getDocumentTypeID()));
             if (!alreadyExists) {
-                MultipartFile newFile = resolveFileForDocument(input, files);
+                MultipartFile newFile = resolveFileForDocument(input, files, consumedFiles);
                 if (newFile != null) {
                     addDocument(List.of(input), List.of(newFile));
                 }
@@ -103,7 +107,12 @@ public class CareGiverDocumentService {
             }
 
             inputDoc.setCareGiverID(careGiverId);
-            MultipartFile newFile = resolveFileForDocument(inputDoc, files);
+
+            if (inputDoc.getDocument() == null || inputDoc.getDocument().isBlank()) {
+                continue;
+            }
+
+            MultipartFile newFile = resolveFileForDocument(inputDoc, files, consumedFiles);
 
             if (newFile != null) {
                 CareGiverDocumentFileUtil.deleteFileIfExists(existingDoc.getDocument());
@@ -124,7 +133,12 @@ public class CareGiverDocumentService {
             boolean expDateChanged = !Objects.equals(inputDoc.getExpDate(), existingDoc.getExpDate());
             boolean statusChanged = inputDoc.getStatus() != null
                     && !inputDoc.getStatus().equalsIgnoreCase(existingDoc.getStatus());
-            if ((expDateChanged || statusChanged) && hasDocumentReference(existingDoc.getDocument())) {
+
+            if ((expDateChanged || statusChanged)
+                    && CareGiverDocumentFileUtil.sameDocumentReference(
+                    inputDoc.getDocument(),
+                    existingDoc.getDocument()
+            )) {
                 inputDoc.setDocument(existingDoc.getDocument());
                 updateDocument(careGiverId, inputDoc.getDocumentTypeID(), inputDoc);
             }
@@ -151,16 +165,28 @@ public class CareGiverDocumentService {
         }
     }
 
-    private MultipartFile resolveFileForDocument(CareGiverDocumentsDTO doc, List<MultipartFile> files) {
-        if (files == null || files.isEmpty()) {
+    private MultipartFile resolveFileForDocument(
+            CareGiverDocumentsDTO doc,
+            List<MultipartFile> files,
+            Set<String> consumedFiles
+    ) {
+        if (files == null || files.isEmpty() || doc == null) {
             return null;
         }
         String reference = doc.getDocument();
-        return CareGiverDocumentFileUtil.resolveMultipartFile(reference, files);
-    }
-
-    private boolean hasDocumentReference(String document) {
-        return document != null && !document.isBlank();
+        if (!CareGiverDocumentFileUtil.hasUploadIntent(reference, files)) {
+            return null;
+        }
+        MultipartFile matched = CareGiverDocumentFileUtil.resolveMultipartFile(reference, files);
+        if (matched == null || matched.getOriginalFilename() == null) {
+            return null;
+        }
+        String fileKey = matched.getOriginalFilename().toLowerCase();
+        if (consumedFiles.contains(fileKey)) {
+            return null;
+        }
+        consumedFiles.add(fileKey);
+        return matched;
     }
 
     private CareGiverDocumentsDTO mapToDTO(CareGiverDocuments document) {
