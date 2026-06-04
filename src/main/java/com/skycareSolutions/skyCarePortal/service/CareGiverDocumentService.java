@@ -76,6 +76,14 @@ public class CareGiverDocumentService {
             return;
         }
 
+        boolean singleFileUpload = files != null && files.size() == 1;
+        if (singleFileUpload) {
+            inputDtos = narrowInputForSingleFileUpload(inputDtos, files);
+            if (inputDtos.isEmpty()) {
+                return;
+            }
+        }
+
         List<CareGiverDocumentsDTO> existingDocuments = getDocumentsByCareGiverId(careGiverId);
         Set<String> consumedFiles = new HashSet<>();
 
@@ -134,7 +142,10 @@ public class CareGiverDocumentService {
             boolean statusChanged = inputDoc.getStatus() != null
                     && !inputDoc.getStatus().equalsIgnoreCase(existingDoc.getStatus());
 
-            if ((expDateChanged || statusChanged)
+            // Legacy mobile sends every document type with status "Pending"; skip bulk metadata writes
+            // when a single new file is being uploaded.
+            if (!singleFileUpload
+                    && (expDateChanged || statusChanged)
                     && CareGiverDocumentFileUtil.sameDocumentReference(
                     inputDoc.getDocument(),
                     existingDoc.getDocument()
@@ -143,6 +154,57 @@ public class CareGiverDocumentService {
                 updateDocument(careGiverId, inputDoc.getDocumentTypeID(), inputDoc);
             }
         }
+    }
+
+    /**
+     * Production mobile sends all active document types in one payload but only one multipart file.
+     * Keep only the row that references the uploaded filename (non-persisted path).
+     */
+    private List<CareGiverDocumentsDTO> narrowInputForSingleFileUpload(
+            List<CareGiverDocumentsDTO> inputDtos,
+            List<MultipartFile> files
+    ) {
+        if (files == null || files.isEmpty() || inputDtos == null || inputDtos.size() <= 1) {
+            return inputDtos;
+        }
+
+        MultipartFile uploaded = files.get(0);
+        String uploadedName = uploaded.getOriginalFilename();
+        if (uploadedName == null || uploadedName.isBlank()) {
+            return inputDtos;
+        }
+
+        List<CareGiverDocumentsDTO> explicitUploadRows = inputDtos.stream()
+                .filter(dto -> dto != null
+                        && dto.getDocument() != null
+                        && !dto.getDocument().isBlank()
+                        && !CareGiverDocumentFileUtil.isPersistedPath(dto.getDocument())
+                        && CareGiverDocumentFileUtil.filenamesMatch(dto.getDocument(), uploadedName))
+                .collect(Collectors.toList());
+
+        if (explicitUploadRows.size() == 1) {
+            return explicitUploadRows;
+        }
+
+        List<CareGiverDocumentsDTO> withIntent = inputDtos.stream()
+                .filter(dto -> dto != null
+                        && CareGiverDocumentFileUtil.hasUploadIntent(dto.getDocument(), files))
+                .collect(Collectors.toList());
+
+        if (withIntent.size() == 1) {
+            return withIntent;
+        }
+
+        if (withIntent.size() > 1) {
+            List<CareGiverDocumentsDTO> nonPersisted = withIntent.stream()
+                    .filter(dto -> !CareGiverDocumentFileUtil.isPersistedPath(dto.getDocument()))
+                    .collect(Collectors.toList());
+            if (nonPersisted.size() == 1) {
+                return nonPersisted;
+            }
+        }
+
+        return inputDtos;
     }
 
     public CareGiverDocumentsDTO updateDocument(String careGiverID, String documentTypeID, CareGiverDocumentsDTO dto) {
