@@ -10,8 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -20,8 +18,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class CareGiverService {
-
-    private static final String DIRECTORY = Paths.get(System.getProperty("user.home"), "skyCareUploads", "careGiverDocuments").toString();
 
     @Autowired
     private CareGiverRepository careGiverRepository;
@@ -108,7 +104,6 @@ public class CareGiverService {
             paymentsDTO.setCareGiverID(id);
         }
         employeeService.updateEmployeeDetails(dto.getEmployee().getEmployeeID(),dto.getEmployee(),profilePhoto);
-        List<CareGiverDocumentsDTO>  exisitingDocuments = careGiverDocumentService.getDocumentsByCareGiverId(id);
 
         List<CareGiverPaymentsDTO> exisitingCareGiverPayments = careGiverPaymentService.getPaymentsByCareGiverId(id);
         if (exisitingCareGiverPayments.isEmpty() && !dto.getCareGiverPayments().isEmpty()){
@@ -126,91 +121,7 @@ public class CareGiverService {
                 }
             }
         }
-        for (CareGiverDocumentsDTO doc:dto.getCareGiverDocuments()){
-            if (doc.getDocument().equalsIgnoreCase("")){
-                for (CareGiverDocumentsDTO exisitDoc:exisitingDocuments){
-                    if (exisitDoc.getDocumentTypeID().equalsIgnoreCase(doc.getDocumentTypeID())){
-                        try{
-                            File existingFile = new File(exisitDoc.getDocument());
-                            if (existingFile.exists()) {
-                                existingFile.delete();
-                            }
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        careGiverDocumentService.deleteDocument(exisitDoc.getCareGiverID(),exisitDoc.getDocumentTypeID());
-                    }
-                }
-            }
-        }
-        for (CareGiverDocumentsDTO newDocs:dto.getCareGiverDocuments()){
-            CareGiverDocumentsDTO eixis = exisitingDocuments.stream().filter(row->row.getDocumentTypeID().equalsIgnoreCase(newDocs.getDocumentTypeID())).findFirst().orElse(null);
-            if (eixis==null){
-                List<CareGiverDocumentsDTO> documentList= new ArrayList<>();
-                documentList.add(newDocs);
-                careGiverDocumentService.addDocument(documentList,documents);
-
-            }
-        }
-
-        for (CareGiverDocumentsDTO exisitDoc:exisitingDocuments){
-
-            CareGiverDocumentsDTO inputDoc = dto.getCareGiverDocuments()
-                    .stream()
-                    .filter(row -> exisitDoc != null &&
-                            row.getDocumentTypeID() != null &&
-                            row.getDocumentTypeID().equalsIgnoreCase(exisitDoc.getDocumentTypeID()))
-                    .findFirst()
-                    .orElse(null);
-            if (inputDoc!=null){
-                if (!inputDoc.getDocument().equalsIgnoreCase(exisitDoc.getDocument())){
-                    try {
-                        File existingFile = new File(exisitDoc.getDocument());
-                        if (existingFile.exists()) {
-                            existingFile.delete();
-                        }
-                        // Add new file
-                        if (documents!=null && documents.size()>0){
-                            MultipartFile newFile = documents.stream()
-                                    .filter(file -> file.getOriginalFilename() != null &&
-                                            file.getOriginalFilename().equalsIgnoreCase(inputDoc.getDocument()))
-                                    .findFirst()
-                                    .orElse(null);
-
-                            if (newFile != null) {
-                                try {
-                                    String originalFileName = newFile.getOriginalFilename();
-                                    String fileExtension = originalFileName != null && originalFileName.contains(".")
-                                            ? originalFileName.substring(originalFileName.lastIndexOf("."))
-                                            : "";
-
-                                    File directory = new File(DIRECTORY);
-                                    if (!directory.exists()) {
-                                        directory.mkdirs();
-                                    }
-
-                                    File newFilePath = new File(directory,
-                                            inputDoc.getCareGiverID() + "_" +
-                                                    inputDoc.getDocumentTypeID() + "_" +
-                                                    originalFileName + fileExtension);
-                                    newFile.transferTo(newFilePath);
-                                    inputDoc.setDocument(newFilePath.getAbsolutePath());
-                                    careGiverDocumentService.updateDocument(id,inputDoc.getDocumentTypeID(),inputDoc);
-                                } catch (Exception e) {
-                                    throw new RuntimeException("Error uploading new document", e);
-                                }
-                            }
-                        }
-
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }else{
-                System.out.println("null file returned "+exisitDoc.getDocumentTypeID());
-
-            }
-        }
+        careGiverDocumentService.processDocumentUpdates(id, dto.getCareGiverDocuments(), documents);
 
         careGiverRepository.save(caregiver);
         return ResponseEntity.ok(mapToDTO(caregiver));
@@ -234,95 +145,7 @@ public class CareGiverService {
         }
         id = careGiver.getCareGiverID();
 
-        List<CareGiverDocumentsDTO>  exisitingDocuments = careGiverDocumentService.getDocumentsByCareGiverId(id);
-
-        for (CareGiverDocumentsDTO doc:dto){
-            if (doc.getDocument().equalsIgnoreCase("")){
-                for (CareGiverDocumentsDTO exisitDoc:exisitingDocuments){
-                    if (exisitDoc.getDocumentTypeID().equalsIgnoreCase(doc.getDocumentTypeID())){
-                        try{
-                            File existingFile = new File(exisitDoc.getDocument());
-                            if (existingFile.exists()) {
-                                existingFile.delete();
-                            }
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        careGiverDocumentService.deleteDocument(exisitDoc.getCareGiverID(),exisitDoc.getDocumentTypeID());
-                    }
-                }
-            }
-        }
-
-        for (CareGiverDocumentsDTO newDocs:dto){
-            CareGiverDocumentsDTO eixis = exisitingDocuments.stream().filter(row->row.getDocumentTypeID().equalsIgnoreCase(newDocs.getDocumentTypeID())).findFirst().orElse(null);
-            if (eixis==null){
-                List<CareGiverDocumentsDTO> documentList= new ArrayList<>();
-                documentList.add(newDocs);
-                careGiverDocumentService.addDocument(documentList,documents);
-
-            }
-        }
-
-        for (CareGiverDocumentsDTO exisitDoc:exisitingDocuments){
-
-            CareGiverDocumentsDTO inputDoc = dto
-                    .stream()
-                    .filter(row -> exisitDoc != null &&
-                            row.getDocumentTypeID() != null &&
-                            row.getDocumentTypeID().equalsIgnoreCase(exisitDoc.getDocumentTypeID()))
-                    .findFirst()
-                    .orElse(null);
-            if (inputDoc!=null){
-                if (!inputDoc.getDocument().equalsIgnoreCase(exisitDoc.getDocument())){
-                    try {
-                        File existingFile = new File(exisitDoc.getDocument());
-                        if (existingFile.exists()) {
-                            existingFile.delete();
-                        }
-                        // Add new file
-                        if (documents!=null && documents.size()>0){
-                            MultipartFile newFile = documents.stream()
-                                    .filter(file -> file.getOriginalFilename() != null &&
-                                            file.getOriginalFilename().equalsIgnoreCase(inputDoc.getDocument()))
-                                    .findFirst()
-                                    .orElse(null);
-
-                            if (newFile != null) {
-                                try {
-                                    String originalFileName = newFile.getOriginalFilename();
-                                    String fileExtension = originalFileName != null && originalFileName.contains(".")
-                                            ? originalFileName.substring(originalFileName.lastIndexOf("."))
-                                            : "";
-
-                                    File directory = new File(DIRECTORY);
-                                    if (!directory.exists()) {
-                                        directory.mkdirs();
-                                    }
-
-                                    File newFilePath = new File(directory,
-                                            inputDoc.getCareGiverID() + "_" +
-                                                    inputDoc.getDocumentTypeID() + "_" +
-                                                    originalFileName + fileExtension);
-                                    newFile.transferTo(newFilePath);
-                                    inputDoc.setDocument(newFilePath.getAbsolutePath());
-                                    careGiverDocumentService.updateDocument(id,inputDoc.getDocumentTypeID(),inputDoc);
-                                } catch (Exception e) {
-                                    throw new RuntimeException("Error uploading new document", e);
-                                }
-                            }
-                        }
-
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }else{
-                System.out.println("null file returned "+exisitDoc.getDocumentTypeID());
-
-
-            }
-        }
+        careGiverDocumentService.processDocumentUpdates(id, dto, documents);
         return ResponseEntity.ok("Updated Documents");
     }
 

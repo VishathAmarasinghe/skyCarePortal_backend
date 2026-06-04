@@ -5,21 +5,19 @@ import com.skycareSolutions.skyCarePortal.model.CareGiver;
 import com.skycareSolutions.skyCarePortal.model.CareGiverDocuments;
 import com.skycareSolutions.skyCarePortal.model.CareGiverDocumentsId;
 import com.skycareSolutions.skyCarePortal.repository.CareGiverDocumentsRepository;
+import com.skycareSolutions.skyCarePortal.utils.CareGiverDocumentFileUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class CareGiverDocumentService {
-
-    private static final String DIRECTORY = Paths.get(System.getProperty("user.home"), "skyCareUploads", "careGiverDocuments").toString();
-
 
     @Autowired
     private CareGiverDocumentsRepository careGiverDocumentsRepository;
@@ -44,39 +42,92 @@ public class CareGiverDocumentService {
     }
 
     public void addDocument(List<CareGiverDocumentsDTO> documentList, List<MultipartFile> files) {
+        if (documentList == null) {
+            return;
+        }
         for (CareGiverDocumentsDTO doc : documentList) {
-            if (files!=null && files.size()>0){
-                // Find the file that matches the document by its filename
-                MultipartFile selectedFile = files.stream()
-                        .filter(file -> file.getOriginalFilename() != null && file.getOriginalFilename().equalsIgnoreCase(doc.getDocument()))
-                        .findFirst()
-                        .orElse(null); // Return null if no match is found
+            MultipartFile selectedFile = resolveFileForDocument(doc, files);
+            if (selectedFile == null) {
+                continue;
+            }
+            try {
+                String storedPath = CareGiverDocumentFileUtil.storeFile(
+                        doc.getCareGiverID(),
+                        doc.getDocumentTypeID(),
+                        selectedFile
+                );
+                doc.setDocument(storedPath);
+                careGiverDocumentsRepository.save(mapToEntity(doc));
+            } catch (Exception e) {
+                throw new RuntimeException("Error storing caregiver document", e);
+            }
+        }
+    }
 
-                if (selectedFile != null) {
-                    try {
-                        String originalFileName = selectedFile.getOriginalFilename();
-                        String fileExtension = originalFileName;
-                        if (originalFileName != null && originalFileName.contains(".")) {
-                            fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
-                        }
-                        System.out.println("original file name " + originalFileName);
-                        File directory = new File(DIRECTORY);
-                        if (!directory.exists()) {
-                            directory.mkdirs();
-                        }
-                        File destinationFile = new File(DIRECTORY, doc.getCareGiverID()+"_"+doc.getDocumentTypeID()+"_"+doc.getDocument()+"_" + fileExtension);
-                        selectedFile.transferTo(destinationFile);
-                        doc.setDocument(destinationFile.getAbsolutePath());
+    public void processDocumentUpdates(
+            String careGiverId,
+            List<CareGiverDocumentsDTO> inputDtos,
+            List<MultipartFile> files
+    ) {
+        if (inputDtos == null || inputDtos.isEmpty()) {
+            return;
+        }
 
-                    } catch (Exception e) {
-                        doc.setDocument(null);
-                        throw new RuntimeException(e);
-                    }
+        List<CareGiverDocumentsDTO> existingDocuments = getDocumentsByCareGiverId(careGiverId);
+
+        for (CareGiverDocumentsDTO input : inputDtos) {
+            if (input == null || input.getDocumentTypeID() == null) {
+                continue;
+            }
+            input.setCareGiverID(careGiverId);
+
+            boolean alreadyExists = existingDocuments.stream()
+                    .anyMatch(row -> row.getDocumentTypeID().equalsIgnoreCase(input.getDocumentTypeID()));
+            if (!alreadyExists) {
+                MultipartFile newFile = resolveFileForDocument(input, files);
+                if (newFile != null) {
+                    addDocument(List.of(input), List.of(newFile));
                 }
             }
+        }
 
-            CareGiverDocuments document = mapToEntity(doc);
-            careGiverDocumentsRepository.save(document);
+        for (CareGiverDocumentsDTO existingDoc : existingDocuments) {
+            CareGiverDocumentsDTO inputDoc = inputDtos.stream()
+                    .filter(row -> row.getDocumentTypeID() != null
+                            && row.getDocumentTypeID().equalsIgnoreCase(existingDoc.getDocumentTypeID()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (inputDoc == null) {
+                continue;
+            }
+
+            inputDoc.setCareGiverID(careGiverId);
+            MultipartFile newFile = resolveFileForDocument(inputDoc, files);
+
+            if (newFile != null) {
+                CareGiverDocumentFileUtil.deleteFileIfExists(existingDoc.getDocument());
+                try {
+                    String storedPath = CareGiverDocumentFileUtil.storeFile(
+                            careGiverId,
+                            inputDoc.getDocumentTypeID(),
+                            newFile
+                    );
+                    inputDoc.setDocument(storedPath);
+                    updateDocument(careGiverId, inputDoc.getDocumentTypeID(), inputDoc);
+                } catch (Exception e) {
+                    throw new RuntimeException("Error uploading caregiver document", e);
+                }
+                continue;
+            }
+
+            boolean expDateChanged = !Objects.equals(inputDoc.getExpDate(), existingDoc.getExpDate());
+            boolean statusChanged = inputDoc.getStatus() != null
+                    && !inputDoc.getStatus().equalsIgnoreCase(existingDoc.getStatus());
+            if ((expDateChanged || statusChanged) && hasDocumentReference(existingDoc.getDocument())) {
+                inputDoc.setDocument(existingDoc.getDocument());
+                updateDocument(careGiverId, inputDoc.getDocumentTypeID(), inputDoc);
+            }
         }
     }
 
@@ -93,7 +144,23 @@ public class CareGiverDocumentService {
 
     public void deleteDocument(String careGiverID, String documentTypeID) {
         CareGiverDocumentsId ids = new CareGiverDocumentsId(careGiverID, documentTypeID);
-        careGiverDocumentsRepository.deleteById(ids);
+        Optional<CareGiverDocuments> document = careGiverDocumentsRepository.findById(ids);
+        if (document.isPresent()) {
+            CareGiverDocumentFileUtil.deleteFileIfExists(document.get().getDocument());
+            careGiverDocumentsRepository.deleteById(ids);
+        }
+    }
+
+    private MultipartFile resolveFileForDocument(CareGiverDocumentsDTO doc, List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            return null;
+        }
+        String reference = doc.getDocument();
+        return CareGiverDocumentFileUtil.resolveMultipartFile(reference, files);
+    }
+
+    private boolean hasDocumentReference(String document) {
+        return document != null && !document.isBlank();
     }
 
     private CareGiverDocumentsDTO mapToDTO(CareGiverDocuments document) {
