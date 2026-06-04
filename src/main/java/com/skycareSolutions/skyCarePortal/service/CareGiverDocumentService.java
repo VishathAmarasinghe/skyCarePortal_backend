@@ -11,9 +11,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,8 +47,9 @@ public class CareGiverDocumentService {
         if (documentList == null) {
             return;
         }
+        Set<String> consumedFiles = new HashSet<>();
         for (CareGiverDocumentsDTO doc : documentList) {
-            MultipartFile selectedFile = resolveFileForDocument(doc, files);
+            MultipartFile selectedFile = resolveFileForDocument(doc, files, consumedFiles);
             if (selectedFile == null) {
                 continue;
             }
@@ -73,7 +76,16 @@ public class CareGiverDocumentService {
             return;
         }
 
+        boolean singleFileUpload = files != null && files.size() == 1;
+        if (singleFileUpload) {
+            inputDtos = narrowInputForSingleFileUpload(inputDtos, files);
+            if (inputDtos.isEmpty()) {
+                return;
+            }
+        }
+
         List<CareGiverDocumentsDTO> existingDocuments = getDocumentsByCareGiverId(careGiverId);
+        Set<String> consumedFiles = new HashSet<>();
 
         for (CareGiverDocumentsDTO input : inputDtos) {
             if (input == null || input.getDocumentTypeID() == null) {
@@ -84,7 +96,7 @@ public class CareGiverDocumentService {
             boolean alreadyExists = existingDocuments.stream()
                     .anyMatch(row -> row.getDocumentTypeID().equalsIgnoreCase(input.getDocumentTypeID()));
             if (!alreadyExists) {
-                MultipartFile newFile = resolveFileForDocument(input, files);
+                MultipartFile newFile = resolveFileForDocument(input, files, consumedFiles);
                 if (newFile != null) {
                     addDocument(List.of(input), List.of(newFile));
                 }
@@ -103,7 +115,12 @@ public class CareGiverDocumentService {
             }
 
             inputDoc.setCareGiverID(careGiverId);
-            MultipartFile newFile = resolveFileForDocument(inputDoc, files);
+
+            if (inputDoc.getDocument() == null || inputDoc.getDocument().isBlank()) {
+                continue;
+            }
+
+            MultipartFile newFile = resolveFileForDocument(inputDoc, files, consumedFiles);
 
             if (newFile != null) {
                 CareGiverDocumentFileUtil.deleteFileIfExists(existingDoc.getDocument());
@@ -124,11 +141,70 @@ public class CareGiverDocumentService {
             boolean expDateChanged = !Objects.equals(inputDoc.getExpDate(), existingDoc.getExpDate());
             boolean statusChanged = inputDoc.getStatus() != null
                     && !inputDoc.getStatus().equalsIgnoreCase(existingDoc.getStatus());
-            if ((expDateChanged || statusChanged) && hasDocumentReference(existingDoc.getDocument())) {
+
+            // Legacy mobile sends every document type with status "Pending"; skip bulk metadata writes
+            // when a single new file is being uploaded.
+            if (!singleFileUpload
+                    && (expDateChanged || statusChanged)
+                    && CareGiverDocumentFileUtil.sameDocumentReference(
+                    inputDoc.getDocument(),
+                    existingDoc.getDocument()
+            )) {
                 inputDoc.setDocument(existingDoc.getDocument());
                 updateDocument(careGiverId, inputDoc.getDocumentTypeID(), inputDoc);
             }
         }
+    }
+
+    /**
+     * Production mobile sends all active document types in one payload but only one multipart file.
+     * Keep only the row that references the uploaded filename (non-persisted path).
+     */
+    private List<CareGiverDocumentsDTO> narrowInputForSingleFileUpload(
+            List<CareGiverDocumentsDTO> inputDtos,
+            List<MultipartFile> files
+    ) {
+        if (files == null || files.isEmpty() || inputDtos == null || inputDtos.size() <= 1) {
+            return inputDtos;
+        }
+
+        MultipartFile uploaded = files.get(0);
+        String uploadedName = uploaded.getOriginalFilename();
+        if (uploadedName == null || uploadedName.isBlank()) {
+            return inputDtos;
+        }
+
+        List<CareGiverDocumentsDTO> explicitUploadRows = inputDtos.stream()
+                .filter(dto -> dto != null
+                        && dto.getDocument() != null
+                        && !dto.getDocument().isBlank()
+                        && !CareGiverDocumentFileUtil.isPersistedPath(dto.getDocument())
+                        && CareGiverDocumentFileUtil.filenamesMatch(dto.getDocument(), uploadedName))
+                .collect(Collectors.toList());
+
+        if (explicitUploadRows.size() == 1) {
+            return explicitUploadRows;
+        }
+
+        List<CareGiverDocumentsDTO> withIntent = inputDtos.stream()
+                .filter(dto -> dto != null
+                        && CareGiverDocumentFileUtil.hasUploadIntent(dto.getDocument(), files))
+                .collect(Collectors.toList());
+
+        if (withIntent.size() == 1) {
+            return withIntent;
+        }
+
+        if (withIntent.size() > 1) {
+            List<CareGiverDocumentsDTO> nonPersisted = withIntent.stream()
+                    .filter(dto -> !CareGiverDocumentFileUtil.isPersistedPath(dto.getDocument()))
+                    .collect(Collectors.toList());
+            if (nonPersisted.size() == 1) {
+                return nonPersisted;
+            }
+        }
+
+        return inputDtos;
     }
 
     public CareGiverDocumentsDTO updateDocument(String careGiverID, String documentTypeID, CareGiverDocumentsDTO dto) {
@@ -151,16 +227,28 @@ public class CareGiverDocumentService {
         }
     }
 
-    private MultipartFile resolveFileForDocument(CareGiverDocumentsDTO doc, List<MultipartFile> files) {
-        if (files == null || files.isEmpty()) {
+    private MultipartFile resolveFileForDocument(
+            CareGiverDocumentsDTO doc,
+            List<MultipartFile> files,
+            Set<String> consumedFiles
+    ) {
+        if (files == null || files.isEmpty() || doc == null) {
             return null;
         }
         String reference = doc.getDocument();
-        return CareGiverDocumentFileUtil.resolveMultipartFile(reference, files);
-    }
-
-    private boolean hasDocumentReference(String document) {
-        return document != null && !document.isBlank();
+        if (!CareGiverDocumentFileUtil.hasUploadIntent(reference, files)) {
+            return null;
+        }
+        MultipartFile matched = CareGiverDocumentFileUtil.resolveMultipartFile(reference, files);
+        if (matched == null || matched.getOriginalFilename() == null) {
+            return null;
+        }
+        String fileKey = matched.getOriginalFilename().toLowerCase();
+        if (consumedFiles.contains(fileKey)) {
+            return null;
+        }
+        consumedFiles.add(fileKey);
+        return matched;
     }
 
     private CareGiverDocumentsDTO mapToDTO(CareGiverDocuments document) {

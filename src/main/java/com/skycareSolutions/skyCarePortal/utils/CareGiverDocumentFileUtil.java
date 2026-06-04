@@ -42,22 +42,55 @@ public final class CareGiverDocumentFileUtil {
         return document.startsWith("/") || document.contains("careGiverDocuments");
     }
 
+    /**
+     * True when the DTO references a filename that matches one of the uploaded multipart files.
+     * Blank references never imply upload intent (avoids applying one file to every document type).
+     */
+    public static boolean hasUploadIntent(String documentReference, List<MultipartFile> files) {
+        if (documentReference == null || documentReference.isBlank() || files == null || files.isEmpty()) {
+            return false;
+        }
+        if (isPersistedPath(documentReference)) {
+            String basename = new File(documentReference).getName();
+            return resolveMultipartFile(basename, files) != null;
+        }
+        return resolveMultipartFile(documentReference, files) != null;
+    }
+
     public static MultipartFile resolveMultipartFile(String referenceName, List<MultipartFile> files) {
         if (files == null || files.isEmpty()) {
             return null;
         }
-        if (referenceName != null && !referenceName.isBlank()) {
-            for (MultipartFile file : files) {
-                String original = file.getOriginalFilename();
-                if (original != null && filenamesMatch(original, referenceName)) {
-                    return file;
-                }
+        if (referenceName == null || referenceName.isBlank()) {
+            return null;
+        }
+        String matchReference = referenceName;
+        if (isPersistedPath(referenceName)) {
+            matchReference = new File(referenceName).getName();
+        }
+        for (MultipartFile file : files) {
+            String original = file.getOriginalFilename();
+            if (original != null && filenamesMatch(original, matchReference)) {
+                return file;
             }
         }
-        if (files.size() == 1 && (referenceName == null || referenceName.isBlank())) {
-            return files.get(0);
-        }
         return null;
+    }
+
+    public static boolean sameDocumentReference(String inputReference, String existingReference) {
+        if (existingReference == null || existingReference.isBlank()) {
+            return false;
+        }
+        if (inputReference == null || inputReference.isBlank()) {
+            return false;
+        }
+        if (inputReference.equalsIgnoreCase(existingReference)) {
+            return true;
+        }
+        if (isPersistedPath(inputReference) && isPersistedPath(existingReference)) {
+            return inputReference.equalsIgnoreCase(existingReference);
+        }
+        return filenamesMatch(inputReference, existingReference);
     }
 
     public static File ensureDirectory() {
