@@ -41,6 +41,10 @@ pipeline {
                         chmod +x scripts/prepare-upload-dirs.sh
                         ./scripts/prepare-upload-dirs.sh /var/lib/skycareuploads
 
+                        # Fixed container_name values conflict with leftovers from older deploys (no -p project).
+                        docker compose -p skycare-backend-staging -f docker-compose.dev.yml down --remove-orphans || true
+                        docker rm -f pdf-service-staging backend-staging 2>/dev/null || true
+
                         docker compose -p skycare-backend-staging -f docker-compose.dev.yml up -d \
                           --force-recreate --remove-orphans \
                           pdf-service-staging backend-staging
@@ -86,6 +90,9 @@ pipeline {
 
                         chmod +x scripts/prepare-upload-dirs.sh
                         ./scripts/prepare-upload-dirs.sh /var/lib/skycare_production/skycareuploads
+
+                        docker compose -p skycare-backend-production -f docker-compose.prod.yml down --remove-orphans || true
+                        docker rm -f pdf-service-production backend-production 2>/dev/null || true
 
                         docker compose -p skycare-backend-production -f docker-compose.prod.yml up -d \
                           --force-recreate --remove-orphans \
