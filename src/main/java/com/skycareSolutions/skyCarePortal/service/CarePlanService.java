@@ -4,6 +4,7 @@ import com.skycareSolutions.skyCarePortal.dto.CarePlanBilablesDTO;
 import com.skycareSolutions.skyCarePortal.dto.CarePlanDTO;
 import com.skycareSolutions.skyCarePortal.dto.CarePlanLongTermGoalDTO;
 import com.skycareSolutions.skyCarePortal.dto.CarePlanShortTermGoalDTO;
+import com.skycareSolutions.skyCarePortal.dto.CarePlanSupportScheduleDTO;
 import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.*;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
@@ -47,6 +48,12 @@ public class CarePlanService {
     @Autowired
     private CarePlanBillablesService carePlanBillablesService;
 
+    @Autowired
+    private CarePlanSupportScheduleService carePlanSupportScheduleService;
+
+    @Autowired
+    private CarePlanSupportScheduleRepository carePlanSupportScheduleRepository;
+
     // DTO to Entity Conversion
     private CarePlan toEntity(CarePlanDTO carePlanDTO) {
         CarePlan carePlan = new CarePlan();
@@ -55,6 +62,13 @@ public class CarePlanService {
         carePlan.setStartDate(carePlanDTO.getStartDate());
         carePlan.setEndDate(carePlanDTO.getEndDate());
         carePlan.setStatus(carePlanDTO.getStatus());
+        carePlan.setCurrentLivingSituation(carePlanDTO.getCurrentLivingSituation());
+        carePlan.setSupportsFundedCore(carePlanDTO.getSupportsFundedCore());
+        carePlan.setSupportsFundedCapacityBuilding(carePlanDTO.getSupportsFundedCapacityBuilding());
+        carePlan.setSupportsFundedCapital(carePlanDTO.getSupportsFundedCapital());
+        carePlan.setRiskManagement(carePlanDTO.getRiskManagement());
+        carePlan.setExpectedOutcomes(carePlanDTO.getExpectedOutcomes());
+        carePlan.setBillingBudgetNotes(carePlanDTO.getBillingBudgetNotes());
         return carePlan;
     }
 
@@ -67,11 +81,22 @@ public class CarePlanService {
         carePlanDTO.setEndDate(carePlan.getEndDate());
         carePlanDTO.setClientID(carePlan.getClientID().getClientID());
         carePlanDTO.setCarePlanStatusID(carePlan.getCarePlanStatus().getStatus());
-        carePlanDTO.setStatus(carePlanDTO.getStatus());
+        carePlanDTO.setStatus(carePlan.getStatus());
+
+        carePlanDTO.setCurrentLivingSituation(carePlan.getCurrentLivingSituation());
+        carePlanDTO.setSupportsFundedCore(carePlan.getSupportsFundedCore());
+        carePlanDTO.setSupportsFundedCapacityBuilding(carePlan.getSupportsFundedCapacityBuilding());
+        carePlanDTO.setSupportsFundedCapital(carePlan.getSupportsFundedCapital());
+        carePlanDTO.setRiskManagement(carePlan.getRiskManagement());
+        carePlanDTO.setExpectedOutcomes(carePlan.getExpectedOutcomes());
+        carePlanDTO.setBillingBudgetNotes(carePlan.getBillingBudgetNotes());
 
 
         List<CarePlanBilablesDTO> carePlanBilllist = carePlanBillablesService.getBillsByCarePlanID(carePlan);
         carePlanDTO.setCarePlanBillables(carePlanBilllist);
+
+        List<CarePlanSupportScheduleDTO> scheduleList = carePlanSupportScheduleService.getSchedulesByCarePlan(carePlan);
+        carePlanDTO.setSupportSchedule(scheduleList);
 
         List<CarePlanLongTermGoalDTO> longTermList = carePlanLongTermGoalService.findByCarePlan(carePlan);
         for (CarePlanLongTermGoalDTO longGoals:longTermList){
@@ -126,6 +151,14 @@ public class CarePlanService {
         carePlan.setStatus("Active");
 
         carePlanRepository.save(carePlan);
+
+        if (carePlanDTO.getSupportSchedule() != null) {
+            for (CarePlanSupportScheduleDTO schedule : carePlanDTO.getSupportSchedule()) {
+                schedule.setCareplanID(newCarePlanID);
+                carePlanSupportScheduleService.createSchedule(schedule);
+            }
+        }
+
         List<CarePlanLongTermGoalDTO>  longTermPlans = carePlanDTO.getCarePlanLongTermGoals();
         for (CarePlanLongTermGoalDTO lPlan:longTermPlans){
             String lastLongTermCarePlanID = carePlanLongTermRepository.getLastIdOfLongTermCarePlan();
@@ -168,6 +201,13 @@ public class CarePlanService {
         carePlan.setStartDate(carePlanDTO.getStartDate());
         carePlan.setTitle(carePlanDTO.getTitle());
         carePlan.setEndDate(carePlanDTO.getEndDate());
+        carePlan.setCurrentLivingSituation(carePlanDTO.getCurrentLivingSituation());
+        carePlan.setSupportsFundedCore(carePlanDTO.getSupportsFundedCore());
+        carePlan.setSupportsFundedCapacityBuilding(carePlanDTO.getSupportsFundedCapacityBuilding());
+        carePlan.setSupportsFundedCapital(carePlanDTO.getSupportsFundedCapital());
+        carePlan.setRiskManagement(carePlanDTO.getRiskManagement());
+        carePlan.setExpectedOutcomes(carePlanDTO.getExpectedOutcomes());
+        carePlan.setBillingBudgetNotes(carePlanDTO.getBillingBudgetNotes());
 
         // Update associated Client
         Client clientValue = clientRepository.findById(carePlanDTO.getClientID())
@@ -181,6 +221,32 @@ public class CarePlanService {
 
         // Save updated CarePlan
         carePlanRepository.save(carePlan);
+
+        // --- Support Schedule Management ---
+        List<CarePlanSupportSchedule> existingSchedules = carePlanSupportScheduleRepository.findAllByCarePlan(carePlan);
+        List<String> incomingScheduleIDs = (carePlanDTO.getSupportSchedule() == null)
+                ? new ArrayList<>()
+                : carePlanDTO.getSupportSchedule().stream()
+                .map(CarePlanSupportScheduleDTO::getScheduleID)
+                .filter(scheduleID -> scheduleID != null && !scheduleID.isEmpty())
+                .collect(Collectors.toList());
+
+        for (CarePlanSupportSchedule existingSchedule : existingSchedules) {
+            if (!incomingScheduleIDs.contains(existingSchedule.getScheduleID())) {
+                carePlanSupportScheduleRepository.delete(existingSchedule);
+            }
+        }
+
+        if (carePlanDTO.getSupportSchedule() != null) {
+            for (CarePlanSupportScheduleDTO scheduleDTO : carePlanDTO.getSupportSchedule()) {
+                scheduleDTO.setCareplanID(id);
+                if (scheduleDTO.getScheduleID() == null || scheduleDTO.getScheduleID().isEmpty()) {
+                    carePlanSupportScheduleService.createSchedule(scheduleDTO);
+                } else {
+                    carePlanSupportScheduleService.updateSchedule(scheduleDTO.getScheduleID(), scheduleDTO);
+                }
+            }
+        }
 
         // --- Long-Term Goals Management ---
         List<CarePlanLongTermGoal> existingLongTermGoals = carePlanLongTermRepository.findLongTermCarePlansByCarePlanID(carePlan);

@@ -19,6 +19,8 @@ RUN mvn clean package -DskipTests
 # Step 2: Run the Spring Boot app in a clean environment
 FROM eclipse-temurin:17-jdk-alpine
 
+RUN apk add --no-cache wget
+
 # Set the working directory inside the container
 WORKDIR /app
 

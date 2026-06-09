@@ -76,6 +76,9 @@ public class CareGiverService {
         String newCaregiverID = Micro_utils.idGenerator("careGiver",lastCaregiverID);
         dto.setCareGiverID(newCaregiverID);
         dto.getEmployee().setEmployeeID(employee.getEmployeeID());
+        if (dto.getCareGiverType() == null || dto.getCareGiverType().isBlank()) {
+            dto.setCareGiverType("Not specified");
+        }
         CareGiver caregiver = mapToEntity(dto);
         careGiverRepository.save(caregiver);
 
@@ -199,6 +202,11 @@ public class CareGiverService {
 
         dto.setEmployee(employeeDTO);
         dto.setStatus(entity.getStatus());
+        dto.setCareGiverType(
+                entity.getCareGiverType() != null && !entity.getCareGiverType().isBlank()
+                        ? entity.getCareGiverType()
+                        : "Not specified"
+        );
 
         dto.setCareGiverPayments(careGiverPaymentService.getPaymentsByCareGiverId(entity.getCareGiverID()));
 
@@ -225,6 +233,11 @@ public class CareGiverService {
         entity.setCareGiverID(dto.getCareGiverID());
         entity.setEmployee(employeeService.findOneEmployeeWithEntity(dto.getEmployee().getEmployeeID()));
         entity.setStatus(dto.getStatus());
+        entity.setCareGiverType(
+                dto.getCareGiverType() != null && !dto.getCareGiverType().isBlank()
+                        ? dto.getCareGiverType()
+                        : "Not specified"
+        );
         return entity;
     }
 }

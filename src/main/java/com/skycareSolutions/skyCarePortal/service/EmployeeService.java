@@ -507,18 +507,34 @@ public class EmployeeService {
         List<Employee> employees = employeeRepository.getAllEmployees();
         List<MetaEmployeeDetailsDTO> employeeDetailsDTOS = new ArrayList<>();
         for (Employee employee:employees){
-            MetaEmployeeDetailsDTO singleEmployeeDetails = new MetaEmployeeDetailsDTO();
-            singleEmployeeDetails.setEmployeeID(employee.getEmployeeID());
-            singleEmployeeDetails.setStatus(employee.getStatus());
-            singleEmployeeDetails.setEmail(employee.getEmail());
-            singleEmployeeDetails.setProfile_photo(employee.getProfile_photo());
-            singleEmployeeDetails.setFirstName(employee.getFirstName());
-            singleEmployeeDetails.setLastName(employee.getLastName());
-            singleEmployeeDetails.setAccessRole(employee.getAccessRole());
-
-            employeeDetailsDTOS.add(singleEmployeeDetails);
+            employeeDetailsDTOS.add(toMetaDto(employee));
         }
         return employeeDetailsDTOS;
+    }
+
+    public List<MetaEmployeeDetailsDTO> lookupEmployees(String query, String role, int limit) {
+        if (query == null || query.trim().length() < 1) {
+            return List.of();
+        }
+        int max = Math.min(Math.max(limit, 1), 50);
+        return employeeRepository.searchByQuery(query.trim()).stream()
+                .filter(employee -> role == null || role.isBlank()
+                        || role.equalsIgnoreCase(employee.getAccessRole()))
+                .limit(max)
+                .map(this::toMetaDto)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    private MetaEmployeeDetailsDTO toMetaDto(Employee employee) {
+        MetaEmployeeDetailsDTO singleEmployeeDetails = new MetaEmployeeDetailsDTO();
+        singleEmployeeDetails.setEmployeeID(employee.getEmployeeID());
+        singleEmployeeDetails.setStatus(employee.getStatus());
+        singleEmployeeDetails.setEmail(employee.getEmail());
+        singleEmployeeDetails.setProfile_photo(employee.getProfile_photo());
+        singleEmployeeDetails.setFirstName(employee.getFirstName());
+        singleEmployeeDetails.setLastName(employee.getLastName());
+        singleEmployeeDetails.setAccessRole(employee.getAccessRole());
+        return singleEmployeeDetails;
     }
 
     public Map<String, String> getAllCareGiverEmployeeMapping() {

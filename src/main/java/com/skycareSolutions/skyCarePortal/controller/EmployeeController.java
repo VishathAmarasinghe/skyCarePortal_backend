@@ -96,6 +96,15 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.getAllEmployees());
     }
 
+    @GetMapping("/lookup")
+    public ResponseEntity<List<MetaEmployeeDetailsDTO>> lookupEmployees(
+            @RequestParam String q,
+            @RequestParam(required = false) String role,
+            @RequestParam(defaultValue = "20") int limit
+    ) {
+        return ResponseEntity.ok(employeeService.lookupEmployees(q, role, limit));
+    }
+
     @GetMapping("/meta/careGiverMapping")
     public ResponseEntity<Map<String, String>> getCareGiverEmployeeMapping() {
         // Directly return the map from the service

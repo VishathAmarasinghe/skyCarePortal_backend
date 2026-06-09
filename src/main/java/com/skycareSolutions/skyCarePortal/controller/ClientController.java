@@ -2,6 +2,7 @@ package com.skycareSolutions.skyCarePortal.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skycareSolutions.skyCarePortal.dto.ClientDTO;
+import com.skycareSolutions.skyCarePortal.dto.ClientLookupDTO;
 import com.skycareSolutions.skyCarePortal.dto.PasswordChangeDTO;
 import com.skycareSolutions.skyCarePortal.model.Employee;
 import com.skycareSolutions.skyCarePortal.service.ClientService;
@@ -50,6 +51,14 @@ public class ClientController {
     @PutMapping("/status/{id}")
     public ResponseEntity<String> updateClientActivationStatus(@PathVariable String id, @RequestParam String status){
         return  new ResponseEntity<>(clientService.updateClientStatus(id,status),HttpStatus.OK);
+    }
+
+    @GetMapping("/lookup")
+    public ResponseEntity<List<ClientLookupDTO>> lookupClients(
+            @RequestParam String q,
+            @RequestParam(defaultValue = "20") int limit
+    ) {
+        return ResponseEntity.ok(clientService.lookupClients(q, limit));
     }
 
     @GetMapping("/careGiverAssignedClients/{id}")

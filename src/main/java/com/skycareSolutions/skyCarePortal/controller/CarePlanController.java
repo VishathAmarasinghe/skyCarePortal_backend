@@ -1,10 +1,12 @@
 package com.skycareSolutions.skyCarePortal.controller;
 
 import com.skycareSolutions.skyCarePortal.dto.ApiResponse;
-import com.skycareSolutions.skyCarePortal.dto.CarePlanBillableWithCarePlanDTO;
 import com.skycareSolutions.skyCarePortal.dto.CarePlanDTO;
 import com.skycareSolutions.skyCarePortal.service.CarePlanService;
+import com.skycareSolutions.skyCarePortal.service.NdisSupportPlanPdfService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,9 @@ public class CarePlanController {
 
     @Autowired
     private CarePlanService carePlanService;
+
+    @Autowired
+    private NdisSupportPlanPdfService ndisSupportPlanPdfService;
 
 
 
@@ -40,6 +45,15 @@ public class CarePlanController {
         return ResponseEntity.ok(carePlan); // 200 OK
     }
 
+    @GetMapping(value = "/{carePlanID}/ndis-support-plan.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> downloadNdisSupportPlanPdf(@PathVariable String carePlanID) {
+        byte[] pdfBytes = ndisSupportPlanPdfService.generateNdisSupportPlanPdfBytes(carePlanID);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"NDIS-Support-Plan-" + carePlanID + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
+    }
+
     // Get all CarePlans
     @GetMapping
     public ResponseEntity<List<CarePlanDTO>> getAllCarePlans() {
@@ -50,7 +64,7 @@ public class CarePlanController {
     // Create a new CarePlan
     @PostMapping
     public ResponseEntity<ApiResponse> createCarePlan(@RequestBody CarePlanDTO carePlanDTO) {
-        CarePlanDTO createdCarePlan = carePlanService.createCarePlan(carePlanDTO);
+        carePlanService.createCarePlan(carePlanDTO);
         return new ResponseEntity<>(new ApiResponse("Care Plan Created successfully",true), HttpStatus.CREATED); // 201 Created
     }
 

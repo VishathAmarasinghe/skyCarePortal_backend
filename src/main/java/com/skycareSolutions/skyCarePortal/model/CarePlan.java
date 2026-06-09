@@ -39,4 +39,25 @@ public class CarePlan {
 
     @Column(name = "status")
     private String status;
+
+    @Column(name = "currentLivingSituation", columnDefinition = "TEXT")
+    private String currentLivingSituation;
+
+    @Column(name = "supportsFundedCore", columnDefinition = "TEXT")
+    private String supportsFundedCore;
+
+    @Column(name = "supportsFundedCapacityBuilding", columnDefinition = "TEXT")
+    private String supportsFundedCapacityBuilding;
+
+    @Column(name = "supportsFundedCapital", columnDefinition = "TEXT")
+    private String supportsFundedCapital;
+
+    @Column(name = "riskManagement", columnDefinition = "TEXT")
+    private String riskManagement;
+
+    @Column(name = "expectedOutcomes", columnDefinition = "TEXT")
+    private String expectedOutcomes;
+
+    @Column(name = "billingBudgetNotes", columnDefinition = "TEXT")
+    private String billingBudgetNotes;
 }
