@@ -1,0 +1,92 @@
+[
+  {
+    "category": "Worker",
+    "items": [
+      { "token": "{{worker.firstName}}", "description": "Employee first name", "exampleOutput": "Jane", "sourceEntity": "Employee" },
+      { "token": "{{worker.lastName}}", "description": "Employee last name", "exampleOutput": "Smith", "sourceEntity": "Employee" },
+      { "token": "{{worker.fullName}}", "description": "First and last name", "exampleOutput": "Jane Smith", "sourceEntity": "Employee" },
+      { "token": "{{worker.email}}", "description": "Employee email", "exampleOutput": "jane.smith@example.com", "sourceEntity": "Employee" },
+      { "token": "{{worker.phone}}", "description": "Primary phone number", "exampleOutput": "+61 400 000 000", "sourceEntity": "Employee" },
+      { "token": "{{worker.address}}", "description": "Full formatted address", "exampleOutput": "6 Katelyn Ct, Waurn Ponds VIC 3216", "sourceEntity": "Employee" },
+      { "token": "{{worker.addressLine1}}", "description": "Street address", "exampleOutput": "6 Katelyn Ct", "sourceEntity": "Employee" },
+      { "token": "{{worker.city}}", "description": "City", "exampleOutput": "Waurn Ponds", "sourceEntity": "Employee" },
+      { "token": "{{worker.state}}", "description": "State", "exampleOutput": "VIC", "sourceEntity": "Employee" },
+      { "token": "{{worker.postalCode}}", "description": "Postal code", "exampleOutput": "3216", "sourceEntity": "Employee" },
+      { "token": "{{worker.employeeId}}", "description": "Employee ID", "exampleOutput": "EM1", "sourceEntity": "Employee" },
+      { "token": "{{worker.careGiverId}}", "description": "Care giver ID", "exampleOutput": "CG1", "sourceEntity": "CareGiver" },
+      { "token": "{{worker.careGiverType}}", "description": "Care giver type", "exampleOutput": "Contractor", "sourceEntity": "CareGiver" },
+      { "token": "{{worker.joinDate}}", "description": "Join date", "exampleOutput": "04 May 2026", "sourceEntity": "Employee" },
+      { "token": "{{worker.status}}", "description": "Employment status", "exampleOutput": "Activated", "sourceEntity": "Employee" },
+      { "token": "{{worker.emergencyContactName}}", "description": "Emergency contact name", "exampleOutput": "John Smith", "sourceEntity": "Employee" },
+      { "token": "{{worker.emergencyContactPhone}}", "description": "Emergency contact phone", "exampleOutput": "+61 400 111 222", "sourceEntity": "Employee" },
+      { "token": "{{worker.positionTitle}}", "description": "Position title", "exampleOutput": "Disability Support Worker", "sourceEntity": "System" }
+    ]
+  },
+  {
+    "category": "Client",
+    "items": [
+      { "token": "{{client.firstName}}", "description": "Client first name", "exampleOutput": "Alex", "sourceEntity": "Client" },
+      { "token": "{{client.lastName}}", "description": "Client last name", "exampleOutput": "Johnson", "sourceEntity": "Client" },
+      { "token": "{{client.fullName}}", "description": "Client full name", "exampleOutput": "Alex Johnson", "sourceEntity": "Client" },
+      { "token": "{{client.preferredName}}", "description": "Preferred name", "exampleOutput": "Alex", "sourceEntity": "Client" },
+      { "token": "{{client.email}}", "description": "Client email", "exampleOutput": "alex@example.com", "sourceEntity": "Client" },
+      { "token": "{{client.phone}}", "description": "Primary phone", "exampleOutput": "+61 400 333 444", "sourceEntity": "Client" },
+      { "token": "{{client.address}}", "description": "Full address", "exampleOutput": "12 Main St, Geelong VIC 3220", "sourceEntity": "Client" },
+      { "token": "{{client.clientId}}", "description": "Client ID", "exampleOutput": "CU1", "sourceEntity": "Client" },
+      { "token": "{{client.ndisNumber}}", "description": "NDIS number", "exampleOutput": "430000000", "sourceEntity": "Client" },
+      { "token": "{{client.dateOfBirth}}", "description": "Date of birth", "exampleOutput": "15 Jan 1990", "sourceEntity": "Client" }
+    ]
+  },
+  {
+    "category": "Organization",
+    "items": [
+      { "token": "{{org.name}}", "description": "Organization name", "exampleOutput": "SkyCare Solutions Pty Ltd", "sourceEntity": "OrganizationSetting" },
+      { "token": "{{org.abn}}", "description": "ABN", "exampleOutput": "12 345 678 901", "sourceEntity": "OrganizationSetting" },
+      { "token": "{{org.address}}", "description": "Organization address", "exampleOutput": "Geelong, VIC", "sourceEntity": "OrganizationSetting" },
+      { "token": "{{org.phone}}", "description": "Organization phone", "exampleOutput": "+61 3 0000 0000", "sourceEntity": "OrganizationSetting" },
+      { "token": "{{org.email}}", "description": "Organization email", "exampleOutput": "info@skycaresolutions.com.au", "sourceEntity": "OrganizationSetting" },
+      { "token": "{{org.directorName}}", "description": "Director / signatory name", "exampleOutput": "Director, SkyCare Solutions", "sourceEntity": "OrganizationSetting" },
+      { "token": "{{org.logo}}", "description": "Organization logo image", "exampleOutput": "[Logo image]", "sourceEntity": "OrganizationSetting" }
+    ]
+  },
+  {
+    "category": "Agreement",
+    "items": [
+      { "token": "{{agreement.templateName}}", "description": "Template display name", "exampleOutput": "Contractor Service Agreement", "sourceEntity": "AgreementTemplate" },
+      { "token": "{{agreement.templateKey}}", "description": "Template key", "exampleOutput": "worker_contractor", "sourceEntity": "AgreementTemplate" },
+      { "token": "{{agreement.version}}", "description": "Published version number", "exampleOutput": "v1", "sourceEntity": "AgreementTemplateVersion" },
+      { "token": "{{agreement.commencementDate}}", "description": "Commencement date", "exampleOutput": "04 May 2026", "sourceEntity": "System" },
+      { "token": "{{agreement.sentDate}}", "description": "Date sent", "exampleOutput": "04 Jun 2026", "sourceEntity": "System" }
+    ]
+  },
+  {
+    "category": "Care Plan",
+    "items": [
+      { "token": "{{carePlan.id}}", "description": "Active care plan ID", "exampleOutput": "CP00001", "sourceEntity": "CarePlan" },
+      { "token": "{{carePlan.title}}", "description": "Care plan title", "exampleOutput": "Support Plan 2026", "sourceEntity": "CarePlan" },
+      { "token": "{{carePlan.startDate}}", "description": "Plan start date", "exampleOutput": "01 Jan 2026", "sourceEntity": "CarePlan" },
+      { "token": "{{carePlan.endDate}}", "description": "Plan end date", "exampleOutput": "31 Dec 2026", "sourceEntity": "CarePlan" },
+      { "token": "{{carePlan.status}}", "description": "Plan status", "exampleOutput": "Active", "sourceEntity": "CarePlan" },
+      { "token": "{{carePlan.currentLivingSituation}}", "description": "Living situation", "exampleOutput": "Lives independently", "sourceEntity": "CarePlan" },
+      { "token": "{{carePlan.expectedOutcomes}}", "description": "Expected outcomes", "exampleOutput": "Increased independence", "sourceEntity": "CarePlan" },
+      { "token": "{{carePlan.riskManagement}}", "description": "Risk management notes", "exampleOutput": "Standard protocols", "sourceEntity": "CarePlan" },
+      { "token": "{{carePlan.supportScheduleTable}}", "description": "Support schedule HTML table", "exampleOutput": "[Table]", "sourceEntity": "CarePlanSupportSchedule" }
+    ]
+  },
+  {
+    "category": "Date",
+    "items": [
+      { "token": "{{today.date}}", "description": "Current date", "exampleOutput": "04 Jun 2026", "sourceEntity": "System" },
+      { "token": "{{today.year}}", "description": "Current year", "exampleOutput": "2026", "sourceEntity": "System" }
+    ]
+  },
+  {
+    "category": "Signatures",
+    "items": [
+      { "token": "{{signature.admin}}", "description": "Admin / employer signature image", "exampleOutput": "[Signature image]", "sourceEntity": "AgreementSignature" },
+      { "token": "{{signature.recipient}}", "description": "Recipient signature image", "exampleOutput": "[Signature image]", "sourceEntity": "AgreementSignature" },
+      { "token": "{{signature.adminDate}}", "description": "Date admin signed", "exampleOutput": "04 Jun 2026", "sourceEntity": "AgreementSignature" },
+      { "token": "{{signature.recipientDate}}", "description": "Date recipient signed", "exampleOutput": "04 Jun 2026", "sourceEntity": "AgreementSignature" }
+    ]
+  }
+]

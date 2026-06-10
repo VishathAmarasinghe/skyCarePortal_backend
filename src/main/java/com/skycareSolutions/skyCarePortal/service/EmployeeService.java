@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -44,6 +45,30 @@ public class EmployeeService {
 
     @Autowired
     private ClientRepository clientRepository;
+
+    @Autowired
+    private CareGiverRepository careGiverRepository;
+
+    @Autowired
+    private CareGiverDocumentsRepository careGiverDocumentsRepository;
+
+    @Autowired
+    private SignatureRepository signatureRepository;
+
+    @Autowired
+    private JobAssignerRepository jobAssignerRepository;
+
+    @Autowired
+    private ShiftNoteRepository shiftNoteRepository;
+
+    @Autowired
+    private CareGiverPaymentsRepository careGiverPaymentsRepository;
+
+    @Autowired
+    private ChatMemberRepository chatMemberRepository;
+
+    @Autowired
+    private StaffTrainingRecordRepository staffTrainingRecordRepository;
 
     AuthenticationUtils authenticationUtils= new AuthenticationUtils();
 
@@ -507,18 +532,34 @@ public class EmployeeService {
         List<Employee> employees = employeeRepository.getAllEmployees();
         List<MetaEmployeeDetailsDTO> employeeDetailsDTOS = new ArrayList<>();
         for (Employee employee:employees){
-            MetaEmployeeDetailsDTO singleEmployeeDetails = new MetaEmployeeDetailsDTO();
-            singleEmployeeDetails.setEmployeeID(employee.getEmployeeID());
-            singleEmployeeDetails.setStatus(employee.getStatus());
-            singleEmployeeDetails.setEmail(employee.getEmail());
-            singleEmployeeDetails.setProfile_photo(employee.getProfile_photo());
-            singleEmployeeDetails.setFirstName(employee.getFirstName());
-            singleEmployeeDetails.setLastName(employee.getLastName());
-            singleEmployeeDetails.setAccessRole(employee.getAccessRole());
-
-            employeeDetailsDTOS.add(singleEmployeeDetails);
+            employeeDetailsDTOS.add(toMetaDto(employee));
         }
         return employeeDetailsDTOS;
+    }
+
+    public List<MetaEmployeeDetailsDTO> lookupEmployees(String query, String role, int limit) {
+        if (query == null || query.trim().length() < 1) {
+            return List.of();
+        }
+        int max = Math.min(Math.max(limit, 1), 50);
+        return employeeRepository.searchByQuery(query.trim()).stream()
+                .filter(employee -> role == null || role.isBlank()
+                        || role.equalsIgnoreCase(employee.getAccessRole()))
+                .limit(max)
+                .map(this::toMetaDto)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    private MetaEmployeeDetailsDTO toMetaDto(Employee employee) {
+        MetaEmployeeDetailsDTO singleEmployeeDetails = new MetaEmployeeDetailsDTO();
+        singleEmployeeDetails.setEmployeeID(employee.getEmployeeID());
+        singleEmployeeDetails.setStatus(employee.getStatus());
+        singleEmployeeDetails.setEmail(employee.getEmail());
+        singleEmployeeDetails.setProfile_photo(employee.getProfile_photo());
+        singleEmployeeDetails.setFirstName(employee.getFirstName());
+        singleEmployeeDetails.setLastName(employee.getLastName());
+        singleEmployeeDetails.setAccessRole(employee.getAccessRole());
+        return singleEmployeeDetails;
     }
 
     public Map<String, String> getAllCareGiverEmployeeMapping() {
@@ -535,6 +576,46 @@ public class EmployeeService {
         }
 
         return employeeCareGiverMap;
+    }
+
+    @Transactional
+    public void deletePendingEmployee(String employeeID) {
+        Employee employee = employeeRepository.findById(employeeID)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+        if (!"Pending".equalsIgnoreCase(employee.getStatus())) {
+            throw new RuntimeException("Only pending employees can be deleted");
+        }
+
+        CareGiver careGiver = careGiverRepository.getCareGiverByEmployee(employee);
+        if (careGiver != null) {
+            jobAssignerRepository.deleteAll(
+                    jobAssignerRepository.findJobsAssignedToCareGiver(careGiver)
+            );
+            shiftNoteRepository.deleteAll(
+                    shiftNoteRepository.getAllShiftNotesByCareGiver(careGiver)
+            );
+            careGiverPaymentsRepository.deleteAll(
+                    careGiverPaymentsRepository.findByCareGiverId(careGiver.getCareGiverID())
+            );
+            careGiverDocumentsRepository.deleteAll(
+                    careGiverDocumentsRepository.findByCareGiverID(careGiver)
+            );
+            careGiverRepository.delete(careGiver);
+        }
+
+        jobAssignerRepository.deleteAll(jobAssignerRepository.findByAssignerEmployee(employee));
+        shiftNoteRepository.deleteAll(shiftNoteRepository.getAllShiftNotesByEmployee(employee));
+        chatMemberRepository.deleteByEmployee(employee);
+        staffTrainingRecordRepository.deleteAll(
+                staffTrainingRecordRepository.findByEmployeeId(employeeID)
+        );
+        signatureRepository.findByEmployeeID(employeeID).ifPresent(signatureRepository::delete);
+
+        if (employee.getEmployeeJobRoles() != null && !employee.getEmployeeJobRoles().isEmpty()) {
+            employeeJobRolesRepository.deleteAll(employee.getEmployeeJobRoles());
+        }
+
+        employeeRepository.delete(employee);
     }
 
     public Boolean resetPassword(PasswordResetDTO passwordResetDTO){

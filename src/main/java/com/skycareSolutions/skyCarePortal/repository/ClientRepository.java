@@ -18,4 +18,12 @@ public interface ClientRepository extends CrudRepository<Client,String> {
 
     @Query(value = "SELECT c.clientID FROM client c ORDER BY CAST(SUBSTRING(c.clientID, 3) AS UNSIGNED) DESC LIMIT 1", nativeQuery = true)
     String getLastIdOfClient();
+
+    @Query("SELECT c FROM Client c WHERE " +
+            "LOWER(c.firstName) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+            "LOWER(c.lastName) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+            "LOWER(c.preferredName) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+            "LOWER(c.referenceNo) LIKE LOWER(CONCAT('%', :q, '%')) " +
+            "ORDER BY c.firstName, c.lastName")
+    List<Client> searchByQuery(String q);
 }

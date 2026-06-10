@@ -1,6 +1,8 @@
-// Multibranch: dev → backend:staging + deploy backend-staging only
-// main → backend:production + deploy backend-production only
-// Compose uses default project network (no external app-network). Prune after build/deploy.
+// Multibranch: dev → backend:staging + pdf-service:staging + deploy staging stack
+// main → backend:production + pdf-service:production + deploy production stack
+// Compose -p isolates staging vs production projects so --remove-orphans does not delete the other env.
+// Staff training certificates, behavior support registers, and compliance lookups are part of the backend JAR;
+// upload dirs on the host must exist and are mounted to /root/skyCareUploads in the container.
 pipeline {
     agent any
     stages {
@@ -11,6 +13,7 @@ pipeline {
             steps {
                 sh '''
                     docker build -t backend:staging .
+                    docker build -t pdf-service:staging ./pdf-service
                     docker image prune -f
                     docker builder prune -f
                 '''
@@ -32,7 +35,20 @@ pipeline {
                         export SPRING_DATASOURCE_PASSWORD
                         export SPRING_MAIL_USERNAME
                         export SPRING_MAIL_PASSWORD
-                        docker compose -f docker-compose.dev.yml up -d --no-deps --force-recreate --remove-orphans backend-staging
+                        export FRONTEND_URL=https://stg.skycare.au
+                        export BACKEND_BASE_URL=https://stg.skycare.au/api
+
+                        chmod +x scripts/prepare-upload-dirs.sh
+                        ./scripts/prepare-upload-dirs.sh /var/lib/skycareuploads
+
+                        # Fixed container_name values conflict with leftovers from older deploys (no -p project).
+                        docker compose -p skycare-backend-staging -f docker-compose.dev.yml down --remove-orphans || true
+                        docker rm -f pdf-service-staging backend-staging 2>/dev/null || true
+
+                        docker compose -p skycare-backend-staging -f docker-compose.dev.yml up -d \
+                          --force-recreate --remove-orphans \
+                          pdf-service-staging backend-staging
+
                         docker image prune -f
                         docker container prune -f
                         docker builder prune -f
@@ -47,6 +63,7 @@ pipeline {
             steps {
                 sh '''
                     docker build -t backend:production .
+                    docker build -t pdf-service:production ./pdf-service
                     docker image prune -f
                     docker builder prune -f
                 '''
@@ -68,7 +85,19 @@ pipeline {
                         export SPRING_DATASOURCE_PASSWORD
                         export SPRING_MAIL_USERNAME
                         export SPRING_MAIL_PASSWORD
-                        docker compose -f docker-compose.prod.yml up -d --no-deps --force-recreate --remove-orphans backend-production
+                        export FRONTEND_URL=https://skycare.au
+                        export BACKEND_BASE_URL=https://skycare.au/api
+
+                        chmod +x scripts/prepare-upload-dirs.sh
+                        ./scripts/prepare-upload-dirs.sh /var/lib/skycare_production/skycareuploads
+
+                        docker compose -p skycare-backend-production -f docker-compose.prod.yml down --remove-orphans || true
+                        docker rm -f pdf-service-production backend-production 2>/dev/null || true
+
+                        docker compose -p skycare-backend-production -f docker-compose.prod.yml up -d \
+                          --force-recreate --remove-orphans \
+                          pdf-service-production backend-production
+
                         docker image prune -f
                         docker container prune -f
                         docker builder prune -f
@@ -79,7 +108,7 @@ pipeline {
     }
     post {
         success {
-            echo 'Backend pipeline completed.'
+            echo 'Backend pipeline completed (API, staff training, behavior support, PDF service).'
         }
         failure {
             echo 'Backend pipeline failed.'

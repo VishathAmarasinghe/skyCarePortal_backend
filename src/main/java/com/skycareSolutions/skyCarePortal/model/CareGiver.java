@@ -25,5 +25,7 @@ public class CareGiver {
     @Column(name = "status")
     private String status;  // Status of the caregiver (e.g., Active, Inactive)
 
+    @Column(name = "careGiverType")
+    private String careGiverType = "Not specified";
 
 }

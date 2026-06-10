@@ -96,6 +96,15 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.getAllEmployees());
     }
 
+    @GetMapping("/lookup")
+    public ResponseEntity<List<MetaEmployeeDetailsDTO>> lookupEmployees(
+            @RequestParam String q,
+            @RequestParam(required = false) String role,
+            @RequestParam(defaultValue = "20") int limit
+    ) {
+        return ResponseEntity.ok(employeeService.lookupEmployees(q, role, limit));
+    }
+
     @GetMapping("/meta/careGiverMapping")
     public ResponseEntity<Map<String, String>> getCareGiverEmployeeMapping() {
         // Directly return the map from the service
@@ -125,6 +134,16 @@ public class EmployeeController {
     @PatchMapping("/{employeeID}/{state}")
     public ApiResponse updateEmployeeState(@PathVariable("employeeID") String employeeID,@PathVariable("state") String state){
         return employeeService.updateEmployeeState(employeeID,state);
+    }
+
+    @DeleteMapping("/{employeeID}")
+    public ResponseEntity<ApiResponse> deletePendingEmployee(@PathVariable String employeeID) {
+        try {
+            employeeService.deletePendingEmployee(employeeID);
+            return ResponseEntity.ok(new ApiResponse("Pending employee deleted successfully", true));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage(), false));
+        }
     }
 
     @PostMapping("/update-basic-info")

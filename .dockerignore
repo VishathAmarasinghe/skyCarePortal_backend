@@ -1,0 +1,9 @@
+target/
+.git/
+.gitignore
+**/*.md
+monitoring/
+pdf-service/node_modules/
+pdf-service/dist/
+*.iml
+.idea/

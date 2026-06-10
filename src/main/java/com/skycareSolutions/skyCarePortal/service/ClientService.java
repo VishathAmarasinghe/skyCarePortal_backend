@@ -1,6 +1,7 @@
 package com.skycareSolutions.skyCarePortal.service;
 
 import com.skycareSolutions.skyCarePortal.dto.ClientDTO;
+import com.skycareSolutions.skyCarePortal.dto.ClientLookupDTO;
 import com.skycareSolutions.skyCarePortal.dto.ClientPhysicalAddressDTO;
 import com.skycareSolutions.skyCarePortal.dto.ClientPostalAddressDTO;
 import com.skycareSolutions.skyCarePortal.dto.PasswordChangeDTO;
@@ -340,5 +341,29 @@ public class ClientService {
         } else {
             throw new RuntimeException("Client not found");
         }
+    }
+
+    public List<ClientLookupDTO> lookupClients(String query, int limit) {
+        if (query == null || query.trim().length() < 1) {
+            return List.of();
+        }
+        int max = Math.min(Math.max(limit, 1), 50);
+        return clientRepository.searchByQuery(query.trim()).stream()
+                .limit(max)
+                .map(this::toLookupDto)
+                .collect(Collectors.toList());
+    }
+
+    private ClientLookupDTO toLookupDto(Client client) {
+        ClientLookupDTO dto = new ClientLookupDTO();
+        dto.setClientID(client.getClientID());
+        dto.setFirstName(client.getFirstName());
+        dto.setLastName(client.getLastName());
+        dto.setReferenceNo(client.getReferenceNo());
+        String preferred = client.getPreferredName() != null && !client.getPreferredName().isBlank()
+                ? client.getPreferredName()
+                : client.getFirstName() + " " + client.getLastName();
+        dto.setDisplayName(preferred);
+        return dto;
     }
 }

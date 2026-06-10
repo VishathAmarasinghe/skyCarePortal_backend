@@ -22,4 +22,10 @@ public class EmailTemplates {
 
     @Column(name = "content", columnDefinition = "TEXT")  // Store HTML content as TEXT
     private String content;
+
+    @Column(name = "category")
+    private String category;
+
+    @Column(name = "placeholders_metadata", columnDefinition = "TEXT")
+    private String placeholdersMetadata;
 }

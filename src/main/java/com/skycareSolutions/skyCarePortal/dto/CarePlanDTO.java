@@ -14,5 +14,13 @@ public class CarePlanDTO {
     private String clientID;
     private List<CarePlanLongTermGoalDTO> carePlanLongTermGoals;
     private List<CarePlanBilablesDTO> carePlanBillables;
+    private String currentLivingSituation;
+    private String supportsFundedCore;
+    private String supportsFundedCapacityBuilding;
+    private String supportsFundedCapital;
+    private List<CarePlanSupportScheduleDTO> supportSchedule;
+    private String riskManagement;
+    private String expectedOutcomes;
+    private String billingBudgetNotes;
     private String status;
 }

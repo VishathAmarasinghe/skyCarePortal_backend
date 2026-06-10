@@ -42,6 +42,8 @@ public class Micro_utils {
             formatTablePrefix="PS";
         } else if (tableName.equalsIgnoreCase("carePlanBillables")){
             formatTablePrefix="BL";
+        } else if (tableName.equalsIgnoreCase("carePlanSupportSchedule")) {
+            formatTablePrefix = "SS";
         }else if (tableName.equalsIgnoreCase("appointment")){
             formatTablePrefix="AP";
         }else if (tableName.equalsIgnoreCase("appointment-type")){
@@ -90,6 +92,40 @@ public class Micro_utils {
             formatTablePrefix="ID";
         }else if (tableName.equalsIgnoreCase("incidentParties")){
             formatTablePrefix = "IP";
+        }else if (tableName.equalsIgnoreCase("agreementTemplate")){
+            formatTablePrefix = "AG";
+        }else if (tableName.equalsIgnoreCase("agreementTemplateVersion")){
+            formatTablePrefix = "AV";
+        }else if (tableName.equalsIgnoreCase("agreementEvent")){
+            formatTablePrefix = "AE";
+        }else if (tableName.equalsIgnoreCase("agreementTemplateAsset")){
+            formatTablePrefix = "AA";
+        }else if (tableName.equalsIgnoreCase("agreementTemplateAssignment")){
+            formatTablePrefix = "AR";
+        }else if (tableName.equalsIgnoreCase("organizationSetting")){
+            formatTablePrefix = "OS";
+        }else if (tableName.equalsIgnoreCase("emailTemplate")){
+            formatTablePrefix = "ET";
+        }else if (tableName.equalsIgnoreCase("agreementInstance")){
+            formatTablePrefix = "AI";
+        }else if (tableName.equalsIgnoreCase("agreementSignature")){
+            formatTablePrefix = "AQ";
+        }else if (tableName.equalsIgnoreCase("adminSavedSignature")){
+            formatTablePrefix = "AD";
+        }else if (tableName.equalsIgnoreCase("agreementReferenceMaterial")){
+            formatTablePrefix = "RF";
+        }else if (tableName.equalsIgnoreCase("agreementInstanceReferenceMaterial")){
+            formatTablePrefix = "IM";
+        }else if (tableName.equalsIgnoreCase("complianceLookup")){
+            formatTablePrefix = "LK";
+        }else if (tableName.equalsIgnoreCase("staffTrainingRecord")){
+            formatTablePrefix = "TR";
+        }else if (tableName.equalsIgnoreCase("restrictivePracticeRegister")){
+            formatTablePrefix = "RP";
+        }else if (tableName.equalsIgnoreCase("behaviourDataRecord")){
+            formatTablePrefix = "BD";
+        }else if (tableName.equalsIgnoreCase("restrictivePracticeEvidence")){
+            formatTablePrefix = "RE";
         }
         return formatTablePrefix+newID;
     }

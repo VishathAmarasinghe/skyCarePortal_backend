@@ -19,4 +19,11 @@ public interface EmployeeRepository extends CrudRepository<Employee,String> {
 
     @Query(value = "SELECT e.employeeID FROM employee e ORDER BY CAST(SUBSTRING(e.employeeID, 3) AS UNSIGNED) DESC LIMIT 1", nativeQuery = true)
     String getLastIdOfEmployees();
+
+    @Query("SELECT e FROM Employee e WHERE " +
+            "LOWER(e.firstName) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+            "LOWER(e.lastName) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+            "LOWER(e.email) LIKE LOWER(CONCAT('%', :q, '%')) " +
+            "ORDER BY e.firstName, e.lastName")
+    List<Employee> searchByQuery(String q);
 }
