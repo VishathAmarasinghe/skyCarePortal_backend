@@ -2,6 +2,7 @@ package com.skycareSolutions.skyCarePortal.repository;
 
 import com.skycareSolutions.skyCarePortal.model.Appointment;
 import com.skycareSolutions.skyCarePortal.model.CareGiver;
+import com.skycareSolutions.skyCarePortal.model.Employee;
 import com.skycareSolutions.skyCarePortal.model.JobAssigner;
 import com.skycareSolutions.skyCarePortal.model.RecurrentAppointment;
 import jakarta.transaction.Transactional;
@@ -45,5 +46,8 @@ public interface JobAssignerRepository extends CrudRepository<JobAssigner,String
 
     @Query("SELECT js FROM JobAssigner js WHERE recurrentAppointment=:recurrentAppointment")
     List<JobAssigner> findJobAssignWithRecurrentAppointment(RecurrentAppointment recurrentAppointment);
+
+    @Query("SELECT j FROM JobAssigner j WHERE j.employee = :employee")
+    List<JobAssigner> findByAssignerEmployee(@Param("employee") Employee employee);
 
 }

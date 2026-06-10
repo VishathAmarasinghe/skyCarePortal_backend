@@ -11,10 +11,12 @@ import com.skycareSolutions.skyCarePortal.service.EmailTemplateLayoutService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -41,10 +43,12 @@ public class EmailTemplateController {
     }
 
     @GetMapping("/logo")
-    public ResponseEntity<ClassPathResource> getEmailLogo() {
+    public ResponseEntity<?> getEmailLogo() {
         ClassPathResource resource = new ClassPathResource(EmailTemplateLayoutService.EMAIL_LOGO_CLASSPATH);
         if (!resource.exists()) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(EmailTemplateLayoutService.DEFAULT_EMAIL_LOGO_URL))
+                    .build();
         }
         return ResponseEntity.ok()
                 .contentType(MediaType.IMAGE_PNG)

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -44,6 +45,30 @@ public class EmployeeService {
 
     @Autowired
     private ClientRepository clientRepository;
+
+    @Autowired
+    private CareGiverRepository careGiverRepository;
+
+    @Autowired
+    private CareGiverDocumentsRepository careGiverDocumentsRepository;
+
+    @Autowired
+    private SignatureRepository signatureRepository;
+
+    @Autowired
+    private JobAssignerRepository jobAssignerRepository;
+
+    @Autowired
+    private ShiftNoteRepository shiftNoteRepository;
+
+    @Autowired
+    private CareGiverPaymentsRepository careGiverPaymentsRepository;
+
+    @Autowired
+    private ChatMemberRepository chatMemberRepository;
+
+    @Autowired
+    private StaffTrainingRecordRepository staffTrainingRecordRepository;
 
     AuthenticationUtils authenticationUtils= new AuthenticationUtils();
 
@@ -551,6 +576,46 @@ public class EmployeeService {
         }
 
         return employeeCareGiverMap;
+    }
+
+    @Transactional
+    public void deletePendingEmployee(String employeeID) {
+        Employee employee = employeeRepository.findById(employeeID)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+        if (!"Pending".equalsIgnoreCase(employee.getStatus())) {
+            throw new RuntimeException("Only pending employees can be deleted");
+        }
+
+        CareGiver careGiver = careGiverRepository.getCareGiverByEmployee(employee);
+        if (careGiver != null) {
+            jobAssignerRepository.deleteAll(
+                    jobAssignerRepository.findJobsAssignedToCareGiver(careGiver)
+            );
+            shiftNoteRepository.deleteAll(
+                    shiftNoteRepository.getAllShiftNotesByCareGiver(careGiver)
+            );
+            careGiverPaymentsRepository.deleteAll(
+                    careGiverPaymentsRepository.findByCareGiverId(careGiver.getCareGiverID())
+            );
+            careGiverDocumentsRepository.deleteAll(
+                    careGiverDocumentsRepository.findByCareGiverID(careGiver)
+            );
+            careGiverRepository.delete(careGiver);
+        }
+
+        jobAssignerRepository.deleteAll(jobAssignerRepository.findByAssignerEmployee(employee));
+        shiftNoteRepository.deleteAll(shiftNoteRepository.getAllShiftNotesByEmployee(employee));
+        chatMemberRepository.deleteByEmployee(employee);
+        staffTrainingRecordRepository.deleteAll(
+                staffTrainingRecordRepository.findByEmployeeId(employeeID)
+        );
+        signatureRepository.findByEmployeeID(employeeID).ifPresent(signatureRepository::delete);
+
+        if (employee.getEmployeeJobRoles() != null && !employee.getEmployeeJobRoles().isEmpty()) {
+            employeeJobRolesRepository.deleteAll(employee.getEmployeeJobRoles());
+        }
+
+        employeeRepository.delete(employee);
     }
 
     public Boolean resetPassword(PasswordResetDTO passwordResetDTO){

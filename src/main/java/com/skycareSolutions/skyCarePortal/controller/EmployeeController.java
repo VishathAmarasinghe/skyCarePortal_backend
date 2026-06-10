@@ -136,6 +136,16 @@ public class EmployeeController {
         return employeeService.updateEmployeeState(employeeID,state);
     }
 
+    @DeleteMapping("/{employeeID}")
+    public ResponseEntity<ApiResponse> deletePendingEmployee(@PathVariable String employeeID) {
+        try {
+            employeeService.deletePendingEmployee(employeeID);
+            return ResponseEntity.ok(new ApiResponse("Pending employee deleted successfully", true));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage(), false));
+        }
+    }
+
     @PostMapping("/update-basic-info")
     public ResponseEntity<String> updateUserBasicInfo(
             @RequestPart("employeeBasicInfo") String employeeBasicInfoUpdaterDTO,

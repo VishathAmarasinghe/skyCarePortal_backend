@@ -18,10 +18,14 @@ public class EmailTemplateLayoutService {
     public static final String EMAIL_LOGO_CLASSPATH = "agreement-assets/skycare_email_logo.png";
 
     /**
-     * Public fallback when classpath inlining is unavailable.
+     * Public logo for email clients (GitHub blob URLs do not serve image bytes).
      */
     public static final String DEFAULT_EMAIL_LOGO_URL =
             "https://raw.githubusercontent.com/VishathAmarasinghe/publicImages/main/skycarelogo.png";
+
+    /** Light header so the teal logo is visible (logo matches brand primary #055476). */
+    private static final String EMAIL_HEADER_BG = "#E7F6FC";
+    private static final String EMAIL_HEADER_BORDER = "#B8D4E0";
 
     @Autowired
     private OrganizationSettingService organizationSettingService;
@@ -52,7 +56,7 @@ public class EmailTemplateLayoutService {
                       <td align="center">
                         <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:600px;width:100%%;background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
                           <tr>
-                            <td style="background-color:#055476;padding:20px 24px;">
+                            <td style="background-color:%s;border-bottom:1px solid %s;padding:20px 24px;">
                               %s
                             </td>
                           </tr>
@@ -76,6 +80,8 @@ public class EmailTemplateLayoutService {
                 </html>
                 """.formatted(
                 orgName,
+                EMAIL_HEADER_BG,
+                EMAIL_HEADER_BORDER,
                 logoBlock,
                 bodyHtml != null ? bodyHtml : "",
                 orgName,
@@ -100,26 +106,14 @@ public class EmailTemplateLayoutService {
                     """.formatted(logoSrc, orgName);
         }
         return """
-                <span style="color:#ffffff;font-size:20px;font-weight:bold;">%s</span>
+                <span style="color:#055476;font-size:20px;font-weight:bold;">%s</span>
                 """.formatted(orgName);
     }
 
     /**
-     * Prefer an inlined data-URI so in-app previews always render the logo.
-     * Fall back to the backend logo endpoint, then the public GitHub raw URL.
+     * Use a public HTTPS URL so Gmail/Outlook can load the image (data-URIs and API URLs often fail).
      */
     private String resolveEmailLogoSrc(OrganizationSetting org) {
-        String dataUrl = getCachedLogoDataUrl();
-        if (dataUrl != null && !dataUrl.isBlank()) {
-            return dataUrl;
-        }
-
-        String backendLogo = resolvePublicLogoUrl();
-        if (backendLogo != null && !backendLogo.toLowerCase().contains("localhost")
-                && !backendLogo.toLowerCase().contains("127.0.0.1")) {
-            return backendLogo;
-        }
-
         if (DEFAULT_EMAIL_LOGO_URL != null && !DEFAULT_EMAIL_LOGO_URL.isBlank()) {
             return DEFAULT_EMAIL_LOGO_URL;
         }
@@ -129,6 +123,17 @@ public class EmailTemplateLayoutService {
                 && !orgLogo.toLowerCase().contains("localhost")
                 && !orgLogo.toLowerCase().contains("127.0.0.1")) {
             return orgLogo;
+        }
+
+        String backendLogo = resolvePublicLogoUrl();
+        if (backendLogo != null && !backendLogo.toLowerCase().contains("localhost")
+                && !backendLogo.toLowerCase().contains("127.0.0.1")) {
+            return backendLogo;
+        }
+
+        String dataUrl = getCachedLogoDataUrl();
+        if (dataUrl != null && !dataUrl.isBlank()) {
+            return dataUrl;
         }
 
         return backendLogo;
