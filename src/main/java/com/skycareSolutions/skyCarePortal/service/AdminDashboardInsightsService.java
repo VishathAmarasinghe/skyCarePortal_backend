@@ -31,7 +31,6 @@ public class AdminDashboardInsightsService {
     private static final String ISSUE_EXPIRED = "EXPIRED";
     private static final String ISSUE_EXPIRING = "EXPIRING";
     private static final String ISSUE_MISSING_REQUIRED = "MISSING_REQUIRED";
-    private static final String ISSUE_PENDING = "PENDING";
     private static final String ISSUE_NO_EXPIRY_DATE = "NO_EXPIRY_DATE";
 
     @Autowired
@@ -208,10 +207,6 @@ public class AdminDashboardInsightsService {
             return buildItem(careGiver, employee, docType, doc, ISSUE_MISSING_REQUIRED, null, today);
         }
 
-        if (doc.getStatus() != null && "Pending".equalsIgnoreCase(doc.getStatus())) {
-            return buildItem(careGiver, employee, docType, doc, ISSUE_PENDING, null, today);
-        }
-
         if (docType.isExpDateNeeded()) {
             if (doc.getExpDate() == null) {
                 return buildItem(careGiver, employee, docType, doc, ISSUE_NO_EXPIRY_DATE, null, today);
@@ -283,7 +278,6 @@ public class AdminDashboardInsightsService {
                 }
             }
             case ISSUE_MISSING_REQUIRED -> summary.setMissingRequired(summary.getMissingRequired() + 1);
-            case ISSUE_PENDING -> summary.setPending(summary.getPending() + 1);
             case ISSUE_NO_EXPIRY_DATE -> summary.setMissingExpiryDate(summary.getMissingExpiryDate() + 1);
             default -> {
             }
@@ -356,8 +350,7 @@ public class AdminDashboardInsightsService {
             case ISSUE_EXPIRED -> 0;
             case ISSUE_EXPIRING -> item.getDaysUntilExpiry() != null && item.getDaysUntilExpiry() <= 7 ? 1 : 5;
             case ISSUE_MISSING_REQUIRED -> 2;
-            case ISSUE_PENDING -> 3;
-            case ISSUE_NO_EXPIRY_DATE -> 4;
+            case ISSUE_NO_EXPIRY_DATE -> 3;
             default -> 6;
         };
     }

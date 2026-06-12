@@ -334,12 +334,24 @@ public class CareGiverDocumentService {
         return dto;
     }
 
+    private String resolveDocumentStatus(CareGiverDocumentsDTO dto) {
+        boolean hasFile = dto.getDocument() != null && !dto.getDocument().isBlank();
+        if (!hasFile) {
+            return dto.getStatus();
+        }
+        if (dto.getStatus() == null || dto.getStatus().isBlank()
+                || "Pending".equalsIgnoreCase(dto.getStatus())) {
+            return "Active";
+        }
+        return dto.getStatus();
+    }
+
     private CareGiverDocuments mapToEntity(CareGiverDocumentsDTO dto) {
         CareGiverDocuments document = new CareGiverDocuments();
         CareGiverDocumentsId ids = new CareGiverDocumentsId(dto.getCareGiverID(), dto.getDocumentTypeID());
         document.setId(ids);
         document.setExpDate(dto.getExpDate());
-        document.setStatus(dto.getStatus());
+        document.setStatus(resolveDocumentStatus(dto));
         document.setDocument(dto.getDocument());
         return document;
     }
