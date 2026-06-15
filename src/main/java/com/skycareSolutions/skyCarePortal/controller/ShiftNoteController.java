@@ -3,6 +3,7 @@ package com.skycareSolutions.skyCarePortal.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.skycareSolutions.skyCarePortal.dto.*;
+import com.skycareSolutions.skyCarePortal.exception.TimesheetComplianceException;
 import com.skycareSolutions.skyCarePortal.service.ShiftNoteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,25 +25,28 @@ public class ShiftNoteController {
     private final ObjectMapper objectMapper;
 
     public ShiftNoteController(ObjectMapper objectMapper) {
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = objectMapper;
         this.objectMapper.registerModule(new JavaTimeModule());
     }
 
     @Autowired
     private ShiftNoteService shiftNoteService;
 
+    private ResponseEntity<String> complianceBlockedResponse(TimesheetComplianceException exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(exception.getMessage());
+    }
+
     @PostMapping("/start")
-    public ResponseEntity<Boolean> startShift(@RequestBody StartShiftNoteDTO startShiftNoteDTO) {
-        // Call the service method to start the shift
-        Boolean isShiftStarted = shiftNoteService.startShift(startShiftNoteDTO);
-
-        // If shift is successfully started, return the ShiftNoteDTO
-        if (isShiftStarted) {
-            return new ResponseEntity<>(true, HttpStatus.CREATED); // 201 Created
+    public ResponseEntity<?> startShift(@RequestBody StartShiftNoteDTO startShiftNoteDTO) {
+        try {
+            Boolean isShiftStarted = shiftNoteService.startShift(startShiftNoteDTO);
+            if (isShiftStarted) {
+                return new ResponseEntity<>(true, HttpStatus.CREATED);
+            }
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } catch (TimesheetComplianceException exception) {
+            return complianceBlockedResponse(exception);
         }
-
-        // If shift start failed, return a bad request response
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // 400 Bad Request
     }
 
     @PostMapping("/new")
@@ -50,12 +54,12 @@ public class ShiftNoteController {
             @RequestPart("note") String shiftNoteDTO,
             @RequestPart(value = "files",required = false) List<MultipartFile> files
     ) {
-        // Call the service method to start the shift
         try {
             ShiftNoteDTO notes = objectMapper.readValue(shiftNoteDTO,ShiftNoteDTO.class);
             return ResponseEntity.ok(shiftNoteService.newShiftNotes(notes,files));
+        } catch (TimesheetComplianceException exception) {
+            return complianceBlockedResponse(exception);
         } catch (RuntimeException e) {
-            // Check if it's a duplicate error
             if (e.getMessage() != null && e.getMessage().contains("duplicate")) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("error", e.getMessage());
@@ -79,15 +83,16 @@ public class ShiftNoteController {
     }
 
     @PostMapping("/finish")
-    public ResponseEntity<ApiResponse> saveFinishDetails(
+    public ResponseEntity<?> saveFinishDetails(
             @RequestPart("note") String shiftNoteDTO,
             @RequestPart(value = "files",required = false) List<MultipartFile> files) {
         try {
             ShiftNoteDTO notes = objectMapper.readValue(shiftNoteDTO,ShiftNoteDTO.class);
             shiftNoteService.finishShift(notes,files);
             return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse("Shift Added successfully",true));
+        } catch (TimesheetComplianceException exception) {
+            return complianceBlockedResponse(exception);
         } catch (RuntimeException e) {
-            // Check if it's a duplicate error
             if (e.getMessage() != null && e.getMessage().contains("duplicate")) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse(e.getMessage(), false));
             }
@@ -133,8 +138,9 @@ public class ShiftNoteController {
             ShiftNoteDTO notes = objectMapper.readValue(shiftNoteDTO,ShiftNoteDTO.class);
             ShiftNoteDTO updatedShiftNote = shiftNoteService.updateShiftNote(noteID, notes, files);
             return ResponseEntity.ok(updatedShiftNote);
+        } catch (TimesheetComplianceException exception) {
+            return complianceBlockedResponse(exception);
         } catch (RuntimeException e) {
-            // Check if it's a duplicate error
             if (e.getMessage() != null && e.getMessage().contains("duplicate")) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("error", e.getMessage());

@@ -4,6 +4,7 @@ import com.skycareSolutions.skyCarePortal.model.CareGiver;
 import com.skycareSolutions.skyCarePortal.model.Employee;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface CareGiverRepository extends JpaRepository<CareGiver, String> {
 
@@ -12,4 +13,7 @@ public interface CareGiverRepository extends JpaRepository<CareGiver, String> {
 
     @Query("SELECT cg from CareGiver cg where cg.employee=:emp")
     CareGiver getCareGiverByEmployee(Employee emp);
+
+    @Query("SELECT cg FROM CareGiver cg WHERE cg.employee.employeeID = :employeeId")
+    CareGiver findByEmployeeId(@Param("employeeId") String employeeId);
 }
