@@ -53,6 +53,9 @@ public class ShiftNoteService {
     @Autowired
     ClientService clientService;
 
+    @Autowired
+    private CareGiverDocumentComplianceService careGiverDocumentComplianceService;
+
     public void generateReport(String startDate,String endDate,String employeeType, String employeeNo){
         if (employeeType.equalsIgnoreCase("All")){
 
@@ -70,6 +73,7 @@ public class ShiftNoteService {
 
 
     public Boolean startShift(StartShiftNoteDTO startShiftNoteDTO){
+        careGiverDocumentComplianceService.assertCanSubmitTimesheet(startShiftNoteDTO.getEmployeeID());
         String lastShiftNoteID = shiftNoteRepository.getLastIdOfShiftNotes();
         String newShiftNoteID = Micro_utils.idGenerator("shiftNotes",lastShiftNoteID);
         Employee employee = employeeService.findOneEmployeeWithEntity(startShiftNoteDTO.getEmployeeID());
@@ -120,6 +124,7 @@ public class ShiftNoteService {
     }
 
     public Boolean newShiftNotes(ShiftNoteDTO shiftNoteDTO,List<MultipartFile> files){
+        careGiverDocumentComplianceService.assertCanSubmitTimesheet(shiftNoteDTO.getEmployeeID());
         Employee employee = employeeService.findOneEmployeeWithEntity(shiftNoteDTO.getEmployeeID());
         
         // Get client from DTO (either directly or from recurrent appointment)
@@ -239,6 +244,7 @@ public class ShiftNoteService {
     }
 
     public Boolean finishShift(ShiftNoteDTO shiftNoteDTO, List<MultipartFile> files){
+        careGiverDocumentComplianceService.assertCanSubmitTimesheet(shiftNoteDTO.getEmployeeID());
         Optional<ShiftNotes> exisitingShiftNote = shiftNoteRepository.findById(shiftNoteDTO.getNoteID());
 
         if (exisitingShiftNote.isPresent()){
@@ -644,6 +650,7 @@ public class ShiftNoteService {
     }
 
     public ShiftNoteDTO updateShiftNote(String noteID, ShiftNoteDTO shiftNoteDTO, List<MultipartFile> files) {
+        careGiverDocumentComplianceService.assertCanSubmitTimesheet(shiftNoteDTO.getEmployeeID());
         // Fetch the existing ShiftNote entity
         ShiftNotes existingShiftNote = shiftNoteRepository.findById(noteID)
                 .orElseThrow(() -> new RuntimeException("ShiftNote not found"));
