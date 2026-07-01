@@ -124,7 +124,10 @@ public class ShiftNoteService {
     }
 
     public Boolean newShiftNotes(ShiftNoteDTO shiftNoteDTO,List<MultipartFile> files){
-        careGiverDocumentComplianceService.assertCanSubmitTimesheet(shiftNoteDTO.getEmployeeID());
+        careGiverDocumentComplianceService.assertCanSubmitTimesheet(
+                shiftNoteDTO.getEmployeeID(),
+                shiftNoteDTO.getCareGiverID()
+        );
         Employee employee = employeeService.findOneEmployeeWithEntity(shiftNoteDTO.getEmployeeID());
         
         // Get client from DTO (either directly or from recurrent appointment)
@@ -244,7 +247,21 @@ public class ShiftNoteService {
     }
 
     public Boolean finishShift(ShiftNoteDTO shiftNoteDTO, List<MultipartFile> files){
-        careGiverDocumentComplianceService.assertCanSubmitTimesheet(shiftNoteDTO.getEmployeeID());
+        String employeeId = shiftNoteDTO.getEmployeeID();
+        String careGiverId = shiftNoteDTO.getCareGiverID();
+        if ((employeeId == null || employeeId.isBlank()) && shiftNoteDTO.getNoteID() != null) {
+            Optional<ShiftNotes> existingShiftNote = shiftNoteRepository.findById(shiftNoteDTO.getNoteID());
+            if (existingShiftNote.isPresent()) {
+                ShiftNotes existing = existingShiftNote.get();
+                if (existing.getEmployee() != null) {
+                    employeeId = existing.getEmployee().getEmployeeID();
+                }
+                if (existing.getCareGiver() != null) {
+                    careGiverId = existing.getCareGiver().getCareGiverID();
+                }
+            }
+        }
+        careGiverDocumentComplianceService.assertCanSubmitTimesheet(employeeId, careGiverId);
         Optional<ShiftNotes> exisitingShiftNote = shiftNoteRepository.findById(shiftNoteDTO.getNoteID());
 
         if (exisitingShiftNote.isPresent()){
@@ -650,10 +667,22 @@ public class ShiftNoteService {
     }
 
     public ShiftNoteDTO updateShiftNote(String noteID, ShiftNoteDTO shiftNoteDTO, List<MultipartFile> files) {
-        careGiverDocumentComplianceService.assertCanSubmitTimesheet(shiftNoteDTO.getEmployeeID());
-        // Fetch the existing ShiftNote entity
         ShiftNotes existingShiftNote = shiftNoteRepository.findById(noteID)
                 .orElseThrow(() -> new RuntimeException("ShiftNote not found"));
+
+        String employeeId = shiftNoteDTO.getEmployeeID();
+        String careGiverId = shiftNoteDTO.getCareGiverID();
+        if (employeeId == null || employeeId.isBlank()) {
+            if (existingShiftNote.getEmployee() != null) {
+                employeeId = existingShiftNote.getEmployee().getEmployeeID();
+            }
+        }
+        if (careGiverId == null || careGiverId.isBlank()) {
+            if (existingShiftNote.getCareGiver() != null) {
+                careGiverId = existingShiftNote.getCareGiver().getCareGiverID();
+            }
+        }
+        careGiverDocumentComplianceService.assertCanSubmitTimesheet(employeeId, careGiverId);
 
         // Check for duplicate timesheets based on start date, start time, end time, client, and employee (excluding current note)
         if (shiftNoteDTO.getShiftStartDate() != null && shiftNoteDTO.getShiftStartTime() != null && shiftNoteDTO.getShiftEndTime() != null) {
