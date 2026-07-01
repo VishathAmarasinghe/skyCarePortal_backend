@@ -137,7 +137,7 @@ public class AdminDashboardInsightsService {
                 .toList();
 
         List<CareGiverDocumentTypes> activeTypes = documentTypesRepository.findAll().stream()
-                .filter(this::isActiveDocumentType)
+                .filter(type -> type.getStatus() == null || "Active".equalsIgnoreCase(type.getStatus()))
                 .toList();
 
         Map<String, Map<String, CareGiverDocuments>> docsByCareGiver = documentsRepository.findAll().stream()
@@ -246,33 +246,15 @@ public class AdminDashboardInsightsService {
         if (doc != null) {
             item.setStatus(doc.getStatus());
             if (doc.getExpDate() != null) {
-                item.setExpDate(toLocalDate(doc.getExpDate()).format(DATE_FMT));
+                item.setExpDate(doc.getExpDate().toInstant().atZone(AU_ZONE).toLocalDate().format(DATE_FMT));
             }
         }
         return item;
     }
 
     private Integer calculateDaysUntilExpiry(Date expDate, LocalDate today) {
-        LocalDate expiry = toLocalDate(expDate);
-        if (expiry == null) {
-            return null;
-        }
+        LocalDate expiry = expDate.toInstant().atZone(AU_ZONE).toLocalDate();
         return (int) ChronoUnit.DAYS.between(today, expiry);
-    }
-
-    private boolean isActiveDocumentType(CareGiverDocumentTypes docType) {
-        return docType.getStatus() != null
-                && "Active".equalsIgnoreCase(docType.getStatus().trim());
-    }
-
-    private LocalDate toLocalDate(Date date) {
-        if (date == null) {
-            return null;
-        }
-        if (date instanceof java.sql.Date sqlDate) {
-            return sqlDate.toLocalDate();
-        }
-        return date.toInstant().atZone(AU_ZONE).toLocalDate();
     }
 
     private String formatName(EmployeeDTO employee) {

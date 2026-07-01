@@ -12,10 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -41,85 +38,51 @@ public class CareGiverDocumentComplianceService {
     private CareGiverDocumentsRepository documentsRepository;
 
     public void assertCanSubmitTimesheet(String employeeId) {
-        assertCanSubmitTimesheet(employeeId, null);
-    }
-
-    public void assertCanSubmitTimesheet(String employeeId, String careGiverId) {
         if (!generalSettingService.isBlockTimesheetOnDocumentNonCompliance()) {
             return;
         }
-
-        CareGiver careGiver = resolveCareGiver(employeeId, careGiverId);
+        if (employeeId == null || employeeId.isBlank()) {
+            return;
+        }
+        CareGiver careGiver = careGiverRepository.findByEmployeeId(employeeId);
         if (careGiver == null) {
             return;
         }
-
-        List<String> blockingDocuments = findBlockingDocuments(careGiver);
-        if (!blockingDocuments.isEmpty()) {
-            String detail = String.join(", ", blockingDocuments);
-            throw new TimesheetComplianceException(
-                    TIMESHEET_BLOCKED_MESSAGE + " Affected document(s): " + detail + "."
-            );
+        if (!isCompliantForTimesheet(careGiver)) {
+            throw new TimesheetComplianceException(TIMESHEET_BLOCKED_MESSAGE);
         }
     }
 
     public boolean isCompliantForTimesheet(CareGiver careGiver) {
-        return careGiver != null && findBlockingDocuments(careGiver).isEmpty();
-    }
-
-    private CareGiver resolveCareGiver(String employeeId, String careGiverId) {
-        if (employeeId != null && !employeeId.isBlank()) {
-            CareGiver fromEmployee = careGiverRepository.findByEmployeeId(employeeId);
-            if (fromEmployee != null) {
-                return fromEmployee;
-            }
+        if (careGiver == null) {
+            return true;
         }
-        if (careGiverId != null && !careGiverId.isBlank()) {
-            return careGiverRepository.findById(careGiverId).orElse(null);
-        }
-        return null;
-    }
 
-    private List<String> findBlockingDocuments(CareGiver careGiver) {
         List<CareGiverDocumentTypes> requiredTypes = documentTypesRepository.findAll().stream()
                 .filter(CareGiverDocumentTypes::isRequired)
-                .filter(this::isActiveDocumentType)
+                .filter(type -> type.getStatus() == null || "Active".equalsIgnoreCase(type.getStatus()))
                 .toList();
 
         if (requiredTypes.isEmpty()) {
-            return List.of();
+            return true;
         }
 
-        Map<String, CareGiverDocuments> docsByType = documentsRepository
-                .findByCareGiverId(careGiver.getCareGiverID())
-                .stream()
+        Map<String, CareGiverDocuments> docsByType = documentsRepository.findByCareGiverID(careGiver).stream()
                 .filter(doc -> doc.getId() != null && doc.getId().getDocumentTypeID() != null)
                 .collect(Collectors.toMap(
-                        doc -> normalizeTypeId(doc.getId().getDocumentTypeID()),
+                        doc -> doc.getId().getDocumentTypeID(),
                         doc -> doc,
-                        (left, right) -> hasUploadedFile(left) ? left : right
+                        (left, right) -> left
                 ));
 
         LocalDate today = LocalDate.now(AU_ZONE);
-        List<String> blockingDocuments = new ArrayList<>();
-
         for (CareGiverDocumentTypes docType : requiredTypes) {
-            CareGiverDocuments doc = docsByType.get(normalizeTypeId(docType.getDocumentTypeID()));
+            CareGiverDocuments doc = docsByType.get(docType.getDocumentTypeID());
             if (!isDocumentCompliant(doc, docType, today)) {
-                blockingDocuments.add(docType.getDocumentName());
+                return false;
             }
         }
-
-        return blockingDocuments;
-    }
-
-    private boolean isActiveDocumentType(CareGiverDocumentTypes docType) {
-        return docType.getStatus() != null
-                && "Active".equalsIgnoreCase(docType.getStatus().trim());
-    }
-
-    private String normalizeTypeId(String documentTypeId) {
-        return documentTypeId == null ? "" : documentTypeId.trim().toLowerCase(Locale.ROOT);
+        return true;
     }
 
     private boolean isDocumentCompliant(
@@ -127,7 +90,8 @@ public class CareGiverDocumentComplianceService {
             CareGiverDocumentTypes docType,
             LocalDate today
     ) {
-        if (!hasUploadedFile(doc)) {
+        boolean hasFile = doc != null && doc.getDocument() != null && !doc.getDocument().isBlank();
+        if (!hasFile) {
             return false;
         }
 
@@ -139,18 +103,7 @@ public class CareGiverDocumentComplianceService {
             return false;
         }
 
-        LocalDate expiry = toLocalDate(doc.getExpDate());
-        return expiry != null && !expiry.isBefore(today);
-    }
-
-    private boolean hasUploadedFile(CareGiverDocuments doc) {
-        return doc != null && doc.getDocument() != null && !doc.getDocument().isBlank();
-    }
-
-    private LocalDate toLocalDate(Date date) {
-        if (date instanceof java.sql.Date sqlDate) {
-            return sqlDate.toLocalDate();
-        }
-        return date.toInstant().atZone(AU_ZONE).toLocalDate();
+        LocalDate expiry = doc.getExpDate().toInstant().atZone(AU_ZONE).toLocalDate();
+        return !expiry.isBefore(today);
     }
 }
