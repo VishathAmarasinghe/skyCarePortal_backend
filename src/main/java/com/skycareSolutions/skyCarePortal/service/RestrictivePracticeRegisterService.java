@@ -65,6 +65,7 @@ public class RestrictivePracticeRegisterService {
 
     public RestrictivePracticeRegisterDTO create(RestrictivePracticeRegisterDTO dto, String requesterRole, String requesterEmployeeId) {
         registerAccessService.assertAdmin(requesterRole);
+        validateRequiredFields(dto);
         RestrictivePracticeRegister row = new RestrictivePracticeRegister();
         row.setRegisterID(Micro_utils.idGenerator("restrictivePracticeRegister", repository.getLastRegisterId()));
         applyDto(row, dto);
@@ -77,6 +78,7 @@ public class RestrictivePracticeRegisterService {
 
     public RestrictivePracticeRegisterDTO update(String id, RestrictivePracticeRegisterDTO dto, String requesterRole) {
         registerAccessService.assertAdmin(requesterRole);
+        validateRequiredFields(dto);
         RestrictivePracticeRegister row = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Register entry not found"));
         applyDto(row, dto);
@@ -87,6 +89,12 @@ public class RestrictivePracticeRegisterService {
     public void delete(String id, String requesterRole) {
         registerAccessService.assertAdmin(requesterRole);
         repository.deleteById(id);
+    }
+
+    private void validateRequiredFields(RestrictivePracticeRegisterDTO dto) {
+        if (dto.getClientID() == null || dto.getClientID().isBlank()) {
+            throw new RuntimeException("Participant is required");
+        }
     }
 
     private void applyDto(RestrictivePracticeRegister row, RestrictivePracticeRegisterDTO dto) {

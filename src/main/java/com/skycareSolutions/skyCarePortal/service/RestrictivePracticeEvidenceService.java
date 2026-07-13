@@ -64,6 +64,7 @@ public class RestrictivePracticeEvidenceService {
 
     public RestrictivePracticeEvidenceDTO create(RestrictivePracticeEvidenceDTO dto, String requesterRole, String requesterEmployeeId) {
         registerAccessService.assertAdmin(requesterRole);
+        validateRequiredFields(dto);
         RestrictivePracticeEvidence row = new RestrictivePracticeEvidence();
         row.setEvidenceID(Micro_utils.idGenerator("restrictivePracticeEvidence", repository.getLastEvidenceId()));
         applyDto(row, dto);
@@ -76,6 +77,7 @@ public class RestrictivePracticeEvidenceService {
 
     public RestrictivePracticeEvidenceDTO update(String id, RestrictivePracticeEvidenceDTO dto, String requesterRole) {
         registerAccessService.assertAdmin(requesterRole);
+        validateRequiredFields(dto);
         RestrictivePracticeEvidence row = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Evidence record not found"));
         applyDto(row, dto);
@@ -86,6 +88,12 @@ public class RestrictivePracticeEvidenceService {
     public void delete(String id, String requesterRole) {
         registerAccessService.assertAdmin(requesterRole);
         repository.deleteById(id);
+    }
+
+    private void validateRequiredFields(RestrictivePracticeEvidenceDTO dto) {
+        if (dto.getClientID() == null || dto.getClientID().isBlank()) {
+            throw new RuntimeException("Participant is required");
+        }
     }
 
     private void applyDto(RestrictivePracticeEvidence row, RestrictivePracticeEvidenceDTO dto) {

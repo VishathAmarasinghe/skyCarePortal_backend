@@ -7,6 +7,7 @@ import com.skycareSolutions.skyCarePortal.model.CareGiverDocuments;
 import com.skycareSolutions.skyCarePortal.repository.CareGiverDocumentTypesRepository;
 import com.skycareSolutions.skyCarePortal.repository.CareGiverDocumentsRepository;
 import com.skycareSolutions.skyCarePortal.repository.CareGiverRepository;
+import com.skycareSolutions.skyCarePortal.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,10 @@ public class CareGiverDocumentComplianceService {
             "You cannot submit a timesheet due to non-compliance status. "
                     + "Please review your compliance documents and upload any missing documents.";
 
+    public static final String TIMESHEET_ADMIN_DISABLED_MESSAGE =
+            "Your timesheet submission has been disabled by an administrator. "
+                    + "Please contact your administrator for assistance.";
+
     private static final ZoneId AU_ZONE = ZoneId.of("Australia/Melbourne");
 
     @Autowired
@@ -40,11 +45,29 @@ public class CareGiverDocumentComplianceService {
     @Autowired
     private CareGiverDocumentsRepository documentsRepository;
 
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
     public void assertCanSubmitTimesheet(String employeeId) {
         assertCanSubmitTimesheet(employeeId, null);
     }
 
     public void assertCanSubmitTimesheet(String employeeId, String careGiverId) {
+        if (employeeId != null && !employeeId.isBlank()) {
+            employeeRepository.findById(employeeId).ifPresent(employee -> {
+                if (employee.isTimesheetSubmissionDisabled()) {
+                    throw new TimesheetComplianceException(TIMESHEET_ADMIN_DISABLED_MESSAGE);
+                }
+            });
+        } else if (careGiverId != null && !careGiverId.isBlank()) {
+            CareGiver careGiver = careGiverRepository.findById(careGiverId).orElse(null);
+            if (careGiver != null
+                    && careGiver.getEmployee() != null
+                    && careGiver.getEmployee().isTimesheetSubmissionDisabled()) {
+                throw new TimesheetComplianceException(TIMESHEET_ADMIN_DISABLED_MESSAGE);
+            }
+        }
+
         if (!generalSettingService.isBlockTimesheetOnDocumentNonCompliance()) {
             return;
         }
