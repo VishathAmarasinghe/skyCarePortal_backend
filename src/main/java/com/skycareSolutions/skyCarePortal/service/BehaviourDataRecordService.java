@@ -67,6 +67,7 @@ public class BehaviourDataRecordService {
     }
 
     public BehaviourDataRecordDTO create(BehaviourDataRecordDTO dto, String requesterRole, String requesterEmployeeId) {
+        validateRequiredFields(dto);
         registerAccessService.assertClientAccess(requesterRole, requesterEmployeeId, dto.getClientID());
         if (registerAccessService.isCareGiverRole(requesterRole)) {
             dto.setStaffEmployeeID(requesterEmployeeId);
@@ -82,11 +83,13 @@ public class BehaviourDataRecordService {
     }
 
     public BehaviourDataRecordDTO update(String id, BehaviourDataRecordDTO dto, String requesterRole, String requesterEmployeeId) {
+        validateRequiredFields(dto);
         BehaviourDataRecord row = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Behaviour data record not found"));
         if (registerAccessService.isAdminRole(requesterRole)) {
             applyDto(row, dto);
         } else if (registerAccessService.isCareGiverRole(requesterRole)
+                && row.getStaffEmployee() != null
                 && row.getStaffEmployee().getEmployeeID().equals(requesterEmployeeId)) {
             registerAccessService.assertClientAccess(requesterRole, requesterEmployeeId, dto.getClientID());
             dto.setStaffEmployeeID(requesterEmployeeId);
@@ -103,11 +106,24 @@ public class BehaviourDataRecordService {
         repository.deleteById(id);
     }
 
+    private void validateRequiredFields(BehaviourDataRecordDTO dto) {
+        if (dto.getClientID() == null || dto.getClientID().isBlank()) {
+            throw new RuntimeException("Participant is required");
+        }
+        if (dto.getRecordDate() == null || dto.getRecordDate().isBlank()) {
+            throw new RuntimeException("Date is required");
+        }
+        if (dto.getRecordTime() == null || dto.getRecordTime().isBlank()) {
+            throw new RuntimeException("Time is required");
+        }
+        if (dto.getBehaviourObserved() == null || dto.getBehaviourObserved().isBlank()) {
+            throw new RuntimeException("Behaviour observed is required");
+        }
+    }
+
     private void applyDto(BehaviourDataRecord row, BehaviourDataRecordDTO dto) {
         Client client = clientRepository.findById(dto.getClientID())
                 .orElseThrow(() -> new RuntimeException("Client not found"));
-        Employee staff = employeeRepository.findById(dto.getStaffEmployeeID())
-                .orElseThrow(() -> new RuntimeException("Staff not found"));
         row.setClient(client);
         row.setRecordDate(parseDate(dto.getRecordDate()));
         row.setRecordTime(parseTime(dto.getRecordTime()));
@@ -119,7 +135,12 @@ public class BehaviourDataRecordService {
         row.setDuration(dto.getDuration());
         row.setIntensity(dto.getIntensity());
         row.setFollowUpRequired(dto.isFollowUpRequired());
-        row.setStaffEmployee(staff);
+        if (dto.getStaffEmployeeID() != null && !dto.getStaffEmployeeID().isBlank()) {
+            row.setStaffEmployee(employeeRepository.findById(dto.getStaffEmployeeID())
+                    .orElseThrow(() -> new RuntimeException("Staff not found")));
+        } else {
+            row.setStaffEmployee(null);
+        }
     }
 
     private void assertReadAccess(BehaviourDataRecord row, String requesterRole, String requesterEmployeeId) {
@@ -170,9 +191,11 @@ public class BehaviourDataRecordService {
         dto.setDuration(row.getDuration());
         dto.setIntensity(row.getIntensity());
         dto.setFollowUpRequired(row.isFollowUpRequired());
-        dto.setStaffEmployeeID(row.getStaffEmployee().getEmployeeID());
-        dto.setStaffName(row.getStaffEmployee().getFirstName() + " " + row.getStaffEmployee().getLastName());
-        dto.setStaffInitials(initials(row.getStaffEmployee()));
+        if (row.getStaffEmployee() != null) {
+            dto.setStaffEmployeeID(row.getStaffEmployee().getEmployeeID());
+            dto.setStaffName(row.getStaffEmployee().getFirstName() + " " + row.getStaffEmployee().getLastName());
+            dto.setStaffInitials(initials(row.getStaffEmployee()));
+        }
         return dto;
     }
 }

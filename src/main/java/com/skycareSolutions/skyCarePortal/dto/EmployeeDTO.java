@@ -24,6 +24,7 @@ public class EmployeeDTO {
     private String emergencyPhoneNo;
     private String emergencyUser;
     private String status;
+    private boolean timesheetSubmissionDisabled;
     private List<Employee_address_DTO> employeeAddresses;
     private List<String> employeeJobRoles;
     private List<String> employeePhoneNo;

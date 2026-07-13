@@ -131,9 +131,17 @@ public class EmployeeController {
         return employeeService.findOneEmployee(employeeID);
     }
 
-    @PatchMapping("/{employeeID}/{state}")
+    @PatchMapping("/{employeeID}/{state:Activated|Deactivated|Pending}")
     public ApiResponse updateEmployeeState(@PathVariable("employeeID") String employeeID,@PathVariable("state") String state){
         return employeeService.updateEmployeeState(employeeID,state);
+    }
+
+    @PatchMapping("/{employeeID}/timesheet-submission")
+    public ApiResponse updateTimesheetSubmissionDisabled(
+            @PathVariable("employeeID") String employeeID,
+            @RequestParam("disabled") boolean disabled
+    ) {
+        return employeeService.updateTimesheetSubmissionDisabled(employeeID, disabled);
     }
 
     @DeleteMapping("/{employeeID}")

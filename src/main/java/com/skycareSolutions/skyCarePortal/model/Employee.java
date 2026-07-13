@@ -46,6 +46,10 @@ public class Employee {
     private Date joinDate;
     @Column(name = "status")
     private String status;
+
+    @Column(name = "timesheetSubmissionDisabled", nullable = false)
+    private boolean timesheetSubmissionDisabled = false;
+
     @OneToMany(mappedBy = "employee",cascade = CascadeType.ALL,orphanRemoval = true)
     @JsonManagedReference
     private List<Employee_address> employeeAddresses;

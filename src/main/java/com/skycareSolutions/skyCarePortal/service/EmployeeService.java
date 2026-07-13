@@ -205,6 +205,7 @@ public class EmployeeService {
         dto.setEmergencyPhoneNo(employee.getEmergencyPhoneNo());
         dto.setJoinDate(employee.getJoinDate());
         dto.setStatus(employee.getStatus());
+        dto.setTimesheetSubmissionDisabled(employee.isTimesheetSubmissionDisabled());
 
         // Convert phone numbers to simple list of strings
         List<String> phoneNumbers = new ArrayList<>();
@@ -526,6 +527,22 @@ public class EmployeeService {
         employeeData.setStatus(state);
         employeeRepository.save(employeeData);
         return new ApiResponse("User "+state+" successfully",true);
+    }
+
+    public ApiResponse updateTimesheetSubmissionDisabled(String employeeID, boolean disabled) {
+        Optional<Employee> existingEmployeeOpt = employeeRepository.findById(employeeID);
+        if (existingEmployeeOpt.isEmpty()) {
+            throw new RuntimeException("Employee not found");
+        }
+        Employee employeeData = existingEmployeeOpt.get();
+        employeeData.setTimesheetSubmissionDisabled(disabled);
+        employeeRepository.save(employeeData);
+        return new ApiResponse(
+                disabled
+                        ? "Timesheet submissions disabled for this employee"
+                        : "Timesheet submissions enabled for this employee",
+                true
+        );
     }
 
     public List<MetaEmployeeDetailsDTO> getAllEmployees(){
