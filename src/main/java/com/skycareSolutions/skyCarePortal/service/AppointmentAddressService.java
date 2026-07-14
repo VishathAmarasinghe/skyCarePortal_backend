@@ -40,6 +40,10 @@ public class AppointmentAddressService {
         return repository.save(appointmentAddress);
     }
 
+    public AppointmentAddress update(AppointmentAddress address) {
+        return repository.save(address);
+    }
+
     /**
      * Find an AppointmentAddress by its ID.
      *
