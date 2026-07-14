@@ -30,7 +30,7 @@ public class CarePlanSupportSchedule {
     @Column(name = "day", nullable = false)
     private String day;
 
-    @Column(name = "supportType")
+    @Column(name = "supportType", columnDefinition = "TEXT")
     private String supportType;
 
     @Column(name = "hours")

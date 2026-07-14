@@ -18,13 +18,13 @@ public class CarePlanLongTermGoal {
     @Column(name = "longGoalID", nullable = false, unique = true)
     private String longGoalID;
 
-    @Column(name = "longTermGoal", nullable = false)
+    @Column(name = "longTermGoal", nullable = false, columnDefinition = "TEXT")
     private String longTermGoal;
 
-    @Column(name = "achieveWay")
+    @Column(name = "achieveWay", columnDefinition = "TEXT")
     private String achieveWay;
 
-    @Column(name = "supportWay")
+    @Column(name = "supportWay", columnDefinition = "TEXT")
     private String supportWay;
 
     @Column(name = "notes", columnDefinition = "TEXT")
