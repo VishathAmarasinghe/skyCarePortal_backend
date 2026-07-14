@@ -57,7 +57,7 @@ public class BehaviourDataRecord {
     private boolean followUpRequired;
 
     @ManyToOne
-    @JoinColumn(name = "staffEmployeeID")
+    @JoinColumn(name = "staffEmployeeID", nullable = true)
     private Employee staffEmployee;
 
     @Column(name = "createdAt")

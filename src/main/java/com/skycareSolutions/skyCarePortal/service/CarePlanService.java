@@ -80,7 +80,11 @@ public class CarePlanService {
         carePlanDTO.setStartDate(carePlan.getStartDate());
         carePlanDTO.setEndDate(carePlan.getEndDate());
         carePlanDTO.setClientID(carePlan.getClientID().getClientID());
-        carePlanDTO.setCarePlanStatusID(carePlan.getCarePlanStatus().getStatus());
+        carePlanDTO.setCarePlanStatusID(
+                carePlan.getCarePlanStatus() != null
+                        ? carePlan.getCarePlanStatus().getCareplanStatusID()
+                        : null
+        );
         carePlanDTO.setStatus(carePlan.getStatus());
 
         carePlanDTO.setCurrentLivingSituation(carePlan.getCurrentLivingSituation());
@@ -250,8 +254,11 @@ public class CarePlanService {
 
         // --- Long-Term Goals Management ---
         List<CarePlanLongTermGoal> existingLongTermGoals = carePlanLongTermRepository.findLongTermCarePlansByCarePlanID(carePlan);
-        List<String> incomingLongTermGoalIDs = carePlanDTO.getCarePlanLongTermGoals().stream()
+        List<CarePlanLongTermGoalDTO> incomingLongTermGoals =
+                carePlanDTO.getCarePlanLongTermGoals() != null ? carePlanDTO.getCarePlanLongTermGoals() : new ArrayList<>();
+        List<String> incomingLongTermGoalIDs = incomingLongTermGoals.stream()
                 .map(CarePlanLongTermGoalDTO::getLongGoalID)
+                .filter(longGoalID -> longGoalID != null && !longGoalID.isEmpty())
                 .collect(Collectors.toList());
 
         // Delete removed long-term goals and their associated short-term goals
@@ -266,7 +273,7 @@ public class CarePlanService {
         }
 
         // Add or update long-term and short-term goals
-        for (CarePlanLongTermGoalDTO lPlan : carePlanDTO.getCarePlanLongTermGoals()) {
+        for (CarePlanLongTermGoalDTO lPlan : incomingLongTermGoals) {
             if (lPlan.getLongGoalID() == null || lPlan.getLongGoalID().isEmpty()) {
                 String lastLongTermCarePlanID = carePlanLongTermRepository.getLastIdOfLongTermCarePlan();
                 String newLongTermCarePlanID = Micro_utils.idGenerator("longTermCarePlan", lastLongTermCarePlanID);
@@ -275,13 +282,33 @@ public class CarePlanService {
             }
             carePlanLongTermGoalService.saveOrUpdate(lPlan);
 
-            for (CarePlanShortTermGoalDTO sPlan : lPlan.getCarePlanShortTermGoals()) {
+            CarePlanLongTermGoal longTermGoalEntity = carePlanLongTermRepository.findById(lPlan.getLongGoalID())
+                    .orElseThrow(() -> new RuntimeException("Long term goal not found with ID: " + lPlan.getLongGoalID()));
+
+            List<CarePlanShortTermGoalDTO> incomingShortGoals =
+                    lPlan.getCarePlanShortTermGoals() != null ? lPlan.getCarePlanShortTermGoals() : new ArrayList<>();
+            List<String> incomingShortGoalIDs = incomingShortGoals.stream()
+                    .map(CarePlanShortTermGoalDTO::getShortTermGoalID)
+                    .filter(shortGoalID -> shortGoalID != null && !shortGoalID.isEmpty())
+                    .collect(Collectors.toList());
+
+            List<CarePlanShortTermGoal> existingShortGoals = carePlanShortTermRepository.findbyLongTermGoalID(longTermGoalEntity);
+            for (CarePlanShortTermGoal existingShortGoal : existingShortGoals) {
+                if (!incomingShortGoalIDs.contains(existingShortGoal.getShortTermGoalID())) {
+                    carePlanShortTermRepository.delete(existingShortGoal);
+                }
+            }
+
+            for (CarePlanShortTermGoalDTO sPlan : incomingShortGoals) {
                 if (sPlan.getShortTermGoalID() == null || sPlan.getShortTermGoalID().isEmpty()) {
                     String lastShortTermCarePlanID = carePlanShortTermRepository.getLastIdOfShortTermCarePlan();
                     String newShortTermCarePlanID = Micro_utils.idGenerator("shortTermCarePlan", lastShortTermCarePlanID);
                     sPlan.setCareplanID(id);
                     sPlan.setLongTermGoalID(lPlan.getLongGoalID());
                     sPlan.setShortTermGoalID(newShortTermCarePlanID);
+                } else {
+                    sPlan.setCareplanID(id);
+                    sPlan.setLongTermGoalID(lPlan.getLongGoalID());
                 }
                 carePlanShortTermGoalService.saveOrUpdate(sPlan);
             }
@@ -289,8 +316,11 @@ public class CarePlanService {
 
         // --- Billables Management ---
         List<CarePlanBilables> existingBillables = carePlanBillableRepository.findAllBillablesByCarePlanID(carePlan);
-        List<String> incomingBillableIDs = carePlanDTO.getCarePlanBillables().stream()
+        List<String> incomingBillableIDs = (carePlanDTO.getCarePlanBillables() == null)
+                ? new ArrayList<>()
+                : carePlanDTO.getCarePlanBillables().stream()
                 .map(CarePlanBilablesDTO::getBillID)
+                .filter(billID -> billID != null && !billID.isEmpty())
                 .collect(Collectors.toList());
 
         // Delete removed billables
@@ -301,18 +331,19 @@ public class CarePlanService {
         }
 
         // Add or update billables
-        for (CarePlanBilablesDTO bill : carePlanDTO.getCarePlanBillables()) {
-            if (bill.getBillID() == null || bill.getBillID().isEmpty()) {
-                bill.setCareplanID(id);
-                carePlanBillablesService.createCarePlanBill(bill);
-            }else{
-                carePlanBillablesService.updateCarePlanBill(bill.getBillID(),bill);
+        if (carePlanDTO.getCarePlanBillables() != null) {
+            for (CarePlanBilablesDTO bill : carePlanDTO.getCarePlanBillables()) {
+                if (bill.getBillID() == null || bill.getBillID().isEmpty()) {
+                    bill.setCareplanID(id);
+                    carePlanBillablesService.createCarePlanBill(bill);
+                } else {
+                    carePlanBillablesService.updateCarePlanBill(bill.getBillID(), bill);
+                }
             }
-
         }
 
-        // Return updated CarePlan as DTO
-        return toDTO(carePlan);
+        // Return refreshed CarePlan as DTO
+        return getCarePlansByCarePlanID(id);
     }
 
     public void deactivateCarePlan(String carePlanID){

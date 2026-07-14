@@ -178,7 +178,7 @@ public class IncidentService {
     }
 
     // Update an incident by ID
-    public IncidentsDTO updateIncident(String id, IncidentsDTO incidentsDTO,List<MultipartFile> files) {
+    public IncidentsDTO updateIncident(String id, IncidentsDTO incidentsDTO, List<MultipartFile> files) {
         Incidents existingIncident = incidentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Incident not found with ID: " + id));
 
@@ -191,66 +191,103 @@ public class IncidentService {
         existingIncident.setHospitalized(incidentsDTO.isHospitalized());
         existingIncident.setAdmitDate(incidentsDTO.getAdmitDate());
         existingIncident.setDischargeDate(incidentsDTO.getDischargeDate());
+        existingIncident.setFollowUp(incidentsDTO.getFollowUp());
+        existingIncident.setNotes(incidentsDTO.getNotes());
 
-        IncidentType incidentType = incidentTypeService.getIncidentTypeByIdWithEntitiy(incidentsDTO.getIncidentTypeID());
-        existingIncident.setIncidentType(incidentType);
+        if (incidentsDTO.getClientID() != null && !incidentsDTO.getClientID().isBlank()) {
+            existingIncident.setClient(clientService.getClientByIdWithEntitiy(incidentsDTO.getClientID()));
+        } else {
+            existingIncident.setClient(null);
+        }
 
-        IncidentStatus incidentStatus = incidentStatusService.getStatusByIdWithEntity(incidentsDTO.getIncidentStatusID());
-        existingIncident.setIncidentStatus(incidentStatus);
+        if (incidentsDTO.getCarePlanID() != null && !incidentsDTO.getCarePlanID().isBlank()) {
+            existingIncident.setCarePlan(carePlanService.findById(incidentsDTO.getCarePlanID()).orElseThrow());
+        } else {
+            existingIncident.setCarePlan(null);
+        }
 
-        AppointmentAddressDTO appointmentAddressDTO = new AppointmentAddressDTO();
-        appointmentAddressDTO.setAppointmentAddressID(existingIncident.getAppointmentAddress().getAppointmentAddressID());
-        appointmentAddressDTO.setCity(incidentsDTO.getAddress().getCity());
-        appointmentAddressDTO.setState(incidentsDTO.getAddress().getState());
-        appointmentAddressDTO.setAddress(incidentsDTO.getAddress().getAddress());
-        appointmentAddressDTO.setPostalCode(incidentsDTO.getAddress().getPostalCode());
-        appointmentAddressService.save(appointmentAddressDTO);
+        if (incidentsDTO.getAppointmentID() != null && !incidentsDTO.getAppointmentID().isBlank()) {
+            existingIncident.setAppointment(appointmentService.getAppointmentByIdWithEntity(incidentsDTO.getAppointmentID()));
+        } else {
+            existingIncident.setAppointment(null);
+        }
+
+        if (incidentsDTO.getTaskID() != null && !incidentsDTO.getTaskID().isBlank()) {
+            existingIncident.setTask(taskService.getTaskByIdWithEntity(incidentsDTO.getTaskID()));
+        } else {
+            existingIncident.setTask(null);
+        }
+
+        if (incidentsDTO.getIncidentTypeID() != null && !incidentsDTO.getIncidentTypeID().isBlank()) {
+            existingIncident.setIncidentType(
+                    incidentTypeService.getIncidentTypeByIdWithEntitiy(incidentsDTO.getIncidentTypeID()));
+        }
+
+        if (incidentsDTO.getIncidentStatusID() != null && !incidentsDTO.getIncidentStatusID().isBlank()) {
+            existingIncident.setIncidentStatus(
+                    incidentStatusService.getStatusByIdWithEntity(incidentsDTO.getIncidentStatusID()));
+        }
+
+        if (incidentsDTO.getAddress() != null) {
+            if (existingIncident.getAppointmentAddress() != null) {
+                AppointmentAddress existingAddress = existingIncident.getAppointmentAddress();
+                existingAddress.setAddress(incidentsDTO.getAddress().getAddress());
+                existingAddress.setCity(incidentsDTO.getAddress().getCity());
+                existingAddress.setState(incidentsDTO.getAddress().getState());
+                existingAddress.setPostalCode(incidentsDTO.getAddress().getPostalCode());
+                appointmentAddressService.update(existingAddress);
+            } else {
+                AppointmentAddress savedAddress = appointmentAddressService.save(incidentsDTO.getAddress());
+                existingIncident.setAppointmentAddress(savedAddress);
+            }
+        }
 
         incidentInvolvedPartiesService.deletePartiesByIncident(id);
-
-        for(IncidentInvolvedPartiesDTO party:incidentsDTO.getParties()){
-            party.setIncidentID(id);
-            incidentInvolvedPartiesService.createParty(party);
+        if (incidentsDTO.getParties() != null) {
+            for (IncidentInvolvedPartiesDTO party : incidentsDTO.getParties()) {
+                party.setIncidentID(id);
+                incidentInvolvedPartiesService.createParty(party);
+            }
         }
 
         incidentActionTypeAllAnswersService.deleteAllAnswersRelatedToIncident(id);
-        for (IncidentActionTypeAllAnswersDTO answer:incidentsDTO.getAnswers()){
-            answer.setIncidentID(id);
-            incidentActionTypeAllAnswersService.saveAnswer(answer);
+        if (incidentsDTO.getAnswers() != null) {
+            for (IncidentActionTypeAllAnswersDTO answer : incidentsDTO.getAnswers()) {
+                answer.setIncidentID(id);
+                answer.setId(null); // force insert after delete-all
+                incidentActionTypeAllAnswersService.saveAnswer(answer);
+            }
         }
 
         try {
             List<IncidentDocumentsDTO> documents = incidentsDTO.getDocuments();
-            if (documents!=null && documents.size()>0){
-                for (IncidentDocumentsDTO note:documents){
+            if (documents != null && !documents.isEmpty()) {
+                for (IncidentDocumentsDTO note : documents) {
                     IncidentDocumentsDTO noteExist = incidentDocumentServicel.getDocumentById(note.getDocumentID());
-                    if (noteExist.getDocumentID()!=null && !noteExist.getDocumentID().isEmpty()){
+                    if (noteExist.getDocumentID() != null && !noteExist.getDocumentID().isEmpty()) {
                         incidentDocumentServicel.deleteDocument(noteExist.getDocumentID());
                         File directory = new File(noteExist.getDocumentLocation());
-                        if (directory.exists()){
+                        if (directory.exists()) {
                             directory.delete();
                         }
                     }
                 }
             }
 
-            if (files!=null && !files.isEmpty()){
-                for (MultipartFile file:files){
-                    System.out.println("lenght "+files.size());
-                    if (file!=null){
+            if (files != null && !files.isEmpty()) {
+                for (MultipartFile file : files) {
+                    if (file != null) {
                         String originalFileName = file.getOriginalFilename();
                         String fileExtension = originalFileName;
                         if (originalFileName != null && originalFileName.contains(".")) {
                             fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
                         }
-                        System.out.println("original file name "+originalFileName);
                         File directory = new File(DIRECTORY);
-                        if(!directory.exists()){
+                        if (!directory.exists()) {
                             directory.mkdirs();
                         }
-                        File destinationFile = new File(DIRECTORY, id+"_"+originalFileName+ fileExtension);
+                        File destinationFile = new File(DIRECTORY, id + "_" + originalFileName + fileExtension);
                         if (destinationFile.exists()) {
-                            // Delete the existing file
                             boolean deleted = destinationFile.delete();
                             if (!deleted) {
                                 throw new RuntimeException("Failed to delete the existing file: " + destinationFile.getName());
@@ -261,7 +298,6 @@ public class IncidentService {
                         incidentDocumentsDTO.setIncidentID(id);
                         incidentDocumentsDTO.setDocumentLocation(destinationFile.getAbsolutePath());
                         incidentDocumentsDTO.setDocumentName(originalFileName);
-
                         incidentDocumentServicel.saveDocument(incidentDocumentsDTO);
                     }
                 }
@@ -271,7 +307,8 @@ public class IncidentService {
             throw new RuntimeException(e);
         }
 
-        return convertToDTO(incidentRepository.save(existingIncident));
+        incidentRepository.save(existingIncident);
+        return getIncidentById(id);
     }
 
     // Delete an incident by ID
@@ -315,6 +352,7 @@ public class IncidentService {
         if (incident.getAppointmentAddress()!=null){
             AppointmentAddressDTO appointmentAddressDTO = new AppointmentAddressDTO();
             AppointmentAddress appointmentAddress = incident.getAppointmentAddress();
+            appointmentAddressDTO.setAppointmentAddressID(appointmentAddress.getAppointmentAddressID());
             appointmentAddressDTO.setAddress(appointmentAddress.getAddress());
             appointmentAddressDTO.setCity(appointmentAddress.getCity());
             appointmentAddressDTO.setPostalCode(appointmentAddress.getPostalCode());

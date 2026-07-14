@@ -128,7 +128,7 @@ public class ShiftNoteController {
     public ResponseEntity<ShiftNoteDTO> getSingleShiftNote(@PathVariable String id){
         return ResponseEntity.ok(shiftNoteService.getShiftNote(id));
     }
-
+ 
     @PutMapping("/{noteID}")
     public ResponseEntity<?> updateShiftNote(
             @PathVariable String noteID,
