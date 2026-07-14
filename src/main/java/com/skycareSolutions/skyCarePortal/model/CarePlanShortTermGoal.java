@@ -22,7 +22,7 @@ public class CarePlanShortTermGoal {
     @JoinColumn(name = "longTermGoalID", nullable = false)
     private CarePlanLongTermGoal longTermGoalID;
 
-    @Column(name = "goalTitle", nullable = false)
+    @Column(name = "goalTitle", nullable = false, columnDefinition = "TEXT")
     private String goalTitle;
 
     @Column(name = "goalDescription", columnDefinition = "TEXT")
