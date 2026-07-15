@@ -8,6 +8,7 @@ import com.skycareSolutions.skyCarePortal.model.Employee;
 import com.skycareSolutions.skyCarePortal.service.ClientService;
 import com.skycareSolutions.skyCarePortal.service.EmailService;
 import com.skycareSolutions.skyCarePortal.service.JobAssignerService;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
@@ -66,6 +67,9 @@ public class ClientController {
         List<String> clientIDList = jobAssignerService.getAllClientIDListCareGiverAssociated(id);
         List<ClientDTO> clientList = new ArrayList<>();
         for (String clientID:clientIDList){
+            if (TemporaryHiddenClients.isHidden(clientID)) {
+                continue;
+            }
             clientList.add(clientService.getClientById(clientID));
         }
         return ResponseEntity.ok(clientList);

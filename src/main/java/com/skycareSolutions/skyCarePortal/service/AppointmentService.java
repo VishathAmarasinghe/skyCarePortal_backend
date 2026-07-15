@@ -5,6 +5,7 @@ import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.AppointmentRepository;
 import com.skycareSolutions.skyCarePortal.repository.AppointmentTypesRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -63,6 +64,10 @@ public class AppointmentService {
         List<AppointmentCalenderDTO> eventDTOs = new ArrayList<>();
         for (RecurrentAppointmentDTO ap:appointments){
             Appointment appointment = getAppointmentByIdWithEntity(ap.getAppointmentID());
+            if (appointment.getClient() != null
+                    && TemporaryHiddenClients.isHidden(appointment.getClient().getClientID())) {
+                continue;
+            }
             appointment.setStartDate(ap.getStartDate());
             appointment.setEndDate(ap.getEndDate());
             appointment.setStartTime(ap.getStartTime());
@@ -77,6 +82,9 @@ public class AppointmentService {
     }
 
     public List<PendingClientAppointmentDTO> getPendingAppointmentsRelatedToClient(String clientID){
+        if (TemporaryHiddenClients.isHidden(clientID)) {
+            return List.of();
+        }
         Client client= clientService.getClientByIdWithEntitiy(clientID);
         List<PendingClientAppointmentDTO> pendingAppointmentDTOList = new ArrayList<>();
         List<Appointment> appointmentList = appointmentRepository.findAppointmentsByClient(client);
@@ -110,6 +118,9 @@ public class AppointmentService {
     }
 
     public List<PendingClientAppointmentDTO> getPastAppointmentsRelatedToClient(String clientID,String startDate,String endDate,String careGiverType){
+        if (TemporaryHiddenClients.isHidden(clientID)) {
+            return List.of();
+        }
         Client client= clientService.getClientByIdWithEntitiy(clientID);
         List<PendingClientAppointmentDTO> pendingAppointmentDTOList = new ArrayList<>();
         List<Appointment> appointmentList = appointmentRepository.findAppointmentsByClient(client);
@@ -192,6 +203,9 @@ public class AppointmentService {
     }
 
     public List<AppointmentCalenderDTO> getAllEventsRelatedToDateRangeWithUser(String employeeID,String startDate,String endDate){
+        if (TemporaryHiddenClients.isHidden(employeeID)) {
+            return List.of();
+        }
         List<RecurrentAppointmentDTO> appointments = recurrenceService.getAppointmentsWithinGivenDateRange(startDate,endDate);
         List<AppointmentCalenderDTO> eventDTOs = new ArrayList<>();
         if (employeeID.substring(0,2).equalsIgnoreCase("CU")){
@@ -224,6 +238,10 @@ public class AppointmentService {
                 for (JobAssignerDTO job : jobAssignerDTO) {
                     if (job.getCareGiverID().equalsIgnoreCase(careGiver.getCareGiverID())) {
                         Appointment appointment = getAppointmentByIdWithEntity(ap.getAppointmentID());
+                        if (appointment.getClient() != null
+                                && TemporaryHiddenClients.isHidden(appointment.getClient().getClientID())) {
+                            continue;
+                        }
                         appointment.setStartDate(ap.getStartDate());
                         appointment.setEndDate(ap.getEndDate());
                         appointment.setStartTime(ap.getStartTime());
@@ -264,6 +282,8 @@ public class AppointmentService {
     public List<AppointmentDTO> getAllAppointments() {
         return appointmentRepository.findAllAppointments()
                 .stream()
+                .filter(appointment -> appointment.getClient() == null
+                        || !TemporaryHiddenClients.isHidden(appointment.getClient().getClientID()))
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
@@ -271,10 +291,17 @@ public class AppointmentService {
     public AppointmentDTO getAppointmentById(String id) {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Appointment not found!"));
+        if (appointment.getClient() != null
+                && TemporaryHiddenClients.isHidden(appointment.getClient().getClientID())) {
+            throw new RuntimeException("Appointment not found!");
+        }
         return mapToDTO(appointment);
     }
 
     public List<AppointmentDTO> getAppointmentsbyClientID(String clientID){
+        if (TemporaryHiddenClients.isHidden(clientID)) {
+            return List.of();
+        }
         Client clientInfo = clientService.getClientByIdWithEntitiy(clientID);
         if (clientInfo!=null){
             List<Appointment> appointments = appointmentRepository.findAppointmentsByClient(clientInfo);

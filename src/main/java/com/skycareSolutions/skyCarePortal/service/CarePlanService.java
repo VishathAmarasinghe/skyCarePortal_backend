@@ -8,6 +8,7 @@ import com.skycareSolutions.skyCarePortal.dto.CarePlanSupportScheduleDTO;
 import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.*;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -113,6 +114,9 @@ public class CarePlanService {
 
     // Get CarePlans by clientID
     public List<CarePlanDTO> getCarePlansByClientID(String clientID) {
+        if (TemporaryHiddenClients.isHidden(clientID)) {
+            return List.of();
+        }
         Client client = clientRepository.findById(clientID)
                 .orElseThrow(() -> new RuntimeException("Client not found with ID: " + clientID));
 
@@ -127,15 +131,23 @@ public class CarePlanService {
 
     // Get CarePlans by careplan id
     public CarePlanDTO getCarePlansByCarePlanID(String carePlanID) {
-        return carePlanRepository.findById(carePlanID)
+        CarePlanDTO dto = carePlanRepository.findById(carePlanID)
                 .map(this::toDTO) // Map the entity to DTO
                 .orElseThrow(() -> new RuntimeException());
+        if (TemporaryHiddenClients.isHidden(dto.getClientID())) {
+            throw new RuntimeException("Care plan not found");
+        }
+        return dto;
     }
 
     // Get all CarePlans
     public List<CarePlanDTO> getAllCarePlans() {
         List<CarePlan> carePlanList = carePlanRepository.findAll().stream().filter(carePlan -> carePlan.getStatus().equalsIgnoreCase("Active")).toList();
-        return carePlanList.stream().map(this::toDTO).toList();
+        return carePlanList.stream()
+                .filter(carePlan -> carePlan.getClientID() == null
+                        || !TemporaryHiddenClients.isHidden(carePlan.getClientID().getClientID()))
+                .map(this::toDTO)
+                .toList();
     }
 
     // Create a new CarePlan
@@ -145,6 +157,9 @@ public class CarePlanService {
         String newCarePlanID = Micro_utils.idGenerator("careplan",lastCarePlanID);
         carePlan.setCareplanID(newCarePlanID);
 
+        if (TemporaryHiddenClients.isHidden(carePlanDTO.getClientID())) {
+            throw new RuntimeException("Client not found with ID: " + carePlanDTO.getClientID());
+        }
         Client clientValue = clientRepository.findById(carePlanDTO.getClientID())
                 .orElseThrow(() -> new RuntimeException("Client not found with ID: " + carePlanDTO.getClientID()));
         carePlan.setClientID(clientValue);
@@ -214,6 +229,9 @@ public class CarePlanService {
         carePlan.setBillingBudgetNotes(carePlanDTO.getBillingBudgetNotes());
 
         // Update associated Client
+        if (TemporaryHiddenClients.isHidden(carePlanDTO.getClientID())) {
+            throw new RuntimeException("Client not found with ID: " + carePlanDTO.getClientID());
+        }
         Client clientValue = clientRepository.findById(carePlanDTO.getClientID())
                 .orElseThrow(() -> new RuntimeException("Client not found with ID: " + carePlanDTO.getClientID()));
         carePlan.setClientID(clientValue);
