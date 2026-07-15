@@ -8,6 +8,7 @@ import com.skycareSolutions.skyCarePortal.repository.BehaviourDataRecordReposito
 import com.skycareSolutions.skyCarePortal.repository.ClientRepository;
 import com.skycareSolutions.skyCarePortal.repository.EmployeeRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +47,7 @@ public class BehaviourDataRecordService {
         String query = q != null ? q.trim().toLowerCase(Locale.ROOT) : "";
 
         return repository.findAll().stream()
+                .filter(row -> row.getClient() == null || !TemporaryHiddenClients.isHidden(row.getClient().getClientID()))
                 .filter(row -> allowedClients == null || allowedClients.contains(row.getClient().getClientID()))
                 .filter(row -> clientId == null || clientId.isBlank() || row.getClient().getClientID().equals(clientId))
                 .filter(row -> fromDate == null || row.getRecordDate() == null || !row.getRecordDate().isBefore(fromDate))
@@ -62,6 +64,9 @@ public class BehaviourDataRecordService {
     public BehaviourDataRecordDTO getById(String id, String requesterRole, String requesterEmployeeId) {
         BehaviourDataRecord row = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Behaviour data record not found"));
+        if (row.getClient() != null && TemporaryHiddenClients.isHidden(row.getClient().getClientID())) {
+            throw new RuntimeException("Behaviour data record not found");
+        }
         assertReadAccess(row, requesterRole, requesterEmployeeId);
         return toDto(row);
     }

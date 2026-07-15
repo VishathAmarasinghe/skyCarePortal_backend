@@ -7,6 +7,7 @@ import com.skycareSolutions.skyCarePortal.model.Employee;
 import com.skycareSolutions.skyCarePortal.repository.CareGiverRepository;
 import com.skycareSolutions.skyCarePortal.repository.EmployeeRepository;
 import com.skycareSolutions.skyCarePortal.repository.JobAssignerRepository;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -53,7 +54,8 @@ public class RegisterAccessService {
         List<JobAssigner> jobs = jobAssignerRepository.findJobsAssignedToCareGiver(careGiver);
         for (JobAssigner job : jobs) {
             Appointment appointment = job.getAppointment();
-            if (appointment != null && appointment.getClient() != null) {
+            if (appointment != null && appointment.getClient() != null
+                    && !TemporaryHiddenClients.isHidden(appointment.getClient().getClientID())) {
                 clientIds.add(appointment.getClient().getClientID());
             }
         }
@@ -61,6 +63,9 @@ public class RegisterAccessService {
     }
 
     public void assertClientAccess(String requesterRole, String requesterEmployeeId, String clientId) {
+        if (TemporaryHiddenClients.isHidden(clientId)) {
+            throw new RuntimeException("Client not found");
+        }
         if (isAdminRole(requesterRole)) {
             return;
         }

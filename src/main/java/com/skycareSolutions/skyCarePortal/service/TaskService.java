@@ -7,6 +7,7 @@ import com.skycareSolutions.skyCarePortal.model.AppointmentAddress;
 import com.skycareSolutions.skyCarePortal.model.Task;
 import com.skycareSolutions.skyCarePortal.repository.TaskRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -73,6 +74,8 @@ public class TaskService {
     public List<TaskDTO> getAllTasks() {
         List<Task> tasks = taskRepository.findAll();
         return tasks.stream()
+                .filter(task -> task.getClient() == null
+                        || !TemporaryHiddenClients.isHidden(task.getClient().getClientID()))
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
@@ -83,7 +86,11 @@ public class TaskService {
         if (taskOptional.isEmpty()) {
             throw new RuntimeException("Task not found with ID: " + id); // Custom Exception can be added
         }
-        return mapToDTO(taskOptional.get());
+        Task task = taskOptional.get();
+        if (task.getClient() != null && TemporaryHiddenClients.isHidden(task.getClient().getClientID())) {
+            throw new RuntimeException("Task not found with ID: " + id);
+        }
+        return mapToDTO(task);
     }
 
     // Get Task by ID

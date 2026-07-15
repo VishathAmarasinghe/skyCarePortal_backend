@@ -5,6 +5,7 @@ import com.skycareSolutions.skyCarePortal.dto.NotesDTO;
 import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.NotesRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -142,6 +143,10 @@ public class NotesService {
         List<Notes> notes = notesRepository.getAllNotes();
         List<NotesDTO> notesDTO = new ArrayList<>();
         for (Notes note:notes){
+            if (note.getClientID() != null
+                    && TemporaryHiddenClients.isHidden(note.getClientID().getClientID())) {
+                continue;
+            }
             notesDTO.add(convertToDTO(note));
         }
         return notesDTO;
@@ -150,10 +155,17 @@ public class NotesService {
     public NotesDTO getNoteById(String noteID) {
         Notes note = notesRepository.findById(noteID)
                 .orElseThrow(() -> new RuntimeException("Note not found"));
+        if (note.getClientID() != null
+                && TemporaryHiddenClients.isHidden(note.getClientID().getClientID())) {
+            throw new RuntimeException("Note not found");
+        }
         return convertToDTO(note);
     }
 
     public List<NotesDTO> getNotesByClientId(String clientID) {
+        if (TemporaryHiddenClients.isHidden(clientID)) {
+            return List.of();
+        }
         return notesRepository.findByClientID(clientID)
                 .stream()
                 .map(this::convertToDTO)

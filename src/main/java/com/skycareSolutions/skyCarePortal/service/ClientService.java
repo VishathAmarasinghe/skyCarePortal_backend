@@ -12,6 +12,7 @@ import com.skycareSolutions.skyCarePortal.repository.ClientTypeRepository;
 import com.skycareSolutions.skyCarePortal.repository.LanguageRepository;
 import com.skycareSolutions.skyCarePortal.utils.AuthenticationUtils;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -226,6 +227,7 @@ public class ClientService {
     // Get all clients
     public List<ClientDTO> getAllClients() {
         return clientRepository.getAllClients().stream()
+                .filter(client -> !TemporaryHiddenClients.isHidden(client.getClientID()))
                 .map(client->fromEntity(client,"values"))
                 .collect(Collectors.toList());
     }
@@ -265,6 +267,9 @@ public class ClientService {
 
     // Get client by ID
     public ClientDTO getClientById(String clientID) {
+        if (TemporaryHiddenClients.isHidden(clientID)) {
+            throw new RuntimeException("Client not found");
+        }
         Optional<Client> clientEntity = clientRepository.findById(clientID);
         return clientEntity.map(client->fromEntity(client,"values")).orElseThrow(() -> new RuntimeException("Client not found"));
     }
@@ -293,6 +298,9 @@ public class ClientService {
 
 
     public Client getClientByIdWithEntitiy(String clientID) {
+        if (TemporaryHiddenClients.isHidden(clientID)) {
+            throw new RuntimeException("Client not found");
+        }
         Optional<Client> clientEntity = clientRepository.findById(clientID);
         return clientEntity.orElseThrow(() -> new RuntimeException("Client not found"));
     }
@@ -349,6 +357,7 @@ public class ClientService {
         }
         int max = Math.min(Math.max(limit, 1), 50);
         return clientRepository.searchByQuery(query.trim()).stream()
+                .filter(client -> !TemporaryHiddenClients.isHidden(client.getClientID()))
                 .limit(max)
                 .map(this::toLookupDto)
                 .collect(Collectors.toList());

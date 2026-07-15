@@ -5,6 +5,7 @@ import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.JobAssignerRepository;
 import com.skycareSolutions.skyCarePortal.repository.ShiftNoteRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -157,7 +158,10 @@ public class JobAssignerService {
         List<JobAssigner> jobList = jobAssignerRepository.findJobsAssignedToCareGiver(careGiverInfo);
         Set<String> clientList = new HashSet<>();
         for (JobAssigner job:jobList){
-            clientList.add(job.getRecurrentAppointment().getAppointment().getClient().getClientID());
+            String clientId = job.getRecurrentAppointment().getAppointment().getClient().getClientID();
+            if (!TemporaryHiddenClients.isHidden(clientId)) {
+                clientList.add(clientId);
+            }
         }
         return clientList.stream().toList();
     }
@@ -174,6 +178,10 @@ public class JobAssignerService {
         List<JobAssigner> jobs = jobAssignerRepository.findJobsAssignedToCareGiver(careGiver);
         List<JobAssignCareGiverViewerDTO> assignViewer = new ArrayList<>();
         for (JobAssigner job:jobs){
+            if (job.getAppointment() != null && job.getAppointment().getClient() != null
+                    && TemporaryHiddenClients.isHidden(job.getAppointment().getClient().getClientID())) {
+                continue;
+            }
 
             ShiftNotes shiftNote = shiftNoteRepository.getShiftNotesByRecurrentAppointmentAndEmployee(job.getRecurrentAppointment(),employee);
             if (shiftNote==null && !job.getAcceptanceType().equalsIgnoreCase("Rejected")){
@@ -199,6 +207,10 @@ public class JobAssignerService {
         List<JobAssigner> jobs = jobAssignerRepository.findJobsAssignedToCareGiver(careGiver);
         List<JobAssignCareGiverViewerDTO> assignViewer = new ArrayList<>();
         for (JobAssigner job:jobs){
+                if (job.getAppointment() != null && job.getAppointment().getClient() != null
+                        && TemporaryHiddenClients.isHidden(job.getAppointment().getClient().getClientID())) {
+                    continue;
+                }
                 JobAssignCareGiverViewerDTO singleView = new JobAssignCareGiverViewerDTO();
                 singleView.setAssignJob(mapToDTO(job));
                 AppointmentDTO appointment = appointmentService.getAppointmentById(job.getAppointment().getAppointmentID());

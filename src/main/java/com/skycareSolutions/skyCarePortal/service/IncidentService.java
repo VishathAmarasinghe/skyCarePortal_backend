@@ -4,6 +4,7 @@ import com.skycareSolutions.skyCarePortal.dto.*;
 import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.IncidentRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -71,6 +72,7 @@ public class IncidentService {
     // Get all incidents
     public List<IncidentsDTO> getAllIncidents() {
         return incidentRepository.findAll().stream()
+                .filter(this::isVisibleIncident)
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -80,6 +82,9 @@ public class IncidentService {
         List<Incidents> incidents = incidentRepository.getIncidentsRelatedToEmployee(employee);
         List<IncidentsDTO> dtoList = new ArrayList<>();
         for (Incidents inc:incidents){
+            if (!isVisibleIncident(inc)) {
+                continue;
+            }
             dtoList.add(convertToDTO(inc));
         }
         return dtoList;
@@ -89,11 +94,20 @@ public class IncidentService {
     public IncidentsDTO getIncidentById(String id) {
         Incidents incident = incidentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Incident not found with ID: " + id));
+        if (!isVisibleIncident(incident)) {
+            throw new RuntimeException("Incident not found with ID: " + id);
+        }
         IncidentsDTO incidentValues = convertToDTO(incident);
         incidentValues.setParties(incidentInvolvedPartiesService.getPartiesByIncident(id));
         incidentValues.setDocuments(incidentDocumentServicel.getDocumentsRelatedToIncident(id));
         incidentValues.setAnswers(incidentActionTypeAllAnswersService.getAnswersByIncident(id));
         return incidentValues;
+    }
+
+    private boolean isVisibleIncident(Incidents incident) {
+        return incident == null
+                || incident.getClient() == null
+                || !TemporaryHiddenClients.isHidden(incident.getClient().getClientID());
     }
 
     // Create a new incident

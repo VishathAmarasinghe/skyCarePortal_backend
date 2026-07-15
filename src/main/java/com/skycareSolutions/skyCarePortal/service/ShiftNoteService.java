@@ -4,6 +4,7 @@ import com.skycareSolutions.skyCarePortal.dto.*;
 import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.ShiftNoteRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -406,10 +407,16 @@ public class ShiftNoteService {
     public List<ShiftNoteDTO> getAllShiftNotes(){
         List<ShiftNotes> allShiftNotes = shiftNoteRepository.getAllShiftNotes();
         List<ShiftNotes> uniqueShiftNotes = removeDuplicates(allShiftNotes);
-        return uniqueShiftNotes.stream().map(this::toDTO).toList();
+        return uniqueShiftNotes.stream()
+                .filter(this::isVisibleTimesheetNote)
+                .map(this::toDTO)
+                .toList();
     }
 
     public List<TimeSheetDTO> getTimeSheetsForGivenDateRange(String startDate,String endDate,String careGiverID,String clientID){
+        if (TemporaryHiddenClients.isHidden(clientID)) {
+            return List.of();
+        }
         LocalDate start = LocalDate.parse(startDate);
         LocalDate end = LocalDate.parse(endDate);
         LocalDateTime startDateTime = start.atStartOfDay();
@@ -429,6 +436,9 @@ public class ShiftNoteService {
         // List<ShiftNotes> shiftNoteList = shiftNoteRepository.findShiftNotesByStartInRangeOrCreatedInRangeAndStartBeforeStart(start, end, startDateTime, endDateTime);
         List<TimeSheetDTO> timeSheetList = new ArrayList<>();
         for (ShiftNotes shiftNote:shiftNoteList){
+            if (!isVisibleTimesheetNote(shiftNote)) {
+                continue;
+            }
             DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
             TimeSheetDTO timeSheet = new TimeSheetDTO();
 
@@ -469,6 +479,9 @@ public class ShiftNoteService {
                 timeSheet.setRecurrentAppointment(recurrentAppointmentDTO);
                 AppointmentDTO appointmentDTO = appointmentService.getAppointmentById(recurrentAppointmentDTO.getAppointmentID());
                 timeSheet.setAppointment(appointmentDTO);
+                if (TemporaryHiddenClients.isHidden(appointmentDTO.getClientID())) {
+                    continue;
+                }
 
                 ClientDTO clientDTO = clientService.getClientById(appointmentDTO.getClientID());
                 timeSheet.setClient(clientDTO);
@@ -494,6 +507,9 @@ public class ShiftNoteService {
 
 
     public List<TimeSheetDTO> getTimeSheetsForGivenDateRangeForExport(String startDate,String endDate,String careGiverID,String clientID){
+        if (TemporaryHiddenClients.isHidden(clientID)) {
+            return List.of();
+        }
         LocalDate start = LocalDate.parse(startDate);
         LocalDate end = LocalDate.parse(endDate);
         List<ShiftNotes> shiftNoteList = shiftNoteRepository.findExportableShiftNotes(start,end);
@@ -501,6 +517,9 @@ public class ShiftNoteService {
         shiftNoteList = removeDuplicates(shiftNoteList);
         List<TimeSheetDTO> timeSheetList = new ArrayList<>();
         for (ShiftNotes shiftNote:shiftNoteList){
+            if (!isVisibleTimesheetNote(shiftNote)) {
+                continue;
+            }
             DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
             TimeSheetDTO timeSheet = new TimeSheetDTO();
 
@@ -540,6 +559,9 @@ public class ShiftNoteService {
                 timeSheet.setRecurrentAppointment(recurrentAppointmentDTO);
                 AppointmentDTO appointmentDTO = appointmentService.getAppointmentById(recurrentAppointmentDTO.getAppointmentID());
                 timeSheet.setAppointment(appointmentDTO);
+                if (TemporaryHiddenClients.isHidden(appointmentDTO.getClientID())) {
+                    continue;
+                }
 
                 ClientDTO clientDTO = clientService.getClientById(appointmentDTO.getClientID());
                 timeSheet.setClient(clientDTO);
@@ -561,6 +583,16 @@ public class ShiftNoteService {
             return timeSheetList.stream().filter(timeSheetDTO -> timeSheetDTO.getEmployeeDTO().getEmployeeID().equalsIgnoreCase(careGiverID)).toList();
         }
 
+    }
+
+    private boolean isVisibleTimesheetNote(ShiftNotes shiftNote) {
+        if (shiftNote == null) {
+            return false;
+        }
+        if (shiftNote.getClient() != null && TemporaryHiddenClients.isHidden(shiftNote.getClient().getClientID())) {
+            return false;
+        }
+        return true;
     }
 
 
@@ -605,7 +637,10 @@ public class ShiftNoteService {
         Employee employee = employeeService.findOneEmployeeWithEntity(employeeID);
         List<ShiftNotes> shiftNotesList = shiftNoteRepository.getAllShiftNotesByEmployee(employee);
         List<ShiftNotes> uniqueShiftNotes = removeDuplicates(shiftNotesList);
-        return uniqueShiftNotes.stream().map(this::toDTO).toList();
+        return uniqueShiftNotes.stream()
+                .filter(this::isVisibleTimesheetNote)
+                .map(this::toDTO)
+                .toList();
 
     }
 
@@ -866,6 +901,9 @@ public class ShiftNoteService {
     }
 
     public List<ShiftNotes> getShiftNotesInPaymentStatusByClient(String clientID,String paymentStatus){
+        if (TemporaryHiddenClients.isHidden(clientID)) {
+            return List.of();
+        }
         Client client = clientService.getClientByIdWithEntitiy(clientID);
         List<ShiftNotes> notesList = shiftNoteRepository.findByClientAndPaymentState(client,paymentStatus);
         List<ShiftNotes> uniqueNotesList = removeDuplicates(notesList);

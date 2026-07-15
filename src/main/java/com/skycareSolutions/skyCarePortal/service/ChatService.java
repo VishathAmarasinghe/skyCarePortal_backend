@@ -4,6 +4,7 @@ import com.mysql.cj.log.Log;
 import com.skycareSolutions.skyCarePortal.dto.*;
 import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.*;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -371,6 +372,9 @@ public class ChatService {
             resultList.add(member);
         }
         for (Client cl:memberClientList){
+            if (TemporaryHiddenClients.isHidden(cl.getClientID())) {
+                continue;
+            }
             ChatMemberDTO member = new ChatMemberDTO();
             member.setUserID(cl.getClientID());
             member.setUserName(cl.getFirstName()+" "+cl.getLastName());
@@ -386,6 +390,9 @@ public class ChatService {
         List<Message> messageList = messageRepository.findByChatId(chatId);
         List<MessageDTO> resultList = new ArrayList<>();
         for (Message message:messageList){
+            if (TemporaryHiddenClients.isHidden(message.getSenderID())) {
+                continue;
+            }
             MessageDTO singleMessage = new MessageDTO();
             singleMessage.setMessageID(message.getId());
             singleMessage.setChatID(message.getChat().getId());
@@ -409,6 +416,9 @@ public class ChatService {
 
 
     public List<ChatDTO> getListOfChatsByUser(String userID){
+        if (TemporaryHiddenClients.isHidden(userID)) {
+            return List.of();
+        }
         List<Long> chatList = new ArrayList<>();
         List<ChatDTO> resutlList = new ArrayList<>();
         String userType = "Client";
@@ -447,6 +457,9 @@ public class ChatService {
                             }
                         }
                         for(Client clt:clientSet){
+                            if (TemporaryHiddenClients.isHidden(clt.getClientID())) {
+                                continue;
+                            }
                             if (!clt.getClientID().equalsIgnoreCase(userID)){
                                 singleResult.setChatIcon(clt.getProfilePhoto());
                                 singleResult.setChatName(clt.getFirstName()+clt.getLastName());

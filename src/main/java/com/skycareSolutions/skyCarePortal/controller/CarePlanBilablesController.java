@@ -5,7 +5,6 @@ import com.skycareSolutions.skyCarePortal.dto.CarePlanBillableWithCarePlanDTO;
 import com.skycareSolutions.skyCarePortal.model.CarePlan;
 import com.skycareSolutions.skyCarePortal.repository.CarePlanRepository;
 import com.skycareSolutions.skyCarePortal.service.CarePlanBillablesService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,14 +42,14 @@ public class CarePlanBilablesController {
     }
 
     @PostMapping
-    public ResponseEntity<CarePlanBilablesDTO> createCarePlanBill(@Valid @RequestBody CarePlanBilablesDTO billDTO) {
+    public ResponseEntity<CarePlanBilablesDTO> createCarePlanBill(@RequestBody CarePlanBilablesDTO billDTO) {
         CarePlanBilablesDTO created = carePlanBillablesService.createCarePlanBill(billDTO);
         URI location = URI.create(String.format("/care-plan-bills/%s", created.getBillID()));
         return ResponseEntity.created(location).body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CarePlanBilablesDTO> updateCarePlanBill(@PathVariable String id, @Valid @RequestBody CarePlanBilablesDTO billDTO) {
+    public ResponseEntity<CarePlanBilablesDTO> updateCarePlanBill(@PathVariable String id, @RequestBody CarePlanBilablesDTO billDTO) {
         return ResponseEntity.ok(carePlanBillablesService.updateCarePlanBill(id, billDTO));
     }
 
