@@ -5,6 +5,7 @@ import com.skycareSolutions.skyCarePortal.dto.*;
 import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.*;
 import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenEmployees;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -364,6 +365,9 @@ public class ChatService {
         List<Client> memberClientList = chatMemberRepository.findClientsByChatId(chatID);
         List<ChatMemberDTO> resultList = new ArrayList<>();
         for (Employee emp:memberList){
+            if (TemporaryHiddenEmployees.isHiddenEmployee(emp.getEmployeeID())) {
+                continue;
+            }
             ChatMemberDTO member = new ChatMemberDTO();
             member.setUserID(emp.getEmployeeID());
             member.setUserName(emp.getFirstName()+" "+emp.getLastName());
@@ -390,7 +394,8 @@ public class ChatService {
         List<Message> messageList = messageRepository.findByChatId(chatId);
         List<MessageDTO> resultList = new ArrayList<>();
         for (Message message:messageList){
-            if (TemporaryHiddenClients.isHidden(message.getSenderID())) {
+            if (TemporaryHiddenClients.isHidden(message.getSenderID())
+                    || TemporaryHiddenEmployees.isHiddenEmployee(message.getSenderID())) {
                 continue;
             }
             MessageDTO singleMessage = new MessageDTO();
@@ -416,7 +421,7 @@ public class ChatService {
 
 
     public List<ChatDTO> getListOfChatsByUser(String userID){
-        if (TemporaryHiddenClients.isHidden(userID)) {
+        if (TemporaryHiddenClients.isHidden(userID) || TemporaryHiddenEmployees.isHiddenEmployee(userID)) {
             return List.of();
         }
         List<Long> chatList = new ArrayList<>();
@@ -451,6 +456,9 @@ public class ChatService {
                         List<Employee> employeeSet = chatMemberRepository.findEmployeesByChatId(chatData.getId());
                         List<Client> clientSet = chatMemberRepository.findClientsByChatId(chatData.getId());
                         for (Employee emp:employeeSet){
+                            if (TemporaryHiddenEmployees.isHiddenEmployee(emp.getEmployeeID())) {
+                                continue;
+                            }
                             if (!emp.getEmployeeID().equalsIgnoreCase(userID)){
                                 singleResult.setChatIcon(emp.getProfile_photo());
                                 singleResult.setChatName(emp.getFirstName()+emp.getLastName());

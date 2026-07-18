@@ -6,6 +6,7 @@ import com.skycareSolutions.skyCarePortal.repository.AppointmentRepository;
 import com.skycareSolutions.skyCarePortal.repository.AppointmentTypesRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
 import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenEmployees;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -163,6 +164,9 @@ public class AppointmentService {
     }
 
     public List<PendingAppointmentDTO> getPendingAppointmentsRelatedToUser(String employeeID){
+        if (TemporaryHiddenEmployees.isHiddenEmployee(employeeID)) {
+            return List.of();
+        }
         LocalDate currentDate = LocalDate.now();
         LocalTime currentTime = LocalTime.now();
         LocalDate endingDate = currentDate.plusYears(1);
@@ -203,7 +207,7 @@ public class AppointmentService {
     }
 
     public List<AppointmentCalenderDTO> getAllEventsRelatedToDateRangeWithUser(String employeeID,String startDate,String endDate){
-        if (TemporaryHiddenClients.isHidden(employeeID)) {
+        if (TemporaryHiddenClients.isHidden(employeeID) || TemporaryHiddenEmployees.isHiddenEmployee(employeeID)) {
             return List.of();
         }
         List<RecurrentAppointmentDTO> appointments = recurrenceService.getAppointmentsWithinGivenDateRange(startDate,endDate);
@@ -435,6 +439,9 @@ public class AppointmentService {
     }
 
     public List<CareGiverAllocatedAppointmentsDTO> getAppointmentsAssignedToCareGiver(String employeeID, String state) {
+        if (TemporaryHiddenEmployees.isHiddenEmployee(employeeID)) {
+            return List.of();
+        }
         CareGiverDTO careGiver = careGiverService.getCareGiverByEmployee(employeeID);
         List<JobAssignerDTO> jobs = jobAssignerService.assignedJobsBasedOnCareGiverAndStatus(careGiver.getCareGiverID(), state);
         List<CareGiverAppointmentDTO> result = new ArrayList<>();

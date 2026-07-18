@@ -10,6 +10,7 @@ import com.skycareSolutions.skyCarePortal.repository.CareGiverDocumentsRepositor
 import com.skycareSolutions.skyCarePortal.repository.CareGiverDocumentTypesRepository;
 import com.skycareSolutions.skyCarePortal.repository.CareGiverRepository;
 import com.skycareSolutions.skyCarePortal.repository.ShiftNoteRepository;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenEmployees;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -134,6 +135,8 @@ public class AdminDashboardInsightsService {
         List<CareGiver> activeCareGivers = careGiverRepository.findAll().stream()
                 .filter(cg -> cg.getEmployee() != null
                         && "Activated".equalsIgnoreCase(cg.getEmployee().getStatus()))
+                .filter(cg -> !TemporaryHiddenEmployees.isHiddenCareGiver(cg.getCareGiverID()))
+                .filter(cg -> !TemporaryHiddenEmployees.isHiddenEmployee(cg.getEmployee().getEmployeeID()))
                 .toList();
 
         List<CareGiverDocumentTypes> activeTypes = documentTypesRepository.findAll().stream()

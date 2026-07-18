@@ -6,6 +6,7 @@ import com.skycareSolutions.skyCarePortal.repository.JobAssignerRepository;
 import com.skycareSolutions.skyCarePortal.repository.ShiftNoteRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
 import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenEmployees;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -172,6 +173,9 @@ public class JobAssignerService {
     }
 
     public List<JobAssignCareGiverViewerDTO> jobAssignTOCareGivers(String id){
+        if (TemporaryHiddenEmployees.isHiddenEmployee(id)) {
+            return List.of();
+        }
         CareGiverDTO careGiverDTO = careGiverService.getCareGiverByEmployee(id);
         Employee employee = employeeService.findOneEmployeeWithEntity(id);
         CareGiver careGiver = careGiverService.getCareGiverByIdWithEntity(careGiverDTO.getCareGiverID());
@@ -201,6 +205,9 @@ public class JobAssignerService {
     }
 
     public List<JobAssignCareGiverViewerDTO> allJobsAssignedToCareGivers(String id){
+        if (TemporaryHiddenEmployees.isHiddenEmployee(id)) {
+            return List.of();
+        }
         CareGiverDTO careGiverDTO = careGiverService.getCareGiverByEmployee(id);
         Employee employee = employeeService.findOneEmployeeWithEntity(id);
         CareGiver careGiver = careGiverService.getCareGiverByIdWithEntity(careGiverDTO.getCareGiverID());

@@ -5,6 +5,7 @@ import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.ShiftNoteRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
 import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenEmployees;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -414,7 +415,7 @@ public class ShiftNoteService {
     }
 
     public List<TimeSheetDTO> getTimeSheetsForGivenDateRange(String startDate,String endDate,String careGiverID,String clientID){
-        if (TemporaryHiddenClients.isHidden(clientID)) {
+        if (TemporaryHiddenClients.isHidden(clientID) || TemporaryHiddenEmployees.isHidden(careGiverID)) {
             return List.of();
         }
         LocalDate start = LocalDate.parse(startDate);
@@ -507,7 +508,7 @@ public class ShiftNoteService {
 
 
     public List<TimeSheetDTO> getTimeSheetsForGivenDateRangeForExport(String startDate,String endDate,String careGiverID,String clientID){
-        if (TemporaryHiddenClients.isHidden(clientID)) {
+        if (TemporaryHiddenClients.isHidden(clientID) || TemporaryHiddenEmployees.isHidden(careGiverID)) {
             return List.of();
         }
         LocalDate start = LocalDate.parse(startDate);
@@ -592,6 +593,19 @@ public class ShiftNoteService {
         if (shiftNote.getClient() != null && TemporaryHiddenClients.isHidden(shiftNote.getClient().getClientID())) {
             return false;
         }
+        if (shiftNote.getEmployee() != null
+                && TemporaryHiddenEmployees.isHiddenEmployee(shiftNote.getEmployee().getEmployeeID())) {
+            return false;
+        }
+        if (shiftNote.getCareGiver() != null) {
+            if (TemporaryHiddenEmployees.isHiddenCareGiver(shiftNote.getCareGiver().getCareGiverID())) {
+                return false;
+            }
+            if (shiftNote.getCareGiver().getEmployee() != null
+                    && TemporaryHiddenEmployees.isHiddenEmployee(shiftNote.getCareGiver().getEmployee().getEmployeeID())) {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -634,6 +648,9 @@ public class ShiftNoteService {
 
 
     public List<ShiftNoteDTO> getAllShiftNotesRelatedToCareGiver(String employeeID){
+        if (TemporaryHiddenEmployees.isHiddenEmployee(employeeID)) {
+            return List.of();
+        }
         Employee employee = employeeService.findOneEmployeeWithEntity(employeeID);
         List<ShiftNotes> shiftNotesList = shiftNoteRepository.getAllShiftNotesByEmployee(employee);
         List<ShiftNotes> uniqueShiftNotes = removeDuplicates(shiftNotesList);
