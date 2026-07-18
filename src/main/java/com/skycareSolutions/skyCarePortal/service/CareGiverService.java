@@ -4,6 +4,7 @@ import com.skycareSolutions.skyCarePortal.dto.*;
 import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.CareGiverRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenEmployees;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -39,28 +40,51 @@ public class CareGiverService {
     public List<CareGiverDTO> getAllCareGivers() {
         List<CareGiverDTO> caregivers = careGiverRepository.findAll()
                 .stream()
+                .filter(cg -> !TemporaryHiddenEmployees.isHiddenCareGiver(cg.getCareGiverID()))
+                .filter(cg -> cg.getEmployee() == null
+                        || !TemporaryHiddenEmployees.isHiddenEmployee(cg.getEmployee().getEmployeeID()))
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
         return caregivers;
     }
 
     public ResponseEntity<CareGiverDTO> getCareGiverById(String id) {
+        if (TemporaryHiddenEmployees.isHiddenCareGiver(id)) {
+            return ResponseEntity.notFound().build();
+        }
         CareGiver caregiver = careGiverRepository.findById(id).orElse(null);
         if (caregiver == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (caregiver.getEmployee() != null
+                && TemporaryHiddenEmployees.isHiddenEmployee(caregiver.getEmployee().getEmployeeID())) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(mapToDTO(caregiver));
     }
 
     public CareGiver getCareGiverByIdWithEntity(String id) {
+        if (TemporaryHiddenEmployees.isHiddenCareGiver(id)) {
+            return null;
+        }
         CareGiver caregiver = careGiverRepository.findById(id).orElse(null);
+        if (caregiver != null && caregiver.getEmployee() != null
+                && TemporaryHiddenEmployees.isHiddenEmployee(caregiver.getEmployee().getEmployeeID())) {
+            return null;
+        }
         return caregiver;
     }
 
     public CareGiverDTO getCareGiverByEmployee(String employeeID) {
+        if (TemporaryHiddenEmployees.isHiddenEmployee(employeeID)) {
+            throw new RuntimeException("Caregiver not found");
+        }
         Employee employee = employeeService.findOneEmployeeWithEntity(employeeID);
         if (employee!=null){
             CareGiver caregiver = careGiverRepository.getCareGiverByEmployee(employee);
+            if (caregiver != null && TemporaryHiddenEmployees.isHiddenCareGiver(caregiver.getCareGiverID())) {
+                throw new RuntimeException("Caregiver not found");
+            }
             return mapToDTO(caregiver);
         }else{
              throw new RuntimeException();

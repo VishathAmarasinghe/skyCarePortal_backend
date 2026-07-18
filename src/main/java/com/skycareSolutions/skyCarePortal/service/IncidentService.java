@@ -5,6 +5,7 @@ import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.IncidentRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
 import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenEmployees;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -78,6 +79,9 @@ public class IncidentService {
     }
 
     public List<IncidentsDTO> getAllIncidentsByEmployeeID(String employeeID){
+        if (TemporaryHiddenEmployees.isHiddenEmployee(employeeID)) {
+            return List.of();
+        }
         Employee employee = employeeService.findOneEmployeeWithEntity(employeeID);
         List<Incidents> incidents = incidentRepository.getIncidentsRelatedToEmployee(employee);
         List<IncidentsDTO> dtoList = new ArrayList<>();
@@ -105,9 +109,17 @@ public class IncidentService {
     }
 
     private boolean isVisibleIncident(Incidents incident) {
-        return incident == null
-                || incident.getClient() == null
-                || !TemporaryHiddenClients.isHidden(incident.getClient().getClientID());
+        if (incident == null) {
+            return false;
+        }
+        if (incident.getClient() != null && TemporaryHiddenClients.isHidden(incident.getClient().getClientID())) {
+            return false;
+        }
+        if (incident.getEmployee() != null
+                && TemporaryHiddenEmployees.isHiddenEmployee(incident.getEmployee().getEmployeeID())) {
+            return false;
+        }
+        return true;
     }
 
     // Create a new incident

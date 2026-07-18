@@ -9,6 +9,7 @@ import com.skycareSolutions.skyCarePortal.repository.EmployeeRepository;
 import com.skycareSolutions.skyCarePortal.repository.StaffTrainingRecordRepository;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
 import com.skycareSolutions.skyCarePortal.utils.StaffTrainingCertificateFileUtil;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenEmployees;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -68,6 +69,8 @@ public class StaffTrainingRecordService {
         String query = q != null ? q.trim().toLowerCase(Locale.ROOT) : "";
 
         return repository.findAll().stream()
+                .filter(record -> record.getEmployee() == null
+                        || !TemporaryHiddenEmployees.isHiddenEmployee(record.getEmployee().getEmployeeID()))
                 .filter(record -> employeeFilter == null || employeeFilter.isBlank()
                         || (record.getEmployee() != null
                         && record.getEmployee().getEmployeeID().equals(employeeFilter)))

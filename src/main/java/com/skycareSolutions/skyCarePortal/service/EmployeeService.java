@@ -5,6 +5,8 @@ import com.skycareSolutions.skyCarePortal.model.*;
 import com.skycareSolutions.skyCarePortal.repository.*;
 import com.skycareSolutions.skyCarePortal.utils.AuthenticationUtils;
 import com.skycareSolutions.skyCarePortal.utils.Micro_utils;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenClients;
+import com.skycareSolutions.skyCarePortal.utils.TemporaryHiddenEmployees;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -82,12 +84,18 @@ public class EmployeeService {
 
         if (userOptional.isPresent()) {
             Employee user = userOptional.get();
+            if (TemporaryHiddenEmployees.isHiddenEmployee(user.getEmployeeID())) {
+                throw new RuntimeException("Invalid email or password");
+            }
             if (passwordUtil.matchPassword(password, user.getPassword())) {
                 return convertToDTO(user);
             }
         }else {
             Client clientOptional = clientRepository.findByEmail(email);
             if (clientOptional!=null){
+                if (TemporaryHiddenClients.isHidden(clientOptional.getClientID())) {
+                    throw new RuntimeException("Invalid email or password");
+                }
                 if (passwordUtil.matchPassword(password, clientOptional.getPassword())) {
                     EmployeeDTO employeeDTO = new EmployeeDTO();
                     employeeDTO.setEmployeeID(clientOptional.getClientID());
@@ -251,6 +259,9 @@ public class EmployeeService {
 
         List<EmployeeDTO> empResult = new ArrayList<>();
         for (Employee emp:employees){
+            if (TemporaryHiddenEmployees.isHiddenEmployee(emp.getEmployeeID())) {
+                continue;
+            }
             System.out.println("ee "+emp.getEmail());
             empResult.add(convertToDTO(emp));
         }
@@ -268,13 +279,23 @@ public class EmployeeService {
             careGiverList.addAll(careGivers);
         }
         for (String careGiverID: careGiverList){
+            if (TemporaryHiddenEmployees.isHiddenCareGiver(careGiverID)) {
+                continue;
+            }
             CareGiver careGiver = careGiverService.getCareGiverByIdWithEntity(careGiverID);
+            if (careGiver == null || careGiver.getEmployee() == null
+                    || TemporaryHiddenEmployees.isHiddenEmployee(careGiver.getEmployee().getEmployeeID())) {
+                continue;
+            }
             employeeList.add(convertToDTO(careGiver.getEmployee()));
         }
         return employeeList;
     }
 
     public EmployeeDTO getSingleEmployee(String employeeID){
+        if (TemporaryHiddenEmployees.isHiddenEmployee(employeeID)) {
+            throw new RuntimeException("Employee not found");
+        }
         Optional<Employee> employee = employeeRepository.findById(employeeID);
         if (employee.isPresent()){
             return convertToDTO(employee.get());
@@ -478,6 +499,9 @@ public class EmployeeService {
     }
 
     public EmployeeDTO findOneEmployee(String employeeID){
+        if (TemporaryHiddenEmployees.isHiddenEmployee(employeeID)) {
+            return null;
+        }
         Optional<Employee> existingEmployeeOpt = employeeRepository.findById(employeeID);
         EmployeeDTO employeeDetails = null;
         if (existingEmployeeOpt.isPresent()) {
@@ -489,10 +513,16 @@ public class EmployeeService {
     public EmployeeDTO findEmployeeByEmail(String email){
         Optional<Employee> employee = employeeRepository.findByEmail(email);
         EmployeeDTO employeeDTO = null;
+        if (employee.isPresent() && TemporaryHiddenEmployees.isHiddenEmployee(employee.get().getEmployeeID())) {
+            return employeeDTO;
+        }
         return employee.map(this::convertToDTO).orElse(employeeDTO);
     }
 
     public Employee findOneEmployeeWithEntity(String employeeID){
+        if (TemporaryHiddenEmployees.isHiddenEmployee(employeeID)) {
+            throw new RuntimeException("Employee not found");
+        }
         Optional<Employee> existingEmployeeOpt = employeeRepository.findById(employeeID);
         if (existingEmployeeOpt.isPresent()) {
             return existingEmployeeOpt.get();
@@ -505,6 +535,9 @@ public class EmployeeService {
         List<Employee> employees = employeeRepository.getEmployeesByRole(role);
         List<EmployeeDTO> employeeDTO = new ArrayList<>();
         for (Employee emp:employees){
+            if (TemporaryHiddenEmployees.isHiddenEmployee(emp.getEmployeeID())) {
+                continue;
+            }
             employeeDTO.add(convertToDTO(emp));
         }
         return employeeDTO;
@@ -549,6 +582,9 @@ public class EmployeeService {
         List<Employee> employees = employeeRepository.getAllEmployees();
         List<MetaEmployeeDetailsDTO> employeeDetailsDTOS = new ArrayList<>();
         for (Employee employee:employees){
+            if (TemporaryHiddenEmployees.isHiddenEmployee(employee.getEmployeeID())) {
+                continue;
+            }
             employeeDetailsDTOS.add(toMetaDto(employee));
         }
         return employeeDetailsDTOS;
@@ -560,6 +596,7 @@ public class EmployeeService {
         }
         int max = Math.min(Math.max(limit, 1), 50);
         return employeeRepository.searchByQuery(query.trim()).stream()
+                .filter(employee -> !TemporaryHiddenEmployees.isHiddenEmployee(employee.getEmployeeID()))
                 .filter(employee -> role == null || role.isBlank()
                         || role.equalsIgnoreCase(employee.getAccessRole()))
                 .limit(max)
