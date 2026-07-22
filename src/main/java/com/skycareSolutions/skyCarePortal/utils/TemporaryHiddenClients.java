@@ -17,7 +17,11 @@ public final class TemporaryHiddenClients {
             "CU38",
             "CU36",
             "CU37",
-            "CU31"
+            "CU31",
+            "CU61",
+            "CU48",
+            "CU32",
+            "CU28"
     );
 
     private TemporaryHiddenClients() {
