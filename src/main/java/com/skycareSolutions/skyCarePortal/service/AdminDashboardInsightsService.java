@@ -70,8 +70,12 @@ public class AdminDashboardInsightsService {
         }
 
         AdminInsightsDashboardDTO dto = new AdminInsightsDashboardDTO();
-        dto.setStaffCount(employeeService.getEmployeesByRole("CareGiver").size());
-        dto.setClientCount(clientService.getAllClients().size());
+        dto.setStaffCount((int) employeeService.getEmployeesByRole("CareGiver").stream()
+                .filter(emp -> emp.getStatus() != null && emp.getStatus().equalsIgnoreCase("Activated"))
+                .count());
+        dto.setClientCount((int) clientService.getAllClients().stream()
+                .filter(client -> client.getStatus() != null && client.getStatus().equalsIgnoreCase("Activated"))
+                .count());
         dto.setTimesheet(buildTimesheetInsights(from, to));
         dto.setDocuments(buildDocumentCompliance(today));
         dto.setAgreements(buildAgreementAttention());

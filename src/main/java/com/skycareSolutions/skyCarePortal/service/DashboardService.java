@@ -101,8 +101,12 @@ public class DashboardService {
 
         dashboardDTO.setAdminCount(employeeService.getEmployeesByRole("Admin").size());
         dashboardDTO.setServiceCount(appointmentService.getAllAppointments().size());
-        dashboardDTO.setStaffCount(employeeService.getEmployeesByRole("CareGiver").size());
-        dashboardDTO.setClientCount(clientService.getAllClients().size());
+        dashboardDTO.setStaffCount((int) employeeService.getEmployeesByRole("CareGiver").stream()
+                .filter(emp -> emp.getStatus() != null && emp.getStatus().equalsIgnoreCase("Activated"))
+                .count());
+        dashboardDTO.setClientCount((int) clientService.getAllClients().stream()
+                .filter(client -> client.getStatus() != null && client.getStatus().equalsIgnoreCase("Activated"))
+                .count());
 
         Map<String, Integer> appointmentCountByType = new HashMap<>();
 
@@ -181,8 +185,12 @@ public class DashboardService {
 
         dashboardDTO.setAdminCount(employeeService.getEmployeesByRole("Admin").size());
         dashboardDTO.setServiceCount(appointmentService.getAllAppointments().size());
-        dashboardDTO.setStaffCount(employeeService.getEmployeesByRole("CareGiver").size());
-        dashboardDTO.setClientCount(clientService.getAllClients().size());
+        dashboardDTO.setStaffCount((int) employeeService.getEmployeesByRole("CareGiver").stream()
+                .filter(emp -> emp.getStatus() != null && emp.getStatus().equalsIgnoreCase("Activated"))
+                .count());
+        dashboardDTO.setClientCount((int) clientService.getAllClients().stream()
+                .filter(client -> client.getStatus() != null && client.getStatus().equalsIgnoreCase("Activated"))
+                .count());
 
         dashboardDTO.setMonthlyPaidTimesheetCount((int) shiftNoteService.getCurrentMonthPaymentStateCount("Paid"));
         dashboardDTO.setMonthlyApprovedTimesheetCount((int) shiftNoteService.getCurrentMonthPaymentStateCount("Approved"));
