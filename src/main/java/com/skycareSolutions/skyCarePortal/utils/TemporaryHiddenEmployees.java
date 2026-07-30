@@ -19,7 +19,8 @@ public final class TemporaryHiddenEmployees {
             "EM24", "EM77", "EM33", "EM29", "EM28", "EM35",
             // Added batch
             "EM114", "EM108", "EM98", "EM84", "EM9", "EM79", "EM74", "EM60",
-            "EM54", "EM52", "EM49", "EM34", "EM38", "EM36", "EM14", "EM5", "EM124"
+            "EM54", "EM52", "EM49", "EM34", "EM38", "EM36", "EM14", "EM5", "EM124",
+            "EM57", "EM68", "EM58"
     );
 
     private static final Set<String> HIDDEN_CAREGIVER_IDS = Set.of(
@@ -32,7 +33,8 @@ public final class TemporaryHiddenEmployees {
             "CG21", "CG73", "CG30", "CG26", "CG25", "CG32",
             // Added batch
             "CG110", "CG104", "CG94", "CG80", "CG5", "CG75", "CG70", "CG56",
-            "CG51", "CG49", "CG46", "CG31", "CG35", "CG33", "CG10", "CG1", "CG120"
+            "CG51", "CG49", "CG46", "CG31", "CG35", "CG33", "CG10", "CG1", "CG120",
+            "CG64", "CG54"
     );
 
     private TemporaryHiddenEmployees() {
